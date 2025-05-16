@@ -1,0 +1,15 @@
+# abaikan file executable
+*.exe
+
+# abaikan folder pengaturan vscode
+.vscode/
+
+# abaikan file enigma.c
+/enigma.c
+
+# abaikan folder build
+src/build/
+
+# abaikan file output
+*.out
+
