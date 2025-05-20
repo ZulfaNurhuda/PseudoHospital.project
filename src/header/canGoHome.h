@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "boolean.h"
-#include "abstractDatatypes.h"
+#include "abstractDataTypes.h"
 #include "utils.h"
 
 /**

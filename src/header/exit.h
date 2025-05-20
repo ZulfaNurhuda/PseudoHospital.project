@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdlib.h>
 
-#include "abstractDatatypes.h"
+#include "abstractDataTypes.h"
 #include "utils.h"
 #include "hospital.h"
 

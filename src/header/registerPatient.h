@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "boolean.h"
 #include "abstractDataTypes.h"
 #include "utils.h"
 #include "enigma.h"

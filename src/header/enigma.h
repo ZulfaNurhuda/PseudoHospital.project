@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "abstractDataTypes.h"
-#include "boolean.h"
 #include "utils.h"
 
 /**

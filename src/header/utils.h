@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "boolean.h"
 #include "abstractDataTypes.h"
 
 // Warna ANSI untuk output terminal
