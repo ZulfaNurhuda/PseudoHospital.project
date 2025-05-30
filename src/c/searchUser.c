@@ -1,5 +1,51 @@
 #include "searchUser.h"
-#include <stdlib.h> // For qsort and bsearch
+#include "utils.h" // For integerToString, floatToString, printError, etc.
+#include <stdlib.h> 
+#include <string.h> 
+
+// Static helper: Convert char to lowercase
+static char localCharToLower(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c + ('a' - 'A');
+    }
+    return c;
+}
+
+// Static helper: Case-insensitive string comparison
+static int localCaseInsensitiveStrcmp(const char *s1, const char *s2) {
+    if (s1 == NULL && s2 == NULL) return 0;
+    if (s1 == NULL) return -1;
+    if (s2 == NULL) return 1;
+    int i = 0;
+    while (s1[i] != '\0' && s2[i] != '\0') {
+        char c1_lower = localCharToLower(s1[i]);
+        char c2_lower = localCharToLower(s2[i]);
+        if (c1_lower != c2_lower) {
+            return c1_lower - c2_lower;
+        }
+        i++;
+    }
+    return localCharToLower(s1[i]) - localCharToLower(s2[i]);
+}
+
+// Static helper: Case-insensitive substring check
+static boolean localContainsCaseInsensitiveSubstring(const char *text, const char *pattern) {
+    if (text == NULL || pattern == NULL) return false;
+    int textLen = 0; while(text[textLen] != '\0') textLen++;
+    int patternLen = 0; while(pattern[patternLen] != '\0') patternLen++;
+    if (patternLen == 0) return true;
+    if (patternLen > textLen) return false;
+    for (int i = 0; i <= textLen - patternLen; i++) {
+        boolean match = true;
+        for (int j = 0; j < patternLen; j++) {
+            if (localCharToLower(text[i + j]) != localCharToLower(pattern[j])) {
+                match = false; break;
+            }
+        }
+        if (match) return true;
+    }
+    return false;
+}
 
 // Static comparison function for Users by ID
 static int compareUsersByID(const void *a, const void *b) {
@@ -165,97 +211,50 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
         return;
     }
 
-    boolean found = false;
-    int widths[] = {5, 20, 10, 20};
+    boolean overallFound = false; 
+    boolean printedTableHeaders = false;
+    int widths[] = {5, 20, 10, 20}; // ID, Username, Role, Penyakit
     const char *headers[] = {"ID", "Username", "Role", "Penyakit"};
-    printTableBorder(widths, 4, 1);
-    printTableRow(headers, widths, 4);
-    printTableBorder(widths, 4, 2);
+    // Table headers are now printed conditionally when the first result is found.
+
+    char idStr[12];      // Buffer for ID string
+    char roleStr[20];    // Buffer for Role string
+    char diseaseStr[50]; // Buffer for Disease string (max 50 as per Patient struct)
 
     if (byId) {
         int targetId = stringToInt(query);
-        if (targetId == -1 && strcmp(query, "-1") != 0) { // stringToInt returns -1 on error
-             // Check if query was genuinely "-1" or an error.
-             // A simple check: if query is not "-1" but result is -1, it's an error.
-             // Or if query is "0" and result is -1 (assuming 0 is not a valid ID for stringToInt error)
-             // For this code, assuming -1 is not a searchable ID and indicates error from stringToInt
-             // if the original query string wasn't also "-1".
-            if (strcmp(query, "0") == 0 && targetId == -1) { // stringToInt might return -1 for "0" depending on impl.
-                 // If "0" is a valid ID to search, this logic needs refinement.
-                 // Let's assume stringToInt returns 0 for "0" if valid, and -1 for actual errors.
-                 // For now, if stringToInt returns -1, and query wasn't "-1", assume error.
-            } else if (strcmp(query,"-1") != 0) {
-                 printError("ID pencarian tidak valid (harus berupa angka).");
-                 printTableBorder(widths, 4, 3); // Close table
-                 printf(COLOR_YELLOW "Pengguna dengan ID '%s' tidak ditemukan.\n" COLOR_RESET, query);
-                 return;
-            }
-             // If query was "-1" and targetId is -1, proceed if -1 is a possible ID.
-             // If -1 is not a possible ID, then this is an error.
-             // Simplified: if targetId is -1 from non "-1" string, it's an error.
+        // Simplified error check for ID format, actual "not found" is handled by overallFound
+        if (targetId == -1 && strcmp(query, "-1") != 0 && strcmp(query, "0") != 0) {
+             if (strcmp(query,"-1")!=0) { // if query is not "-1" or "0" but stringToInt returned -1
+                printError("ID pencarian tidak valid (harus berupa angka).");
+                printf(COLOR_YELLOW "Pengguna dengan ID '%s' tidak ditemukan.\n" COLOR_RESET, query);
+                return;
+             }
         }
         
-        // Special handling if targetId is 0 and query was "0"
-        if (targetId == 0 && strcmp(query, "0") != 0) {
-             // This means stringToInt converted non-"0" string to 0, which might be an error or valid if "0" is not allowed as ID
-        }
-
-
-        User keyUser;
-        keyUser.id = targetId;
-
+        User keyUser; keyUser.id = targetId;
         qsort(hospital->users.elements, hospital->users.nEff, sizeof(User), compareUsersByID);
-        // User *foundUser = (User *)bsearch(&keyUser, hospital->users.elements, hospital->users.nEff, sizeof(User), compareUsersByID);
         User *foundUser = customBinarySearchUsers(&keyUser, hospital->users.elements, hospital->users.nEff, compareUsersByID);
 
         if (foundUser != NULL) {
-            found = true;
-            char idStr[12]; 
-            // Manual integerToString for foundUser->id
-            char tempIdConv[20];
-            int k_id = 0;
-            if (foundUser->id == 0) { tempIdConv[k_id++] = '0'; }
-            else {
-                long long tempVal_id = foundUser->id;
-                boolean isNeg_id = false;
-                if (tempVal_id < 0) { isNeg_id = true; tempVal_id = -tempVal_id; }
-                int numDigits_id = 0; long long valCopy_id = tempVal_id; if(valCopy_id == 0 && foundUser->id != 0) numDigits_id=0; else if (valCopy_id == 0) numDigits_id=1; else while (valCopy_id > 0) { valCopy_id /= 10; numDigits_id++; }
-                k_id = numDigits_id;
-                if (tempVal_id == 0 && foundUser->id != 0) {} // Handles if id was 0 and became empty str
-                else if (tempVal_id == 0) tempIdConv[0] = '0';
-                else while (tempVal_id > 0) { tempIdConv[--k_id] = (tempVal_id % 10) + '0'; tempVal_id /= 10; }
-                k_id = numDigits_id;
-                if (isNeg_id) { for (int m = k_id; m > 0; m--) tempIdConv[m] = tempIdConv[m-1]; tempIdConv[0] = '-'; k_id++; }
+            if (!printedTableHeaders) {
+                printTableBorder(widths, 4, 1); printTableRow(headers, widths, 4); printTableBorder(widths, 4, 2);
+                printedTableHeaders = true;
             }
-            tempIdConv[k_id] = '\0';
-            if (k_id < sizeof(idStr)) strcpy(idStr, tempIdConv); else strcpy(idStr, "BIG");
-
-            char roleStr[20], diseaseStr[20] = "-";
-            switch (foundUser->role)
-            {
-            case MANAGER:
-                strcpy(roleStr, "Manajer");
-                break;
-            case DOCTOR:
-                strcpy(roleStr, "Dokter");
-                break;
-            case PATIENT:
-                strcpy(roleStr, "Pasien");
-                break;
-            default:
-                strcpy(roleStr, "Tidak diketahui");
+            overallFound = true;
+            if (!integerToString(foundUser->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+            
+            switch (foundUser->role) {
+                case MANAGER: strcpy(roleStr, "Manajer"); break;
+                case DOCTOR: strcpy(roleStr, "Dokter"); break;
+                case PATIENT: strcpy(roleStr, "Pasien"); break;
+                default: strcpy(roleStr, "N/A"); break;
             }
-            // Corrected: use foundUser->id for checking patient details
-            if (foundUser->role == PATIENT && hospital->patients.nEff > 0)
-            {
-                for (int j = 0; j < hospital->patients.nEff; j++)
-                {
-                    if (hospital->patients.elements[j].id == foundUser->id)
-                    {
-                        if (strlen(hospital->patients.elements[j].disease) > 0 && hospital->patients.elements[j].disease[0] != '\0')
-                        {
-                            strcpy(diseaseStr, hospital->patients.elements[j].disease);
-                        }
+            strcpy(diseaseStr, "-");
+            if (foundUser->role == PATIENT) {
+                for (int j = 0; j < hospital->patients.nEff; j++) {
+                    if (hospital->patients.elements[j].id == foundUser->id && hospital->patients.elements[j].disease[0] != '\0') {
+                        strcpy(diseaseStr, hospital->patients.elements[j].disease);
                         break;
                     }
                 }
@@ -263,45 +262,28 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
             const char *row[] = {idStr, foundUser->username, roleStr, diseaseStr};
             printTableRow(row, widths, 4);
         }
-    } else { // Search by name (existing logic)
+    } else { // Search by name (two-tier)
+        boolean exactMatchFound = false;
         for (int i = 0; i < hospital->users.nEff; i++) {
             User *user = &hospital->users.elements[i];
-            if (containsSubstring(user->username, query)) {
-                found = true;
-                char idStr[12];
-                // Manual integerToString for user->id
-                char tempIdConv_name[20];
-                int k_id_name = 0;
-                if (user->id == 0) { tempIdConv_name[k_id_name++] = '0'; }
-                else {
-                    long long tempVal_id_name = user->id;
-                    boolean isNeg_id_name = false;
-                    if (tempVal_id_name < 0) { isNeg_id_name = true; tempVal_id_name = -tempVal_id_name; }
-                    int numDigits_id_name = 0; long long valCopy_id_name = tempVal_id_name; if(valCopy_id_name == 0 && user->id != 0) numDigits_id_name=0; else if (valCopy_id_name == 0) numDigits_id_name=1; else while (valCopy_id_name > 0) { valCopy_id_name /= 10; numDigits_id_name++; }
-                    k_id_name = numDigits_id_name;
-                    if (tempVal_id_name == 0 && user->id != 0) {}
-                    else if (tempVal_id_name == 0) tempIdConv_name[0] = '0';
-                    else while (tempVal_id_name > 0) { tempIdConv_name[--k_id_name] = (tempVal_id_name % 10) + '0'; tempVal_id_name /= 10; }
-                    k_id_name = numDigits_id_name;
-                    if (isNeg_id_name) { for (int m = k_id_name; m > 0; m--) tempIdConv_name[m] = tempIdConv_name[m-1]; tempIdConv_name[0] = '-'; k_id_name++; }
+            if (customCaseInsensitiveStrcmp(user->username, query) == 0) {
+                if (!printedTableHeaders) {
+                    printTableBorder(widths, 4, 1); printTableRow(headers, widths, 4); printTableBorder(widths, 4, 2);
+                    printedTableHeaders = true;
                 }
-                tempIdConv_name[k_id_name] = '\0';
-                if (k_id_name < sizeof(idStr)) strcpy(idStr, tempIdConv_name); else strcpy(idStr, "BIG");
-
-                char roleStr[20], diseaseStr[20] = "-";
-                switch (user->role) {
-                case MANAGER: strcpy(roleStr, "Manajer"); break;
-                case DOCTOR: strcpy(roleStr, "Dokter"); break;
-                case PATIENT: strcpy(roleStr, "Pasien"); break;
-                default: strcpy(roleStr, "Tidak diketahui");
+                overallFound = true; exactMatchFound = true;
+                if (!integerToString(user->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+                switch (user->role) { 
+                    case MANAGER: strcpy(roleStr, "Manajer"); break;
+                    case DOCTOR: strcpy(roleStr, "Dokter"); break;
+                    case PATIENT: strcpy(roleStr, "Pasien"); break;
+                    default: strcpy(roleStr, "N/A"); break;
                 }
-                if (user->role == PATIENT && hospital->patients.nEff > 0) {
+                strcpy(diseaseStr, "-");
+                if (user->role == PATIENT) { 
                     for (int j = 0; j < hospital->patients.nEff; j++) {
-                        if (hospital->patients.elements[j].id == user->id) {
-                            if (strlen(hospital->patients.elements[j].disease) > 0 && hospital->patients.elements[j].disease[0] != '\0') {
-                                strcpy(diseaseStr, hospital->patients.elements[j].disease);
-                            }
-                            break;
+                        if (hospital->patients.elements[j].id == user->id && hospital->patients.elements[j].disease[0] != '\0') {
+                             strcpy(diseaseStr, hospital->patients.elements[j].disease); break;
                         }
                     }
                 }
@@ -309,11 +291,51 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
                 printTableRow(row, widths, 4);
             }
         }
-    }
-    printTableBorder(widths, 4, 3);
 
-    if (!found)
-    {
+        if (!exactMatchFound && query[0] != '\0') { // Only search for suggestions if no exact match and query is not empty
+            boolean suggestionsFound = false;
+            for (int i = 0; i < hospital->users.nEff; i++) {
+                User *user = &hospital->users.elements[i];
+                if (containsCaseInsensitiveSubstring(user->username, query)) {
+                    if (!printedTableHeaders) {
+                        printTableBorder(widths, 4, 1); printTableRow(headers, widths, 4); printTableBorder(widths, 4, 2);
+                        printedTableHeaders = true;
+                    }
+                    if (!suggestionsFound) {
+                        printf(COLOR_YELLOW "Tidak ada hasil pencocokan pasti. Mungkin maksud Anda:\n" COLOR_RESET);
+                        suggestionsFound = true;
+                    }
+                    overallFound = true;
+                    if (!integerToString(user->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+                    switch (user->role) { 
+                        case MANAGER: strcpy(roleStr, "Manajer"); break;
+                        case DOCTOR: strcpy(roleStr, "Dokter"); break;
+                        case PATIENT: strcpy(roleStr, "Pasien"); break;
+                        default: strcpy(roleStr, "N/A"); break;
+                    }
+                     strcpy(diseaseStr, "-");
+                    if (user->role == PATIENT) { 
+                        for (int j = 0; j < hospital->patients.nEff; j++) {
+                            if (hospital->patients.elements[j].id == user->id && hospital->patients.elements[j].disease[0] != '\0') {
+                                strcpy(diseaseStr, hospital->patients.elements[j].disease); break;
+                            }
+                        }
+                    }
+                    const char *row[] = {idStr, user->username, roleStr, diseaseStr};
+                    printTableRow(row, widths, 4);
+                }
+            }
+        }
+    }
+
+    if (overallFound) {
+        printTableBorder(widths, 4, 3);
+    } else {
+        // If headers were printed, it implies an ID search for a validly formatted ID that wasn't found.
+        // So, close the table. Otherwise, just print the message.
+        if (printedTableHeaders) { 
+             printTableBorder(widths, 4, 3);
+        }
         printf(COLOR_YELLOW "Pengguna dengan %s '%s' tidak ditemukan.\n" COLOR_RESET, byId ? "ID" : "nama", query);
     }
 }
@@ -339,135 +361,120 @@ void findPatient(Hospital *hospital, Session *session, const char *query, boolea
         return;
     }
 
-    boolean found_overall = false; // Use a single flag for overall result
-    int widths[] = {5, 20, 20}; // ID, Username, Penyakit
+    boolean overallFound = false; 
+    boolean printedTableHeaders = false;
+    int widths[] = {5, 20, 50}; // ID, Username, Penyakit (diseaseStr width increased)
     const char *headers[] = {"ID", "Username", "Penyakit"};
-    
-    // Print table headers once
-    printTableBorder(widths, 3, 1);
-    printTableRow(headers, widths, 3);
-    printTableBorder(widths, 3, 2);
+    char idStr[12];
+    char diseaseStr[51]; // Max disease name 50 + null
 
     if (byDisease) {
+        boolean exactMatchFound = false;
         for (int i = 0; i < hospital->patients.nEff; i++) {
             Patient *patient = &hospital->patients.elements[i];
-            if (strcmp(patient->disease, query) == 0) { // Exact match for disease name
-                found_overall = true;
-                char idStr[20];
-                // Manual int-to-string for patient->id
-                char tempIntStr_id[20]; 
-                int k_id = 0;
-                long long val_id = patient->id;
-                if (val_id == 0) { tempIntStr_id[k_id++] = '0'; } 
-                else {
-                    if (val_id < 0) { /* Should not happen for IDs, but good practice */ val_id = -val_id; /* then add sign handling if needed */ }
-                    int numDigits_id = 0; long long cpy_id = val_id; if(cpy_id == 0) numDigits_id=1; else while(cpy_id > 0){ cpy_id /= 10; numDigits_id++; }
-                    k_id = numDigits_id; 
-                    while (val_id > 0) { tempIntStr_id[--k_id] = (val_id % 10) + '0'; val_id /= 10; }
-                    k_id = numDigits_id;
+            if (customCaseInsensitiveStrcmp(patient->disease, query) == 0) {
+                if (!printedTableHeaders) {
+                    printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
+                    printedTableHeaders = true;
                 }
-                tempIntStr_id[k_id] = '\0';
-                // strcpy(idStr, tempIntStr_id); // Assuming idStr is large enough
-                if(k_id < sizeof(idStr)) strcpy(idStr, tempIntStr_id); else strcpy(idStr, "BIG_ID");
-
-
-                char diseaseStr[50] = "-"; 
-                if (patient->disease[0] != '\0') {
-                    // strncpy(diseaseStr, patient->disease, sizeof(diseaseStr) - 1); // strncpy not allowed
-                    // diseaseStr[sizeof(diseaseStr)-1] = '\0';
-                    // Use customSafeStrcpy or manual loop if available/needed, for now direct strcpy assuming size
-                    strcpy(diseaseStr, patient->disease); // Assuming diseaseStr is large enough
-                }
+                overallFound = true; exactMatchFound = true;
+                if (!integerToString(patient->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+                strcpy(diseaseStr, patient->disease[0] != '\0' ? patient->disease : "-");
                 const char *row[] = {idStr, patient->username, diseaseStr};
                 printTableRow(row, widths, 3);
+            }
+        }
+        if (!exactMatchFound && query[0] != '\0') {
+            boolean suggestionsFound = false;
+            for (int i = 0; i < hospital->patients.nEff; i++) {
+                Patient *patient = &hospital->patients.elements[i];
+                if (containsCaseInsensitiveSubstring(patient->disease, query)) {
+                    if (!printedTableHeaders) {
+                        printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
+                        printedTableHeaders = true;
+                    }
+                    if (!suggestionsFound) {
+                        printf(COLOR_YELLOW "Tidak ada hasil pencocokan pasti untuk penyakit. Mungkin maksud Anda:\n" COLOR_RESET);
+                        suggestionsFound = true;
+                    }
+                    overallFound = true;
+                    if (!integerToString(patient->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+                    strcpy(diseaseStr, patient->disease[0] != '\0' ? patient->disease : "-");
+                    const char *row[] = {idStr, patient->username, diseaseStr};
+                    printTableRow(row, widths, 3);
+                }
             }
         }
     } else if (byId) {
         int targetId = stringToInt(query);
-        if (targetId == -1 && strcmp(query, "-1") != 0 ) {
-             if (strcmp(query,"-1") !=0) {
-                // Error message will be printed by the common "not found" logic if found_overall is false
-             }
-        } else { // Valid integer or query was "-1"
-            Patient keyPatient;
-            keyPatient.id = targetId;
-
-            qsort(hospital->patients.elements, hospital->patients.nEff, sizeof(Patient), comparePatientsByID);
-            Patient *foundPatient = customBinarySearchPatients(&keyPatient, hospital->patients.elements, hospital->patients.nEff, comparePatientsByID);
-            
-            if (foundPatient != NULL) {
-                found_overall = true;
-                char idStr[12];
-                // Manual integerToString for foundPatient->id (copied from previous step)
-                char tempIdConv_pat[20]; int k_id_pat = 0;
-                if (foundPatient->id == 0) { tempIdConv_pat[k_id_pat++] = '0'; } else {
-                    long long tempVal_id_pat = foundPatient->id; boolean isNeg_id_pat = false;
-                    if (tempVal_id_pat < 0) { isNeg_id_pat = true; tempVal_id_pat = -tempVal_id_pat; }
-                    int numDigits_id_pat = 0; long long valCopy_id_pat = tempVal_id_pat; if(valCopy_id_pat == 0 && foundPatient->id !=0) numDigits_id_pat=0; else if(valCopy_id_pat == 0) numDigits_id_pat=1; else while (valCopy_id_pat > 0) { valCopy_id_pat /= 10; numDigits_id_pat++; }
-                    k_id_pat = numDigits_id_pat;
-                    if (tempVal_id_pat == 0 && foundPatient->id != 0) {} else if (tempVal_id_pat == 0) tempIdConv_pat[0] = '0'; else while (tempVal_id_pat > 0) { tempIdConv_pat[--k_id_pat] = (tempVal_id_pat % 10) + '0'; tempVal_id_pat /= 10; }
-                    k_id_pat = numDigits_id_pat; if (isNeg_id_pat) { for (int m = k_id_pat; m > 0; m--) tempIdConv_pat[m] = tempIdConv_pat[m-1]; tempIdConv_pat[0] = '-'; k_id_pat++; }
-                } tempIdConv_pat[k_id_pat] = '\0';
-                if (k_id_pat < sizeof(idStr)) strcpy(idStr, tempIdConv_pat); else strcpy(idStr, "BIG");
-                
-                char diseaseStr[50] = "-"; 
-                if (strlen(foundPatient->disease) > 0 && foundPatient->disease[0] != '\0') {
-                    // strncpy(diseaseStr, foundPatient->disease, sizeof(diseaseStr) - 1);
-                    // diseaseStr[sizeof(diseaseStr)-1] = '\0';
-                    strcpy(diseaseStr, foundPatient->disease); // Assuming diseaseStr is large enough
-                }
-                const char *row[] = {idStr, foundPatient->username, diseaseStr};
-                printTableRow(row, widths, 3);
+        if (targetId == -1 && strcmp(query,"-1")!=0 && strcmp(query, "0") !=0) { 
+            printError("ID pencarian tidak valid."); 
+            printf(COLOR_YELLOW "Pasien dengan ID '%s' tidak ditemukan.\n" COLOR_RESET, query); return;
+        }
+        Patient keyPatient; keyPatient.id = targetId;
+        qsort(hospital->patients.elements, hospital->patients.nEff, sizeof(Patient), comparePatientsByID);
+        Patient *foundPatient = customBinarySearchPatients(&keyPatient, hospital->patients.elements, hospital->patients.nEff, comparePatientsByID);
+        if (foundPatient != NULL) {
+            if (!printedTableHeaders) {
+                printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
+                printedTableHeaders = true;
             }
+            overallFound = true;
+            if (!integerToString(foundPatient->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+            strcpy(diseaseStr, foundPatient->disease[0] != '\0' ? foundPatient->disease : "-");
+            const char *row[] = {idStr, foundPatient->username, diseaseStr};
+            printTableRow(row, widths, 3);
         }
     } else { // Search by name
+        boolean exactMatchFound = false;
         for (int i = 0; i < hospital->patients.nEff; i++) {
             Patient *patient = &hospital->patients.elements[i];
-            if (containsSubstring(patient->username, query)) {
-                found_overall = true;
-                char idStr[12];
-                // Manual integerToString for patient->id (copied from previous step)
-                char tempIdConv_pat_name[20]; int k_id_pat_name = 0;
-                if (patient->id == 0) { tempIdConv_pat_name[k_id_pat_name++] = '0'; } else {
-                    long long tempVal_id_pat_name = patient->id; boolean isNeg_id_pat_name = false;
-                    if (tempVal_id_pat_name < 0) { isNeg_id_pat_name = true; tempVal_id_pat_name = -tempVal_id_pat_name; }
-                    int numDigits_id_pat_name = 0; long long valCopy_id_pat_name = tempVal_id_pat_name; if(valCopy_id_pat_name == 0 && patient->id != 0) numDigits_id_pat_name=0; else if (valCopy_id_pat_name == 0) numDigits_id_pat_name=1; else while (valCopy_id_pat_name > 0) { valCopy_id_pat_name /= 10; numDigits_id_pat_name++; }
-                    k_id_pat_name = numDigits_id_pat_name;
-                    if (tempVal_id_pat_name == 0 && patient->id != 0) {} else if (tempVal_id_pat_name == 0) tempIdConv_pat_name[0] = '0'; else while (tempVal_id_pat_name > 0) { tempIdConv_pat_name[--k_id_pat_name] = (tempVal_id_pat_name % 10) + '0'; tempVal_id_pat_name /= 10; }
-                    k_id_pat_name = numDigits_id_pat_name; if (isNeg_id_pat_name) { for (int m = k_id_pat_name; m > 0; m--) tempIdConv_pat_name[m] = tempIdConv_pat_name[m-1]; tempIdConv_pat_name[0] = '-'; k_id_pat_name++; }
-                } tempIdConv_pat_name[k_id_pat_name] = '\0';
-                if (k_id_pat_name < sizeof(idStr)) strcpy(idStr, tempIdConv_pat_name); else strcpy(idStr, "BIG");
-
-                char diseaseStr[50] = "-";
-                if (strlen(patient->disease) > 0 && patient->disease[0] != '\0') {
-                     // strncpy(diseaseStr, patient->disease, sizeof(diseaseStr) - 1);
-                     // diseaseStr[sizeof(diseaseStr)-1] = '\0';
-                     strcpy(diseaseStr, patient->disease); // Assuming diseaseStr is large enough
+            if (customCaseInsensitiveStrcmp(patient->username, query) == 0) {
+                if (!printedTableHeaders) {
+                    printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
+                    printedTableHeaders = true;
                 }
+                overallFound = true; exactMatchFound = true;
+                if (!integerToString(patient->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+                strcpy(diseaseStr, patient->disease[0] != '\0' ? patient->disease : "-");
                 const char *row[] = {idStr, patient->username, diseaseStr};
                 printTableRow(row, widths, 3);
             }
         }
+        if (!exactMatchFound && query[0] != '\0') {
+            boolean suggestionsFound = false;
+            for (int i = 0; i < hospital->patients.nEff; i++) {
+                Patient *patient = &hospital->patients.elements[i];
+                if (containsCaseInsensitiveSubstring(patient->username, query)) {
+                     if (!printedTableHeaders) {
+                        printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
+                        printedTableHeaders = true;
+                    }
+                    if (!suggestionsFound) {
+                        printf(COLOR_YELLOW "Tidak ada hasil pencocokan pasti untuk nama. Mungkin maksud Anda:\n" COLOR_RESET);
+                        suggestionsFound = true;
+                    }
+                    overallFound = true;
+                    if (!integerToString(patient->id, idStr, sizeof(idStr))) { strcpy(idStr, "ERR"); }
+                    strcpy(diseaseStr, patient->disease[0] != '\0' ? patient->disease : "-");
+                    const char *row[] = {idStr, patient->username, diseaseStr};
+                    printTableRow(row, widths, 3);
+                }
+            }
+        }
     }
     
-    // Print table bottom border once if any patient was found, or print not found message.
-    if (found_overall) {
+    if (overallFound) {
         printTableBorder(widths, 3, 3);
     } else {
-        // Close the header part of the table if nothing was found before printing message
-        printTableBorder(widths, 3, 3); // This might look odd if no rows, but closes the header box
-        char notFoundMsg[100];
+        if (printedTableHeaders) { printTableBorder(widths, 3, 3); }
         char searchTypeStr[20];
         if (byDisease) strcpy(searchTypeStr, "penyakit");
         else if (byId) strcpy(searchTypeStr, "ID");
         else strcpy(searchTypeStr, "nama");
-        
-        // Manual construction for notFoundMsg
-        strcpy(notFoundMsg, "Pasien dengan ");
-        strcat(notFoundMsg, searchTypeStr);
-        strcat(notFoundMsg, " '");
-        strcat(notFoundMsg, query);
-        strcat(notFoundMsg, "' tidak ditemukan.");
+        char notFoundMsg[100];
+        strcpy(notFoundMsg, "Pasien dengan "); strcat(notFoundMsg, searchTypeStr); strcat(notFoundMsg, " '");
+        strcat(notFoundMsg, query); strcat(notFoundMsg, "' tidak ditemukan.");
         printf(COLOR_YELLOW "%s\n" COLOR_RESET, notFoundMsg);
     }
 }

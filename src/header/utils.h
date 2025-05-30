@@ -213,4 +213,23 @@ boolean isUsernameTaken(struct Hospital *hospital, const char *username);
  */
 boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt);
 
+/**
+ * Nama Fungsi: `customCharToLower`
+ * Deskripsi: Mengubah sebuah karakter menjadi lowercase jika ia uppercase.
+ * Parameter:
+ *   - c (char): Karakter input.
+ * Return: `char` - Karakter lowercase atau karakter original jika bukan uppercase.
+ */
+char customCharToLower(char c);
+
+/**
+ * Nama Fungsi: `customCaseInsensitiveStrcmp`
+ * Deskripsi: Membandingkan dua string secara case-insensitive.
+ * Parameter:
+ *   - s1 (const char*): String pertama.
+ *   - s2 (const char*): String kedua.
+ * Return: `int` - 0 jika identik (ignore case), <0 jika s1<s2, >0 jika s1>s2.
+ */
+int customCaseInsensitiveStrcmp(const char *s1, const char *s2);
+
 #endif // UTILS_H

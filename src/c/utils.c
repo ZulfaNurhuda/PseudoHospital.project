@@ -61,6 +61,31 @@ boolean readValidString(char *buffer, int maxLen, const char *prompt, boolean al
     return true;
 }
 
+int customCaseInsensitiveStrcmp(const char *s1, const char *s2) {
+    if (s1 == NULL && s2 == NULL) return 0;
+    if (s1 == NULL) return -1; // Consistent with strcmp: NULL is less than non-NULL
+    if (s2 == NULL) return 1;  // Consistent with strcmp: non-NULL is greater than NULL
+
+    int i = 0;
+    while (s1[i] != '\0' && s2[i] != '\0') {
+        char c1_lower = customCharToLower(s1[i]);
+        char c2_lower = customCharToLower(s2[i]);
+        if (c1_lower != c2_lower) {
+            return c1_lower - c2_lower;
+        }
+        i++;
+    }
+    // Check if one string is a prefix of the other, or if both ended
+    return customCharToLower(s1[i]) - customCharToLower(s2[i]);
+}
+
+char customCharToLower(char c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c + ('a' - 'A');
+    }
+    return c;
+}
+
 boolean readValidInt(int *value, const char *prompt)
 {
     char buffer[32];
@@ -144,17 +169,57 @@ boolean readValidFloat(float *value, const char *prompt)
     return true;
 }
 
-boolean isValidUsername(const char *username)
-{
-    if (strlen(username) == 0 || strlen(username) > 50)
+boolean isValidUsername(const char *username) {
+    if (username == NULL) {
         return false;
-    for (int i = 0; username[i]; i++)
-    {
-        char c = username[i];
-        if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_'))
-            return false;
     }
-    return true;
+    int len = 0;
+    // Custom strlen to avoid direct call if not desired, or use it if allowed
+    while(username[len] != '\0') {
+        len++;
+    }
+
+    if (len == 0 || len > 50) {
+        return false;
+    }
+
+    boolean allSpaces = true;
+    for (int i = 0; i < len; i++) {
+        char c = username[i];
+        boolean charIsValid = false;
+
+        // Check for letter
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+            charIsValid = true;
+            allSpaces = false;
+        }
+        // Check for number
+        else if (c >= '0' && c <= '9') {
+            charIsValid = true;
+            allSpaces = false;
+        }
+        // Check for underscore
+        else if (c == '_') {
+            charIsValid = true;
+            allSpaces = false;
+        }
+        // Check for space (now allowed as an internal character)
+        else if (c == ' ') {
+            charIsValid = true;
+            // Do not set allSpaces to false for a space character
+        }
+
+        if (!charIsValid) {
+            return false; // Found an invalid character
+        }
+    }
+    
+    if (allSpaces && len > 0) { // If len is 0, it's caught by the first check.
+                                // This checks if a non-empty username consists only of spaces.
+        return false; 
+    }
+
+    return true; // All characters are valid, and it's not all spaces (if non-empty)
 }
 
 boolean isValidRoomCode(Hospital *hospital, const char *roomCode)
@@ -443,69 +508,69 @@ boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt) {
     if (buffer == NULL || bufferSize <= 0) {
         return false;
     }
-    
-    printf("%s", prompt);
-
     if (bufferSize == 1) { // Only space for null terminator
         buffer[0] = '\0';
-        // Consume the rest of the input line
-        int r1 = scanf("%*[^\n]"); 
-        if (r1 == EOF) { /* EOF during clear, probably okay */ }
-        int r2 = scanf("%*c");    
-        if (r2 == EOF) { /* EOF during clear, probably okay */ }
-        return true; // Read an "empty" string successfully
-    }
-
-    char formatString[20]; 
-    char widthStr[5];     // Max width for int (e.g., 2000000000 is 10 digits, bufferSize-1)
-
-    formatString[0] = '%';
-    formatString[1] = '\0';
-
-    if (!integerToString(bufferSize - 1, widthStr, sizeof(widthStr))) {
-        printError("Internal error: Could not construct scan width for readStringWithSpaces.");
-        // Clear the input buffer before returning false to prevent issues with next input
-        int r1 = scanf("%*[^\n]"); if (r1 == EOF) { /* Optional: specific handling */ }
-        int r2 = scanf("%*c");    if (r2 == EOF) { /* Optional: specific handling */ }
-        buffer[0] = '\0'; 
-        return false; 
-    }
-    strcat(formatString, widthStr);
-    strcat(formatString, "[^\n]");
-
-    int scanf_result = scanf(formatString, buffer);
-
-    if (scanf_result == EOF) {
-        buffer[0] = '\0'; // Ensure buffer is empty on EOF
-        // No need to clear buffer further if EOF was hit on the main read
-        return false; 
-    }
-    if (scanf_result == 0) { 
-        // No characters were assigned by the main scanf. 
-        // This implies the first character encountered was a newline.
-        buffer[0] = '\0'; // Ensure buffer is an empty string
-        // Consume the newline character that scanf %[^
-] specifically does not consume.
-        int r = scanf("%*c"); // Consume the single newline character.
-        if (r == EOF) return false; // EOF occurred while consuming the newline
-        return true; // Successfully "read" an empty line
-    }
-    
-    // If scanf_result == 1, data was read.
-    // Now, consume the rest of the line up to and including the newline.
-    int clearScanResChars = scanf("%*[^\n]"); // Renamed variable
-    if (clearScanResChars == EOF) { 
-        // Main read succeeded, but EOF hit during buffer clear.
-        // The primary read was successful, so return true.
+        // Consume rest of line if any (e.g., just a newline)
+        int r1 = scanf("%*[^\n]"); if (r1 == EOF) { /* ignore EOF for clear */ }
+        int r2 = scanf("%*c");    if (r2 == EOF) { /* ignore EOF for clear */ }
         return true; 
     }
 
-    // Consume the newline character itself.
-    if (scanf("%*c") == EOF) {
-        // Main read succeeded, but EOF hit while consuming the final newline.
-        // Consider this a successful read of the data obtained.
-        return true;
+    printf("%s", prompt);
+
+    char rawInput[256]; // Temporary larger buffer
+    rawInput[0] = '\0'; 
+
+    // Step 1: Read the whole line or up to rawInput capacity
+    int scanf_res = scanf("%255[^\n]", rawInput); 
+
+    // Step 2: Clear the rest of the input buffer (newline and any overflow)
+    int clear_res_loop;
+    do {
+        clear_res_loop = scanf("%*[^\n]"); 
+    } while (clear_res_loop == 1 && clear_res_loop != EOF); // if it consumed something and not EOF
+    
+    if (clear_res_loop != EOF) { // If loop didn't break due to EOF, then a newline (or other char) is next
+        scanf("%*c"); // Consume the newline (or whatever single char is left)
+    }
+    
+    if (scanf_res == EOF && rawInput[0] == '\0') { // True EOF before any input captured
+        buffer[0] = '\0';
+        return false;
+    }
+    // If scanf_res is 0, it means the first char was newline (rawInput remains empty)
+    // If scanf_res is 1, something was read into rawInput.
+    // If scanf_res is EOF but rawInput got some data (e.g. file without trailing newline), process rawInput.
+
+    // Step 3: Trim logic from rawInput into final buffer
+    int i = 0; // Index for rawInput
+    int j = 0; // Index for buffer (final output)
+    boolean inWord = false;
+
+    // Skip leading spaces from rawInput
+    while (rawInput[i] == ' ') {
+        i++;
     }
 
+    // Process rest of string: copy non-spaces, condense multiple spaces to one
+    while (rawInput[i] != '\0' && j < bufferSize - 1) {
+        if (rawInput[i] == ' ') {
+            if (inWord) { 
+                buffer[j++] = ' ';
+                inWord = false; 
+            }
+            // Skip multiple spaces by advancing 'i' (already handled by outer loop's i++ and inner logic)
+        } else {
+            buffer[j++] = rawInput[i];
+            inWord = true;
+        }
+        i++;
+    }
+    // After loop, if the last character processed to buffer was a space, remove it.
+    if (j > 0 && buffer[j - 1] == ' ') {
+        j--; // Effectively remove trailing space before null termination
+    }
+    buffer[j] = '\0'; // Null-terminate the processed string
+       
     return true;
 }

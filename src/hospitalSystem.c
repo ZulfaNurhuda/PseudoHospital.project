@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
         // F01 - Login
         if (strcmp(command, "LOGIN") == 0)
         {
-            char username[50], password[100];
-            if (!readValidString(username, 50, "Masukkan username: ", true) ||
+            char username[51], password[100]; // username buffer 50 + 1 for null
+            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username: ") ||
                 !readValidString(password, 100, "Masukkan password: ", false))
             {
                 printError("Input tidak valid!");
@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
         // F02 - Register Pasien
         else if (strcmp(command, "REGISTERPASIEN") == 0)
         {
-            char username[50], password[100];
-            if (!readValidString(username, 50, "Masukkan username: ", true) ||
+            char username[51], password[100];
+            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username: ") ||
                 !readValidString(password, 100, "Masukkan password: ", false))
             {
                 printError("Input tidak valid!");
@@ -106,8 +106,8 @@ int main(int argc, char *argv[])
         // F04 - Forgot Password
         else if (strcmp(command, "LUPAPASSWORD") == 0)
         {
-            char username[50], new_password[100], rleCode[100];
-            if (!readValidString(username, 50, "Masukkan username: ", true) ||
+            char username[51], new_password[100], rleCode[100];
+            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username: ") ||
                 !readValidString(rleCode, 100, "Masukkan kode RLE: ", false) ||
                 !readValidString(new_password, 100, "Masukkan password baru: ", false))
             {
@@ -154,14 +154,29 @@ int main(int argc, char *argv[])
         {
             char query[50];
             boolean by_id = false;
-            printf("Cari berdasarkan ID? (1=Ya, 0=Tidak): ");
+            char query[51]; // Ensure buffer is adequate for readStringWithSpaces
+            boolean by_id = false;
+            printf("Cari berdasarkan?\n1. ID\n2. Nama\n");
             int choice;
-            if (!readValidInt(&choice, "Masukkan pilihan: "))
+            if (!readValidInt(&choice, ">>> Pilihan: ")) {
+                printError("Pilihan tidak valid!");
                 continue;
-            by_id = choice == 1;
-            if (!readValidString(query, 50, "Masukkan query: ", false))
-            {
-                printError("Query tidak valid!");
+            }
+            
+            if (choice == 1) {
+                by_id = true;
+                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID user: ", false)) {
+                    printError("Input ID tidak valid!");
+                    continue;
+                }
+            } else if (choice == 2) {
+                by_id = false;
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama user: ")) {
+                    printError("Input Nama tidak valid!");
+                    continue;
+                }
+            } else {
+                printError("Pilihan tidak valid!");
                 continue;
             }
             findUser(&hospital, &session, query, by_id);
@@ -188,10 +203,7 @@ int main(int argc, char *argv[])
             } else if (choice == 2) { // Nama
                 by_id = false;
                 by_disease = false;
-                // Using readValidString for now as per simplified task.
-                // If names can truly have spaces and that's desired, this should also be readStringWithSpaces.
-                // For this subtask, only disease input is changed to readStringWithSpaces.
-                if (!readValidString(query, sizeof(query), ">>> Masukkan nama user: ", false)) { 
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama user: ")) { 
                     printError("Input Nama tidak valid!");
                     continue;
                 }
@@ -213,14 +225,29 @@ int main(int argc, char *argv[])
         {
             char query[50];
             boolean by_id = false;
-            printf("Cari berdasarkan ID? (1 - Ya, 0 - Tidak): ");
+            char query[51]; // Ensure buffer is adequate
+            boolean by_id = false;
+            printf("Cari berdasarkan?\n1. ID\n2. Nama\n");
             int choice;
-            if (!readValidInt(&choice, "Masukkan pilihan: "))
+            if (!readValidInt(&choice, ">>> Pilihan: ")) {
+                printError("Pilihan tidak valid!");
                 continue;
-            by_id = choice == 1;
-            if (!readValidString(query, 50, "Masukkan query: ", false))
-            {
-                printError("Query tidak valid!");
+            }
+
+            if (choice == 1) {
+                by_id = true;
+                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID dokter: ", false)) {
+                    printError("Input ID tidak valid!");
+                    continue;
+                }
+            } else if (choice == 2) {
+                by_id = false;
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama dokter: ")) {
+                    printError("Input Nama tidak valid!");
+                    continue;
+                }
+            } else {
+                printError("Pilihan tidak valid!");
                 continue;
             }
             findDoctor(&hospital, &session, query, by_id);
@@ -233,10 +260,11 @@ int main(int argc, char *argv[])
         // F10 - Tambah Dokter
         else if (strcmp(command, "TAMBAHDOKTER") == 0)
         {
-            char username[50], password[100], specialization[50];
-            if (!readValidString(username, 50, "Masukkan username dokter: ", true) ||
+            char username[51], password[100], specialization[50];
+            // Specialization can also use readStringWithSpaces if it can contain spaces
+            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username dokter: ") ||
                 !readValidString(password, 100, "Masukkan password dokter: ", false) ||
-                !readValidString(specialization, 50, "Masukkan spesialisasi dokter: ", true))
+                !readStringWithSpaces(specialization, sizeof(specialization), "Masukkan spesialisasi dokter: ")) // Assuming specialization can have spaces
             {
                 printError("Input tidak valid!");
                 continue;
@@ -245,8 +273,8 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(command, "ASSIGNDOKTER") == 0)
         {
-            char username[50], room_code[5];
-            if (!readValidString(username, 50, "Masukkan username dokter: ", true) ||
+            char username[51], room_code[5];
+            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username dokter: ") ||
                 !readValidString(room_code, 5, "Masukkan kode ruangan: ", false))
             {
                 printError("Input tidak valid!");
@@ -257,10 +285,10 @@ int main(int argc, char *argv[])
         // F11 - Diagnosis
         else if (strcmp(command, "DIAGNOSIS") == 0)
         {
-            char patient_username[50];
-            if (!readValidString(patient_username, 50, "Masukkan username pasien: ", true))
+            char patient_username[51];
+            if (!readUsernameWithTrim(patient_username, sizeof(patient_username), "Masukkan username pasien: "))
             {
-                printError("Username pasien tidak valid!");
+                printError("Input username pasien tidak valid!"); // More generic error as trim handles format
                 continue;
             }
             diagnosePatient(&hospital, &session, patient_username);
@@ -268,10 +296,10 @@ int main(int argc, char *argv[])
         // F12 - Ngobatin
         else if (strcmp(command, "NGOBATIN") == 0)
         {
-            char patient_username[50];
-            if (!readValidString(patient_username, 50, "Masukkan username pasien: ", true))
+            char patient_username[51];
+            if (!readUsernameWithTrim(patient_username, sizeof(patient_username), "Masukkan username pasien: "))
             {
-                printError("Username pasien tidak valid!");
+                printError("Input username pasien tidak valid!");
                 continue;
             }
             treatPatient(&hospital, &session, patient_username);
@@ -284,9 +312,9 @@ int main(int argc, char *argv[])
         // F14 - Daftar Checkup
         else if (strcmp(command, "DAFTARCHECKUP") == 0)
         {
-            char doctor_username[50];
+            char doctor_username[51];
             float health_data[11];
-            if (!readValidString(doctor_username, 50, "Masukkan username dokter: ", true))
+            if (!readUsernameWithTrim(doctor_username, sizeof(doctor_username), "Masukkan username dokter: "))
             {
                 printError("Username dokter tidak valid!");
                 continue;
@@ -342,8 +370,8 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(command, "PINDAHKANDOKTER") == 0)
         {
-            char username[50], room_code[5];
-            if (!readValidString(username, 50, "Masukkan username dokter: ", true) ||
+            char username[51], room_code[5];
+            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username dokter: ") ||
                 !readValidString(room_code, 5, "Masukkan kode ruangan: ", false))
             {
                 printError("Input tidak valid!");

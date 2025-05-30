@@ -3,9 +3,9 @@
 // utils.h should provide isUsernameTaken, ensure it's included if not via addDoctor.h
 // No local static isUsernameTaken needed here anymore.
 
-boolean addDoctor(Hospital *hospital, Session *session, const char *username, const char *password, const char *specialization)
+boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsername, const char *password, const char *specialization)
 {
-    if (hospital == NULL || session == NULL || username == NULL || password == NULL || specialization == NULL)
+    if (hospital == NULL || session == NULL || inputUsername == NULL || password == NULL || specialization == NULL)
     {
         printError("Struktur rumah sakit, sesi, atau input tidak valid!");
         return false;
@@ -16,9 +16,16 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
         return false;
     }
 
-    if (!isValidUsername(username))
-    {
-        printError("Username tidak valid! Gunakan huruf, angka, atau underscore.");
+    // 1. Validate format using the new isValidUsername (allows spaces)
+    if (!isValidUsername(inputUsername)) {
+        // F10 spec for format validation: "Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore."
+        printError("Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore.");
+        return false;
+    }
+
+    // 2. Check uniqueness using isUsernameTaken (case-insensitive)
+    if (isUsernameTaken(hospital, inputUsername)) { 
+        printError("Username sudah terdaftar!"); // F10 spec message
         return false;
     }
 
@@ -34,11 +41,8 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
         return false;
     }
 
-    // Check username uniqueness using the utility isUsernameTaken function
-    if (isUsernameTaken(hospital, username)) { // This now calls the util version
-        printError("Username sudah terdaftar!"); // F10 spec message
-        return false;
-    }
+    // The previous isUsernameTaken check is now done above.
+    // The isValidUsername check is also done above.
 
     if (hospital->users.nEff >= hospital->users.capacity || hospital->doctors.nEff >= hospital->doctors.capacity)
     {
@@ -57,7 +61,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
 
     User *newUser = &hospital->users.elements[hospital->users.nEff];
     newUser->id = new_doctor_id;
-    strcpy(newUser->username, username);
+    strcpy(newUser->username, inputUsername); // Use inputUsername
     if (!enigmaEncrypt(password, newUser->password.encryptedContent, 100))
     {
         printError("Gagal mengenkripsi password!");
@@ -68,7 +72,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
     // Menambahkan ke DoctorList
     Doctor *newDoctor = &hospital->doctors.elements[hospital->doctors.nEff];
     newDoctor->id = new_doctor_id; // Use the same new_doctor_id
-    strcpy(newDoctor->username, username);
+    strcpy(newDoctor->username, inputUsername); // Use inputUsername
     strcpy(newDoctor->specialization, specialization);
     newDoctor->aura = 0;
     newDoctor->bananaRich = 100.0f;
@@ -84,7 +88,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
 
     // Membuat pesan sukses
     char successMsg[100] = "Dokter ";
-    strcat(successMsg, username);
+    strcat(successMsg, inputUsername); // Use inputUsername
     strcat(successMsg, " berhasil ditambahkan!");
     printSuccess(successMsg);
     return true;
