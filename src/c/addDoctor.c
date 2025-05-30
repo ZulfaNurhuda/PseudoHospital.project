@@ -50,7 +50,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
         return false;
     }
 
-    // Menambahkan ke UserMap
+    // Menambahkan ke UserSet
     int max_id = 0;
     for (int i = 0; i < hospital->users.nEff; i++) {
         if (hospital->users.elements[i].id > max_id) {

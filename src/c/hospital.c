@@ -25,7 +25,7 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
     hospital->prescriptions.elements = NULL;
     hospital->treatmentHistory.elements = NULL;
 
-    // Inisialisasi UserMap (formerly UserList)
+    // Inisialisasi UserSet (formerly UserList)
     hospital->users.elements = (User *)safeMalloc(userCapacity * sizeof(User));
     if (hospital->users.elements == NULL) {
         printError("Gagal alokasi memori untuk UserList!");

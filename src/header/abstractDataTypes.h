@@ -38,13 +38,13 @@ typedef struct
     Role role;             // "MANAJER", "DOKTER", atau "PASIEN"
 } User;
 
-/* ADT Map (array-based) - untuk penyimpanan kumpulan user */ // Changed comment
+/* ADT Set (array-based) - untuk penyimpanan kumpulan user */ // Changed comment
 typedef struct
 {
     User *elements;
     int capacity;
     int nEff;
-} UserMap; // Renamed
+} UserSet; // Renamed
 
 // >>> ADT PASIEN
 
@@ -339,7 +339,7 @@ typedef struct
 typedef struct
 {
     // Pengguna
-    UserMap users; // Renamed
+    UserSet users; // Renamed
     PatientList patients;
     DoctorList doctors;
 
