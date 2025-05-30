@@ -19,7 +19,7 @@
  * 
  * Return: `void` - Tidak mengembalikan nilai, hanya mencetak daftar pengguna ke konsol.
  */
-void displayUsers(Hospital *hospital, Session *session);
+void displayUsers(Hospital *hospital, Session *session, int choiceSortBy, int choiceSortOrder);
 
 /**
  * Nama Fungsi: `displayPatients`
@@ -32,7 +32,7 @@ void displayUsers(Hospital *hospital, Session *session);
  * 
  * Return: `void` - Tidak mengembalikan nilai, hanya mencetak daftar pasien ke konsol.
  */
-void displayPatients(Hospital *hospital, Session *session);
+void displayPatients(Hospital *hospital, Session *session, int choiceSortBy, int choiceSortOrder);
 
 /**
  * Nama Fungsi: `displayDoctors`
@@ -45,6 +45,6 @@ void displayPatients(Hospital *hospital, Session *session);
  * 
  * Return: `void` - Tidak mengembalikan nilai, hanya mencetak daftar dokter ke konsol.
  */
-void displayDoctors(Hospital *hospital, Session *session);
+void displayDoctors(Hospital *hospital, Session *session, int choiceSortBy, int choiceSortOrder);
 
 #endif // VIEW_USERS_H
