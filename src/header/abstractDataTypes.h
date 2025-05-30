@@ -51,7 +51,7 @@ typedef struct
 /* ADT List - untuk penyimpanan obat yang diresepkan dokter */
 typedef struct
 {
-    int *medicationID;
+    int *medicationId;
     int capacity;
     int nEff;
 } PatientMedicationPrescribedList;
@@ -59,7 +59,7 @@ typedef struct
 /* ADT Stack - untuk penyimpanan data obat yang telah diminum */
 typedef struct
 {
-    int *medicationID;
+    int *medicationId;
     int capacity;
     int top;
 } PatientMedicationTakenList;

@@ -1,7 +1,4 @@
 #include "addDoctor.h"
-// #include "stringSet.h" // Removed as StringSet ADT was deleted
-// utils.h should provide isUsernameTaken, ensure it's included if not via addDoctor.h
-// No local static isUsernameTaken needed here anymore.
 
 boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsername, const char *password, const char *specialization)
 {
@@ -16,16 +13,13 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
         return false;
     }
 
-    // 1. Validate format using the new isValidUsername (allows spaces)
     if (!isValidUsername(inputUsername)) {
-        // F10 spec for format validation: "Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore."
         printError("Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore.");
         return false;
     }
 
-    // 2. Check uniqueness using isUsernameTaken (case-insensitive)
     if (isUsernameTaken(hospital, inputUsername)) { 
-        printError("Username sudah terdaftar!"); // F10 spec message
+        printError("Username sudah terdaftar!");
         return false;
     }
 
@@ -35,33 +29,49 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
         return false;
     }
 
+    // Karena spesialisasi memiliki batasan yang sama dengan username
+    // untuk validasi, dapat digunakan fungsi yang sama
     if (!isValidUsername(specialization))
     {
         printError("Spesialisasi tidak valid! Gunakan huruf, angka, atau underscore.");
         return false;
     }
 
-    // The previous isUsernameTaken check is now done above.
-    // The isValidUsername check is also done above.
-
     if (hospital->users.nEff >= hospital->users.capacity || hospital->doctors.nEff >= hospital->doctors.capacity)
     {
-        printError("Kapasitas pengguna atau dokter penuh!");
-        return false;
+        int newCapacity = hospital->users.capacity * 2;
+        User *tempUsers = realloc(hospital->users.elements, newCapacity * sizeof(User));
+        if (tempUsers == NULL)
+        {
+            printError("Gagal mengalokasi memori untuk ekspansi pengguna!");
+            return false;
+        }
+        hospital->users.elements = tempUsers;
+        hospital->users.capacity = newCapacity;
+
+        int newDoctorCapacity = hospital->doctors.capacity * 2;
+        Doctor *tempDoctors = realloc(hospital->doctors.elements, newDoctorCapacity * sizeof(Doctor));
+        if (tempDoctors == NULL)
+        {
+            printError("Gagal mengalokasi memori untuk ekspansi dokter!");
+            return false;
+        }
+        hospital->doctors.elements = tempDoctors;
+        hospital->doctors.capacity = newDoctorCapacity;
     }
 
-    // Menambahkan ke UserMap
-    int max_id = 0;
+    int maxId = 0;
     for (int i = 0; i < hospital->users.nEff; i++) {
-        if (hospital->users.elements[i].id > max_id) {
-            max_id = hospital->users.elements[i].id;
+        if (hospital->users.elements[i].id > maxId)
+        {
+            maxId = hospital->users.elements[i].id;
         }
     }
-    int new_doctor_id = max_id + 1;
+    int newDoctorId = maxId + 1;
 
     User *newUser = &hospital->users.elements[hospital->users.nEff];
-    newUser->id = new_doctor_id;
-    strcpy(newUser->username, inputUsername); // Use inputUsername
+    newUser->id = newDoctorId;
+    strcpy(newUser->username, inputUsername);
     if (!enigmaEncrypt(password, newUser->password.encryptedContent, 100))
     {
         printError("Gagal mengenkripsi password!");
@@ -69,10 +79,9 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
     }
     newUser->role = DOCTOR;
 
-    // Menambahkan ke DoctorList
     Doctor *newDoctor = &hospital->doctors.elements[hospital->doctors.nEff];
-    newDoctor->id = new_doctor_id; // Use the same new_doctor_id
-    strcpy(newDoctor->username, inputUsername); // Use inputUsername
+    newDoctor->id = newDoctorId;
+    strcpy(newDoctor->username, inputUsername);
     strcpy(newDoctor->specialization, specialization);
     newDoctor->aura = 0;
     newDoctor->bananaRich = 100.0f;
@@ -81,14 +90,9 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
     hospital->users.nEff++;
     hospital->doctors.nEff++;
 
-    // Add the new username to the StringSet // This section is removed
-    // if (!addToStringSet(&hospital->registeredUsernames, newUser->username)) {
-    //     printError("Gagal menambahkan username dokter ke daftar unik sistem. Penambahan dokter mungkin tidak konsisten.");
-    // }
-
-    // Membuat pesan sukses
-    char successMsg[100] = "Dokter ";
-    strcat(successMsg, inputUsername); // Use inputUsername
+    char successMsg[100] = "";
+    strcat(successMsg, "Dokter ");
+    strcat(successMsg, inputUsername);
     strcat(successMsg, " berhasil ditambahkan!");
     printSuccess(successMsg);
     return true;
