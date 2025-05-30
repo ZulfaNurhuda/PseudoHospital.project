@@ -168,6 +168,16 @@ boolean registerPatient(Hospital *hospital, Session *session, const char *inputU
     strcat(successMessage, " berhasil terdaftar!");
     printSuccess(successMessage); // Mencetak pesan sukses.
 
+    // Mengatur sesi pengguna baru.
+    session->userId = newPatientId; // Menetapkan ID pengguna sesi ke ID pasien baru.
+    strcpy(session->username, inputUsername); // Menyalin username ke sesi.
+    session->role = PATIENT; // Menetapkan peran sesi sebagai PATIENT.
+    session->isLoggedIn = true; // Menandai sesi sebagai login.
+
+    // Integrasi fitur register dengan fitur login sehingga pengguna tidak perlu login lagi.
+    printf("\n[ℹ️ | Info]: Fitur ini terintegrasi dengan fitur login, kamu tidak perlu login lagi.\n");
+    printSuccess(FORMAT_BOLD "Anda langsung masuk sebagai pasien!" FORMAT_RESET);
+
     // Mengembalikan true karena registrasi berhasil.
     return true;
 }
