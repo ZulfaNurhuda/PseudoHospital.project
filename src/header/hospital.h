@@ -7,6 +7,7 @@
 
 #include "abstractDataTypes.h"
 #include "utils.h"
+#include "myQueue.h" // For queue operations like isQueueEmpty
 
 /**
  * Nama Fungsi: `initHospital`
@@ -21,9 +22,9 @@
  *   - `roomRows (int)`: Jumlah baris untuk denah rumah sakit.
  *   - `roomCols (int)`: Jumlah kolom untuk denah rumah sakit.
  * 
- * Return: `void` - Tidak mengembalikan nilai, tetapi mengatur struktur hospital.
+ * Return: `boolean` - True jika inisialisasi berhasil, false jika gagal (misalnya, alokasi memori gagal).
  */
-void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int doctorCapacity, int roomRows, int roomCols);
+boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int doctorCapacity, int roomRows, int roomCols);
 
 /**
  * Nama Fungsi: `freeHospital`

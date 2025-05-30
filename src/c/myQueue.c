@@ -49,7 +49,10 @@ boolean enqueue(Queue *q, int patientID) {
     }
 
     QueueNode *newNode = (QueueNode *)safeMalloc(sizeof(QueueNode));
-    // Assuming safeMalloc exits on failure, newNode will be valid here.
+    if (newNode == NULL) {
+        printError("Gagal alokasi memori untuk node antrian baru!");
+        return false; // Allocation failed
+    }
     newNode->info.patientID = patientID;
     newNode->next = NULL;
 

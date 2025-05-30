@@ -43,6 +43,7 @@ SOURCES = hospitalSystem.c \
           $(SRC_DIR)/treat.c \
           $(SRC_DIR)/utils.c \
           $(SRC_DIR)/viewLifeStatus.c \
+          $(SRC_DIR)/viewPatientQueue.c \
           $(SRC_DIR)/viewQueue.c \
           $(SRC_DIR)/viewUsers.c
 

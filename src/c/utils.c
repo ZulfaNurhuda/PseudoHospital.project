@@ -11,8 +11,8 @@ void *safeMalloc(size_t size)
     void *ptr = malloc(size);
     if (ptr == NULL)
     {
-        printf(COLOR_RED "Alokasi memori gagal! Program dihentikan.\n" COLOR_RESET);
-        exit(1);
+        // Caller is now responsible for handling NULL return
+        return NULL;
     }
     return ptr;
 }
@@ -21,19 +21,23 @@ boolean readValidString(char *buffer, int maxLen, const char *prompt, boolean al
 {
     printf("%s", prompt);
     char temp[256];       // Buffer sementara
-    scanf("%255s", temp); // Baca string tanpa spasi
+    if (scanf("%255s", temp) != 1) { // Baca string tanpa spasi, check if read was successful
+        // If scanf fails (e.g. EOF before any input), clear buffer and return false
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF);
+        printError("Gagal membaca input.");
+        return false;
+    }
     
-    // Clear the rest of the input buffer using scanf
-    // Reads and discards characters until a newline is encountered, then reads and discards the newline.
-    if (scanf("%*[^
-]") == EOF) {
-        // Handle EOF or error if necessary, though for buffer clearing,
-        // it might mean the stream ended. For this function, we can often ignore it.
-    }
-    // Consume the newline character itself, or whatever single char remains if input was just newline
-    if (scanf("%*c") == EOF) { 
-        // Handle EOF or error if necessary.
-    }
+    // Clear the rest of the input buffer robustly
+    // Consume characters until newline or EOF
+    // This pattern aims to clear any remaining characters on the line after "%255s"
+    // The first scanf discards everything up to a newline.
+    // The second scanf discards the newline itself.
+    // Check return values to be absolutely sure, but often ignored for buffer clearing.
+    if (scanf("%*[^\n]") == EOF) { /* Handle EOF if necessary, though unlikely here */ }
+    if (scanf("%*c") == EOF) { /* Handle EOF if newline was the last char */ }
+
 
     if (strlen(temp) >= maxLen)
     {
@@ -325,7 +329,7 @@ void printTableRow(const char **row, int *widths, int n)
     printf("\n");
 }
 
-int stringToInt(char *str)
+int stringToInt(const char *str)
 {
     int result = 0;
     int i = 0;
@@ -340,7 +344,7 @@ int stringToInt(char *str)
 }
 
 // User-specified function for case-insensitive username check
-boolean isUsernameTaken(Hospital *hospital, const char *username) {
+_Bool isUsernameTaken(Hospital *hospital, const char *username) {
     if (hospital == NULL || username == NULL) {
         return true; // Error condition, treat as taken to be safe
     }
@@ -573,4 +577,11 @@ boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt) {
     buffer[j] = '\0'; // Null-terminate the processed string
        
     return true;
+}
+
+boolean readUsernameWithTrim(char *buffer, int bufferSize, const char *prompt) {
+    // This function is intended to read usernames, which can include spaces.
+    // It should trim leading/trailing whitespace and condense internal spaces.
+    // readStringWithSpaces already provides this functionality.
+    return readStringWithSpaces(buffer, bufferSize, prompt);
 }

@@ -45,9 +45,39 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
 
     // Membuat layout baru
     Room **newLayout = (Room **)safeMalloc(newRowCount * sizeof(Room *));
+    if (newLayout == NULL) {
+        printError("Gagal alokasi memori untuk layout baru (rows)!");
+        return false;
+    }
+    // Initialize row pointers to NULL for partial allocation cleanup
+    for (int i = 0; i < newRowCount; i++) {
+        newLayout[i] = NULL;
+    }
+
     for (int i = 0; i < newRowCount; i++)
     {
         newLayout[i] = (Room *)safeMalloc(newColCount * sizeof(Room));
+        if (newLayout[i] == NULL) {
+            printError("Gagal alokasi memori untuk layout baru (cols)!");
+            for (int k = 0; k < i; k++) { // Free successfully allocated rows
+                if (newLayout[k] != NULL) { // Should not be NULL if loop for k ran
+                    // Free patientInRoom.patientID within each column of row k
+                    for (int l = 0; l < newColCount; l++) { // Assuming newColCount columns were intended for prior rows
+                        if (newLayout[k][l].patientInRoom.patientID != NULL) {
+                             free(newLayout[k][l].patientInRoom.patientID);
+                        }
+                    }
+                    free(newLayout[k]);
+                }
+            }
+            free(newLayout);
+            return false;
+        }
+        // Initialize patientInRoom.patientID pointers to NULL for this new row
+        for (int j = 0; j < newColCount; j++) {
+            newLayout[i][j].patientInRoom.patientID = NULL;
+        }
+
         for (int j = 0; j < newColCount; j++)
         {
             char code[5] = "";
@@ -72,6 +102,30 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             newLayout[i][j].capacity = 3;
             newLayout[i][j].doctorID = -1;
             newLayout[i][j].patientInRoom.patientID = (int *)safeMalloc(3 * sizeof(int));
+            if (newLayout[i][j].patientInRoom.patientID == NULL) {
+                printError("Gagal alokasi memori untuk patientInRoom.patientID di layout baru!");
+                // Cleanup: free all patientInRoom.patientID in current row up to column j-1
+                for (int m = 0; m < j; m++) {
+                    if (newLayout[i][m].patientInRoom.patientID != NULL) {
+                        free(newLayout[i][m].patientInRoom.patientID);
+                    }
+                }
+                // Free current row i itself
+                free(newLayout[i]);
+                // Free previously allocated full rows (0 to i-1)
+                for (int k = 0; k < i; k++) {
+                    if (newLayout[k] != NULL) {
+                        for (int l = 0; l < newColCount; l++) {
+                            if (newLayout[k][l].patientInRoom.patientID != NULL) {
+                               free(newLayout[k][l].patientInRoom.patientID);
+                            }
+                        }
+                        free(newLayout[k]);
+                    }
+                }
+                free(newLayout);
+                return false;
+            }
             newLayout[i][j].patientInRoom.capacity = 3;
             newLayout[i][j].patientInRoom.nEff = 0;
         }

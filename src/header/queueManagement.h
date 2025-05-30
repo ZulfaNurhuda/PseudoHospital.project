@@ -20,19 +20,20 @@
  *
  * Return: `boolean` - True jika antrian berhasil dilewati, false jika pasien tidak dalam antrian, sudah di posisi pertama, atau input tidak valid.
  */
-boolean skipQueue(Hospital *hospital, Session *session);
+boolean skipPatientInQueue(Hospital *hospital, Session *session, const char *roomCode);
 
 /**
- * Nama Fungsi: `cancelQueue`
+ * Nama Fungsi: `cancelPatientFromQueue`
  *
  * Deskripsi: Membatalkan antrian pasien dari ruangan yang ditentukan oleh patient->queueRoom di hospital->queues. Menghapus pasien dari antrian, memperbarui queuePosition untuk pasien lain, dan mengosongkan patient->queueRoom serta patient->queuePosition. Menampilkan tabel ASCII dengan informasi dokter dan ruangan yang dibatalkan, diikuti pesan sukses berwarna. Hanya dapat diakses oleh Pasien yang sudah login dan terdaftar dalam antrian.
  *
  * Parameter:
  *   - `hospital (Hospital*)`: Pointer ke struktur rumah sakit yang berisi data pasien, antrian, dan dokter.
  *   - `session (Session*)`: Pointer ke struktur sesi untuk memeriksa akses.
+ *   - `patientUsernameToCancel (const char*)`: Username pasien yang antriannya akan dibatalkan.
  *
  * Return: `boolean` - True jika antrian berhasil dibatalkan, false jika pasien tidak dalam antrian atau input tidak valid.
  */
-boolean cancelQueue(Hospital *hospital, Session *session);
+boolean cancelPatientFromQueue(Hospital *hospital, Session *session, const char *patientUsernameToCancel);
 
 #endif // QUEUE_MANAGEMENT_H

@@ -345,16 +345,16 @@ boolean gacha(Hospital *hospital, Session *session)
 
     // char decStr[10] = ""; // Already declared above loop in this scope
     decStr[0] = '\0'; // Clear it for reuse
-    int decIndex = 0; // Renamed from index
-    int tempDecPart = decPart;
+    int decIndexAfter = 0; // Renamed from index
+    int tempDecPartAfter = decPart;
 
-    if (tempDecPart == 0) {
+    if (tempDecPartAfter == 0) {
         strcat(tempStr, "00");
     } else {
-        while (tempDecPart > 0) {
+        while (tempDecPartAfter > 0) {
             if (decIndex >= 9) break;
-            decStr[decIndex++] = (tempDecPart % 10) + '0';
-            tempDecPart /= 10;
+            decStr[decIndexAfter++] = (tempDecPartAfter % 10) + '0';
+            tempDecPartAfter /= 10;
         }
         for (int i = decIndex - 1; i >= 0; i--) {
             int currentLen = strlen(tempStr);
@@ -363,7 +363,7 @@ boolean gacha(Hospital *hospital, Session *session)
                 tempStr[currentLen+1] = '\0';
             }
         }
-        if (decIndex == 1) {
+        if (decIndexAfter == 1) {
             strcat(tempStr, "0");
         }
     }

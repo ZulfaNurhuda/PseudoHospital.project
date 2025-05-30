@@ -1,34 +1,99 @@
 #include "hospital.h"
+#include "utils.h" // Ensure printError is available
 // #include "stringSet.h" // Removed as StringSet ADT is being deleted
 
-void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int doctorCapacity, int roomRows, int roomCols)
+boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int doctorCapacity, int roomRows, int roomCols)
 {
+    if (hospital == NULL) {
+        printError("Pointer hospital tidak valid!");
+        return false;
+    }
     if (userCapacity <= 0 || patientCapacity <= 0 || doctorCapacity <= 0 || roomRows <= 0 || roomCols <= 0)
     {
         printError("Kapasitas atau ukuran denah tidak valid!");
-        return;
+        return false;
     }
+
+    // Initialize all pointers to NULL first, important for cleanup logic
+    hospital->users.elements = NULL;
+    hospital->patients.elements = NULL;
+    hospital->doctors.elements = NULL;
+    hospital->layout.elements = NULL;
+    hospital->queues.queues = NULL;
+    hospital->diseases.elements = NULL;
+    hospital->medications.elements = NULL;
+    hospital->prescriptions.elements = NULL;
+    hospital->treatmentHistory.elements = NULL;
 
     // Inisialisasi UserMap (formerly UserList)
     hospital->users.elements = (User *)safeMalloc(userCapacity * sizeof(User));
+    if (hospital->users.elements == NULL) {
+        printError("Gagal alokasi memori untuk UserList!");
+        return false; // No prior allocations in this function to free
+    }
     hospital->users.capacity = userCapacity;
     hospital->users.nEff = 0;
 
     // Inisialisasi PatientList
     hospital->patients.elements = (Patient *)safeMalloc(patientCapacity * sizeof(Patient));
+    if (hospital->patients.elements == NULL) {
+        printError("Gagal alokasi memori untuk PatientList!");
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        return false;
+    }
     hospital->patients.capacity = patientCapacity;
     hospital->patients.nEff = 0;
 
     // Inisialisasi DoctorList
     hospital->doctors.elements = (Doctor *)safeMalloc(doctorCapacity * sizeof(Doctor));
+    if (hospital->doctors.elements == NULL) {
+        printError("Gagal alokasi memori untuk DoctorList!");
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        free(hospital->patients.elements); hospital->patients.elements = NULL;
+        return false;
+    }
     hospital->doctors.capacity = doctorCapacity;
     hospital->doctors.nEff = 0;
 
     // Inisialisasi Layout
     hospital->layout.elements = (Room **)safeMalloc(roomRows * sizeof(Room *));
+    if (hospital->layout.elements == NULL) {
+        printError("Gagal alokasi memori untuk Layout (rows)!");
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        free(hospital->patients.elements); hospital->patients.elements = NULL;
+        free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+        return false;
+    }
+    // Initialize row pointers to NULL for partial allocation cleanup
+    for (int i = 0; i < roomRows; i++) {
+        hospital->layout.elements[i] = NULL;
+    }
+
     for (int i = 0; i < roomRows; i++)
     {
         hospital->layout.elements[i] = (Room *)safeMalloc(roomCols * sizeof(Room));
+        if (hospital->layout.elements[i] == NULL) {
+            printError("Gagal alokasi memori untuk Layout (cols)!");
+            for (int k = 0; k < i; k++) { // Free previously allocated rows
+                // Need to free patientInRoom.patientID within each column of row k first
+                for (int l = 0; l < roomCols; l++) {
+                    if (hospital->layout.elements[k] != NULL && hospital->layout.elements[k][l].patientInRoom.patientID != NULL) {
+                         free(hospital->layout.elements[k][l].patientInRoom.patientID);
+                    }
+                }
+                free(hospital->layout.elements[k]);
+            }
+            free(hospital->layout.elements); hospital->layout.elements = NULL;
+            free(hospital->users.elements); hospital->users.elements = NULL;
+            free(hospital->patients.elements); hospital->patients.elements = NULL;
+            free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+            return false;
+        }
+        // Initialize patientInRoom.patientID pointers to NULL for this row
+        for (int j = 0; j < roomCols; j++) {
+            hospital->layout.elements[i][j].patientInRoom.patientID = NULL;
+        }
+
         for (int j = 0; j < roomCols; j++)
         {
             char code[5] = "";
@@ -60,6 +125,31 @@ void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int
             hospital->layout.elements[i][j].capacity = 3;
             hospital->layout.elements[i][j].doctorID = -1;
             hospital->layout.elements[i][j].patientInRoom.patientID = (int *)safeMalloc(3 * sizeof(int));
+            if (hospital->layout.elements[i][j].patientInRoom.patientID == NULL) {
+                printError("Gagal alokasi memori untuk patientInRoom.patientID!");
+                // Cleanup: free all patientInRoom.patientID in current row up to column j-1
+                for (int m = 0; m < j; m++) {
+                    if (hospital->layout.elements[i][m].patientInRoom.patientID != NULL) {
+                        free(hospital->layout.elements[i][m].patientInRoom.patientID);
+                    }
+                }
+                // Free current row i
+                free(hospital->layout.elements[i]);
+                // Free previously allocated full rows (0 to i-1)
+                for (int k = 0; k < i; k++) {
+                    for (int l = 0; l < roomCols; l++) { // Free patientID arrays in these rows
+                        if (hospital->layout.elements[k] != NULL && hospital->layout.elements[k][l].patientInRoom.patientID != NULL) {
+                           free(hospital->layout.elements[k][l].patientInRoom.patientID);
+                        }
+                    }
+                    free(hospital->layout.elements[k]);
+                }
+                free(hospital->layout.elements); hospital->layout.elements = NULL;
+                free(hospital->users.elements); hospital->users.elements = NULL;
+                free(hospital->patients.elements); hospital->patients.elements = NULL;
+                free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+                return false;
+            }
             hospital->layout.elements[i][j].patientInRoom.capacity = 3;
             hospital->layout.elements[i][j].patientInRoom.nEff = 0;
         }
@@ -71,6 +161,25 @@ void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int
 
     // Inisialisasi HospitalQueueList
     hospital->queues.queues = (Queue *)safeMalloc(roomRows * roomCols * sizeof(Queue));
+    if (hospital->queues.queues == NULL) {
+        printError("Gagal alokasi memori untuk HospitalQueueList!");
+        // Full cleanup for layout
+        for (int i = 0; i < roomRows; i++) {
+            if (hospital->layout.elements[i] != NULL) {
+                for (int j = 0; j < roomCols; j++) {
+                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    }
+                }
+                free(hospital->layout.elements[i]);
+            }
+        }
+        free(hospital->layout.elements); hospital->layout.elements = NULL;
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        free(hospital->patients.elements); hospital->patients.elements = NULL;
+        free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+        return false;
+    }
     hospital->queues.capacity = roomRows * roomCols;
     hospital->queues.nRooms = 0;
     for (int i = 0; i < hospital->queues.capacity; i++) { // Iterate up to the allocated capacity for the list of queues
@@ -82,6 +191,26 @@ void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int
 
     // Inisialisasi DiseaseList
     hospital->diseases.elements = (Disease *)safeMalloc(5 * sizeof(Disease));
+    if (hospital->diseases.elements == NULL) {
+        printError("Gagal alokasi memori untuk DiseaseList!");
+        free(hospital->queues.queues); hospital->queues.queues = NULL;
+        // Full cleanup for layout (copied for brevity, ideally a helper)
+        for (int i = 0; i < roomRows; i++) {
+            if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
+                for (int j = 0; j < roomCols; j++) {
+                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    }
+                }
+                free(hospital->layout.elements[i]);
+            }
+        }
+        if (hospital->layout.elements != NULL) { free(hospital->layout.elements); hospital->layout.elements = NULL; }
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        free(hospital->patients.elements); hospital->patients.elements = NULL;
+        free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+        return false;
+    }
     hospital->diseases.capacity = 5;
     hospital->diseases.nEff = 5;
     Disease diseases[] = {
@@ -99,6 +228,27 @@ void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int
 
     // Inisialisasi MedicationList
     hospital->medications.elements = (Medication *)safeMalloc(5 * sizeof(Medication));
+    if (hospital->medications.elements == NULL) {
+        printError("Gagal alokasi memori untuk MedicationList!");
+        free(hospital->diseases.elements); hospital->diseases.elements = NULL;
+        free(hospital->queues.queues); hospital->queues.queues = NULL;
+        // Full cleanup for layout
+        for (int i = 0; i < roomRows; i++) {
+            if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
+                for (int j = 0; j < roomCols; j++) {
+                     if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    }
+                }
+                free(hospital->layout.elements[i]);
+            }
+        }
+       if (hospital->layout.elements != NULL) { free(hospital->layout.elements); hospital->layout.elements = NULL; }
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        free(hospital->patients.elements); hospital->patients.elements = NULL;
+        free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+        return false;
+    }
     hospital->medications.capacity = 5;
     hospital->medications.nEff = 5;
     Medication medications[] = {
@@ -116,6 +266,28 @@ void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int
 
     // Inisialisasi PrescriptionList
     hospital->prescriptions.elements = (MedicationPrescription *)safeMalloc(10 * sizeof(MedicationPrescription));
+    if (hospital->prescriptions.elements == NULL) {
+        printError("Gagal alokasi memori untuk PrescriptionList!");
+        free(hospital->medications.elements); hospital->medications.elements = NULL;
+        free(hospital->diseases.elements); hospital->diseases.elements = NULL;
+        free(hospital->queues.queues); hospital->queues.queues = NULL;
+        // Full cleanup for layout
+        for (int i = 0; i < roomRows; i++) {
+            if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
+                for (int j = 0; j < roomCols; j++) {
+                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    }
+                }
+                free(hospital->layout.elements[i]);
+            }
+        }
+        if (hospital->layout.elements != NULL) { free(hospital->layout.elements); hospital->layout.elements = NULL; }
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        free(hospital->patients.elements); hospital->patients.elements = NULL;
+        free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+        return false;
+    }
     hospital->prescriptions.capacity = 10;
     hospital->prescriptions.nEff = 10;
     MedicationPrescription prescriptions[] = {
@@ -140,6 +312,29 @@ void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int
 
     // Inisialisasi TreatmentHistoryList
     hospital->treatmentHistory.elements = (TreatmentHistory *)safeMalloc(100 * sizeof(TreatmentHistory));
+    if (hospital->treatmentHistory.elements == NULL) {
+        printError("Gagal alokasi memori untuk TreatmentHistoryList!");
+        free(hospital->prescriptions.elements); hospital->prescriptions.elements = NULL;
+        free(hospital->medications.elements); hospital->medications.elements = NULL;
+        free(hospital->diseases.elements); hospital->diseases.elements = NULL;
+        free(hospital->queues.queues); hospital->queues.queues = NULL;
+        // Full cleanup for layout
+        for (int i = 0; i < roomRows; i++) {
+            if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
+                for (int j = 0; j < roomCols; j++) {
+                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
+                         free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    }
+                }
+                free(hospital->layout.elements[i]);
+            }
+        }
+        if (hospital->layout.elements != NULL) { free(hospital->layout.elements); hospital->layout.elements = NULL; }
+        free(hospital->users.elements); hospital->users.elements = NULL;
+        free(hospital->patients.elements); hospital->patients.elements = NULL;
+        free(hospital->doctors.elements); hospital->doctors.elements = NULL;
+        return false;
+    }
     hospital->treatmentHistory.capacity = 100;
     hospital->treatmentHistory.nEff = 0;
 
@@ -147,6 +342,7 @@ void initHospital(Hospital *hospital, int userCapacity, int patientCapacity, int
     // initializeStringSet(&hospital->registeredUsernames);
 
     printSuccess("Rumah sakit berhasil diinisialisasi!");
+    return true;
 }
 
 void freeHospital(Hospital *hospital)

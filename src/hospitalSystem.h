@@ -32,6 +32,7 @@
 #include "takeMedication.h"
 #include "treat.h"
 #include "viewLifeStatus.h"
+#include "viewPatientQueue.h" // Added for patient's own queue view
 #include "viewQueue.h"
 #include "viewUsers.h"
 

@@ -157,11 +157,11 @@ void printTableRow(const char **row, int *widths, int n);
  * Deskripsi: Mengubah string yang terdiri dari digit angka menjadi bilangan integer. Fungsi ini melakukan parsing manual tanpa menggunakan pustaka `atoi`. Jika string mengandung karakter non-digit, fungsi akan mengembalikan -1.
  *
  * Parameter:
- *   - `str (char*)`: String yang akan dikonversi ke bilangan integer.
+ *   - `str (const char*)`: String yang akan dikonversi ke bilangan integer.
  *
  * Return: `int` — Nilai integer hasil konversi, atau -1 jika input tidak valid.
  */
-int stringToInt(char *str);
+int stringToInt(const char *str);
 
 // Removed integerToString and floatToString declarations (again)
 
@@ -194,12 +194,12 @@ boolean floatToString(float value, char *buffer, int bufferSize, int precision);
  * Deskripsi: Memeriksa apakah username sudah terdaftar dalam sistem (case-insensitive).
  *
  * Parameter:
- *   - `hospital (struct Hospital*)`: Pointer ke struktur rumah sakit.
+ *   - `hospital (Hospital*)`: Pointer ke struktur rumah sakit (menggunakan typedef).
  *   - `username (const char*)`: Username yang akan diperiksa.
  *
- * Return: `boolean` - True jika username sudah terdaftar, false jika belum.
+ * Return: `_Bool` - True jika username sudah terdaftar, false jika belum. (Using _Bool directly)
  */
-boolean isUsernameTaken(struct Hospital *hospital, const char *username);
+_Bool isUsernameTaken(Hospital *hospital, const char *username);
 
 /**
  * Nama Fungsi: `readStringWithSpaces`
@@ -212,6 +212,18 @@ boolean isUsernameTaken(struct Hospital *hospital, const char *username);
  * Return: `boolean` - True jika input berhasil dibaca (meskipun kosong), false jika error.
  */
 boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt);
+
+/**
+ * Nama Fungsi: `readUsernameWithTrim`
+ * Deskripsi: Membaca username dari input standar, mengizinkan spasi, dan melakukan trim.
+ *            Mirip dengan readStringWithSpaces, namun dikhususkan untuk username.
+ * Parameter:
+ *   - buffer (char*): Array tempat string disimpan.
+ *   - bufferSize (int): Ukuran penuh buffer.
+ *   - prompt (const char*): Prompt yang ditampilkan sebelum membaca input.
+ * Return: `boolean` - True jika input berhasil dibaca, false jika error.
+ */
+boolean readUsernameWithTrim(char *buffer, int bufferSize, const char *prompt);
 
 /**
  * Nama Fungsi: `customCharToLower`

@@ -41,7 +41,11 @@ int main(int argc, char *argv[])
     }
 
     // Inisialisasi hospital
-    initHospital(&hospital, 100, 100, 100, hospitalRows, hospitalCols);
+    if (!initHospital(&hospital, 100, 100, 100, hospitalRows, hospitalCols)) {
+        // initHospital already prints a specific error message
+        printError("Inisialisasi rumah sakit gagal. Program dihentikan.");
+        return 1; // Exit main with an error code
+    }
 
     // Inisialisasi Seorang Manajer
     hospital.users.elements[0].id = 1;
@@ -152,8 +156,6 @@ int main(int argc, char *argv[])
         // F08 - Cari User
         else if (strcmp(command, "CARIUSER") == 0)
         {
-            char query[50];
-            boolean by_id = false;
             char query[51]; // Ensure buffer is adequate for readStringWithSpaces
             boolean by_id = false;
             printf("Cari berdasarkan?\n1. ID\n2. Nama\n");
@@ -223,8 +225,6 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(command, "CARIDOKTER") == 0)
         {
-            char query[50];
-            boolean by_id = false;
             char query[51]; // Ensure buffer is adequate
             boolean by_id = false;
             printf("Cari berdasarkan?\n1. ID\n2. Nama\n");
@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
         // F15 - Antrian Saya
         else if (strcmp(command, "ANTRIANSAYA") == 0)
         {
-            myQueue(&hospital, &session);
+            viewMySpecificQueueStatus(&hospital, &session);
         }
         // F16 - Minum Obat
         else if (strcmp(command, "MINUMOBAT") == 0)
@@ -355,6 +355,7 @@ int main(int argc, char *argv[])
         else if (strcmp(command, "EXIT") == 0)
         {
             exitProgram(&hospital, &session);
+            return 0; // Terminate main loop and program
         }
         // B02 - Denah Dinamis
         else if (strcmp(command, "UBAHDENAH") == 0)
@@ -395,11 +396,32 @@ int main(int argc, char *argv[])
         // B05 - Mainin Antrian
         else if (strcmp(command, "SKIPANTRIAN") == 0)
         {
-            skipQueue(&hospital, &session);
+            char roomCode[5]; // Assuming room codes are like "A1", "B12" etc. Max 4 chars + null.
+            if (!readValidString(roomCode, sizeof(roomCode), "Masukkan kode ruangan antrian yang akan di-skip: ", false)) {
+                // readValidString prints its own error
+                continue;
+            }
+            skipPatientInQueue(&hospital, &session, roomCode);
         }
         else if (strcmp(command, "CANCELANTRIAN") == 0)
         {
-            cancelQueue(&hospital, &session);
+            char patientUsernameToCancel[51]; // Max username length 50 + null.
+            // Use readUsernameWithTrim as usernames can have spaces and need trimming.
+            if (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): ")) {
+                // readUsernameWithTrim prints its own error or handles empty input based on its impl.
+                continue;
+            }
+            // If user types 'saya', use their own session username
+            // Note: customCaseInsensitiveStrcmp should be available from utils.h
+            if (customCaseInsensitiveStrcmp(patientUsernameToCancel, "saya") == 0) {
+                 if (session.role == PATIENT) { // Make sure it's a patient session if 'saya' is used
+                    strcpy(patientUsernameToCancel, session.username);
+                 } else {
+                    printError("Perintah 'saya' hanya valid untuk Pasien. Manajer harus memasukkan username pasien secara spesifik.");
+                    continue;
+                 }
+            }
+            cancelPatientFromQueue(&hospital, &session, patientUsernameToCancel);
         }
         // New Feature: View Life Status
         else if (strcmp(command, "LIHATNYAWA") == 0)

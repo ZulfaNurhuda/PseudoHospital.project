@@ -20,5 +20,5 @@ void exitProgram(Hospital *hospital, Session *session)
     printf("╚══════════════════════════════════════════════╝\n\n");
 
     freeHospital(hospital);
-    exit(0);
+    // exit(0); // Removed: Control flow will return to main
 }

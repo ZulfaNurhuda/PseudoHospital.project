@@ -1,7 +1,5 @@
 #include "searchUser.h"
-#include "utils.h" // For integerToString, floatToString, printError, etc.
-#include <stdlib.h> 
-#include <string.h> 
+// utils.h, stdlib.h, string.h are included via searchUser.h
 
 // Static helper: Convert char to lowercase
 static char localCharToLower(char c) {
@@ -296,7 +294,7 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
             boolean suggestionsFound = false;
             for (int i = 0; i < hospital->users.nEff; i++) {
                 User *user = &hospital->users.elements[i];
-                if (containsCaseInsensitiveSubstring(user->username, query)) {
+                if (localContainsCaseInsensitiveSubstring(user->username, query)) {
                     if (!printedTableHeaders) {
                         printTableBorder(widths, 4, 1); printTableRow(headers, widths, 4); printTableBorder(widths, 4, 2);
                         printedTableHeaders = true;
@@ -388,7 +386,7 @@ void findPatient(Hospital *hospital, Session *session, const char *query, boolea
             boolean suggestionsFound = false;
             for (int i = 0; i < hospital->patients.nEff; i++) {
                 Patient *patient = &hospital->patients.elements[i];
-                if (containsCaseInsensitiveSubstring(patient->disease, query)) {
+                if (localContainsCaseInsensitiveSubstring(patient->disease, query)) {
                     if (!printedTableHeaders) {
                         printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
                         printedTableHeaders = true;
@@ -445,7 +443,7 @@ void findPatient(Hospital *hospital, Session *session, const char *query, boolea
             boolean suggestionsFound = false;
             for (int i = 0; i < hospital->patients.nEff; i++) {
                 Patient *patient = &hospital->patients.elements[i];
-                if (containsCaseInsensitiveSubstring(patient->username, query)) {
+                if (localContainsCaseInsensitiveSubstring(patient->username, query)) {
                      if (!printedTableHeaders) {
                         printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
                         printedTableHeaders = true;
@@ -552,8 +550,8 @@ void findDoctor(Hospital *hospital, Session *session, const char *query, boolean
             int precision_aura = 1;
             auraStr[0] = '\0'; // Initialize auraStr
             char tempFloatStr_aura[30]; tempFloatStr_aura[0] = '\0';
-            boolean isNeg_aura = false;
-            if (floatValue_aura < 0.0f) { isNeg_aura = true; floatValue_aura = -floatValue_aura; strcpy(tempFloatStr_aura, "-");}
+            // boolean isNeg_aura = false; // Unused variable
+            if (floatValue_aura < 0.0f) { /* isNeg_aura = true; */ floatValue_aura = -floatValue_aura; strcpy(tempFloatStr_aura, "-");}
             
             long long intPart_aura = (long long)floatValue_aura;
             char intStr_aura[20];
@@ -617,8 +615,8 @@ void findDoctor(Hospital *hospital, Session *session, const char *query, boolean
                 int precision_aura_name = 1;
                 auraStr[0] = '\0';
                 char tempFloatStr_aura_name[30]; tempFloatStr_aura_name[0] = '\0';
-                boolean isNeg_aura_name = false;
-                if (floatValue_aura_name < 0.0f) { isNeg_aura_name = true; floatValue_aura_name = -floatValue_aura_name; strcpy(tempFloatStr_aura_name, "-");}
+                // boolean isNeg_aura_name = false; // Unused variable
+                if (floatValue_aura_name < 0.0f) { /* isNeg_aura_name = true; */ floatValue_aura_name = -floatValue_aura_name; strcpy(tempFloatStr_aura_name, "-");}
 
                 long long intPart_aura_name = (long long)floatValue_aura_name;
                 char intStr_aura_name[20];
