@@ -1,4 +1,5 @@
 #include "registerCheckup.h"
+#include "myQueue.h" // Added for new queue functions
 
 boolean registerCheckup(Hospital *hospital, Session *session, const char *doctorUsername, float healthData[])
 {
@@ -123,31 +124,31 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
         }
         queueIdx = hospital->queues.nRooms++;
         Queue *newQueue = &hospital->queues.queues[queueIdx];
-        strcpy(newQueue->roomCode, doctor->room);
-        newQueue->idxHead = -1;
-        newQueue->idxTail = -1;
-        newQueue->capacity = 100; // Asumsi kapasitas default
+        // Initialize Queue using the new function, or ensure it's already initialized by initHospital
+        // For now, let's assume initHospital handled basic initialization (front/rear=NULL, size=0)
+        // We just need to set the roomCode if this is the first time it's used.
+        if (newQueue->roomCode[0] == '\0') { // Check if roomCode is not set
+             // customSafeStrcpy(newQueue->roomCode, doctor->room, sizeof(newQueue->roomCode));
+             strcpy(newQueue->roomCode, doctor->room); // Assuming newQueue->roomCode is always large enough
+        }
+        // If initializeQueue is preferred: initializeQueue(newQueue, doctor->room);
     }
 
-    Queue *queue = &hospital->queues.queues[queueIdx];
-    if (queue->idxTail - queue->idxHead + 1 >= queue->capacity)
-    {
-        printError("Antrian ruangan penuh!");
+    Queue *queueToEnqueue = &hospital->queues.queues[queueIdx];
+    
+    // The linked list queue doesn't have a fixed capacity like the old array buffer.
+    // The main capacity constraint is memory, or if we impose an artificial limit (not done here).
+    // So, the check `if (queue->idxTail - queue->idxHead + 1 >= queue->capacity)` is removed.
+
+    if (!enqueue(queueToEnqueue, patient->id)) {
+        // This typically would only fail if q is NULL (already checked by finding queueIdx)
+        // or if safeMalloc fails (which exits). So, this 'if' might be redundant
+        // unless enqueue is modified to return false for other reasons.
+        printError("Gagal menambahkan pasien ke antrian!"); // Generic error
         return false;
     }
-
-    if (queue->idxHead == -1)
-    {
-        queue->idxHead = 0;
-        queue->idxTail = 0;
-    }
-    else
-    {
-        queue->idxTail++;
-    }
-    queue->buffer[queue->idxTail].patientID = patient->id;
     strcpy(patient->queueRoom, doctor->room);
-    patient->queuePosition = queue->idxTail - queue->idxHead + 1;
+    patient->queuePosition = queueSize(queueToEnqueue); // Get current size as position
 
     // Menyimpan data kesehatan
     patient->bodyTemperature = healthData[0];
@@ -170,8 +171,8 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
     if (hospital->treatmentHistory.nEff < hospital->treatmentHistory.capacity)
     {
         TreatmentHistory *history = &hospital->treatmentHistory.elements[hospital->treatmentHistory.nEff++];
-        history->patientID = patient->id;
-        history->doctorID = doctor->id;
+        history->patientId = patient->id;
+        history->doctorId = doctor->id;
         strcpy(history->room, doctor->room);
         history->examinationDate = 20250509; // Asumsi tanggal saat ini (YYYYMMDD)
         history->treatmentStatus = false;    // Belum selesai

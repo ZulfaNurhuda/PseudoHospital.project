@@ -33,10 +33,11 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
  *   - `session (Session*)`: Pointer ke struktur sesi untuk memeriksa akses.
  *   - `query (const char*)`: Kueri pencarian (ID atau nama pengguna).
  *   - `byId (boolean)`: True jika mencari berdasarkan ID, false jika berdasarkan nama pengguna.
+ *   - `byDisease (boolean)`: True jika mencari berdasarkan penyakit.
  * 
  * Return: `void` - Tidak mengembalikan nilai, hanya mencetak hasil pencarian ke konsol.
  */
-void findPatient(Hospital *hospital, Session *session, const char *query, boolean byId);
+void findPatient(Hospital *hospital, Session *session, const char *query, boolean byId, boolean byDisease);
 
 /**
  * Nama Fungsi: `findDoctor`

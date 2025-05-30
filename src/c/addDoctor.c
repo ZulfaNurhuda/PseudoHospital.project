@@ -1,45 +1,8 @@
 #include "addDoctor.h"
 
-// Fungsi untuk memeriksa apakah username sudah ada
-static boolean isUsernameTaken(Hospital *hospital, const char *username)
+boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsername, const char *password, const char *specialization)
 {
-    char lowerUsername[strlen(username) + 1];
-    for (int i = 0; i < strlen(username); i++)
-    {
-        char c = username[i];
-        if (c >= 'A' && c <= 'Z')
-        {
-            c = c + ('a' - 'A');
-        }
-        lowerUsername[i] = c;
-    }
-    lowerUsername[strlen(username)] = '\0';
-
-    for (int i = 0; i < hospital->users.nEff; i++)
-    {
-        char lowerElementUsername[strlen(hospital->users.elements[i].username) + 1];
-        for (int j = 0; j < strlen(hospital->users.elements[i].username); j++)
-        {
-            char c = hospital->users.elements[i].username[j];
-            if (c >= 'A' && c <= 'Z')
-            {
-                c = c + ('a' - 'A');
-            }
-            lowerElementUsername[j] = c;
-        }
-        lowerElementUsername[strlen(hospital->users.elements[i].username)] = '\0';
-
-        if (strcmp(lowerUsername, lowerElementUsername) == 0)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-boolean addDoctor(Hospital *hospital, Session *session, const char *username, const char *password, const char *specialization)
-{
-    if (hospital == NULL || session == NULL || username == NULL || password == NULL || specialization == NULL)
+    if (hospital == NULL || session == NULL || inputUsername == NULL || password == NULL || specialization == NULL)
     {
         printError("Struktur rumah sakit, sesi, atau input tidak valid!");
         return false;
@@ -50,9 +13,13 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
         return false;
     }
 
-    if (!isValidUsername(username))
-    {
-        printError("Username tidak valid! Gunakan huruf, angka, atau underscore.");
+    if (!isValidUsername(inputUsername)) {
+        printError("Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore.");
+        return false;
+    }
+
+    if (isUsernameTaken(hospital, inputUsername)) { 
+        printError("Username sudah terdaftar!");
         return false;
     }
 
@@ -62,28 +29,49 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
         return false;
     }
 
+    // Karena spesialisasi memiliki batasan yang sama dengan username
+    // untuk validasi, dapat digunakan fungsi yang sama
     if (!isValidUsername(specialization))
     {
         printError("Spesialisasi tidak valid! Gunakan huruf, angka, atau underscore.");
         return false;
     }
 
-    if (isUsernameTaken(hospital, username))
-    {
-        printError("Username sudah terdaftar!");
-        return false;
-    }
-
     if (hospital->users.nEff >= hospital->users.capacity || hospital->doctors.nEff >= hospital->doctors.capacity)
     {
-        printError("Kapasitas pengguna atau dokter penuh!");
-        return false;
+        int newCapacity = hospital->users.capacity * 2;
+        User *tempUsers = realloc(hospital->users.elements, newCapacity * sizeof(User));
+        if (tempUsers == NULL)
+        {
+            printError("Gagal mengalokasi memori untuk ekspansi pengguna!");
+            return false;
+        }
+        hospital->users.elements = tempUsers;
+        hospital->users.capacity = newCapacity;
+
+        int newDoctorCapacity = hospital->doctors.capacity * 2;
+        Doctor *tempDoctors = realloc(hospital->doctors.elements, newDoctorCapacity * sizeof(Doctor));
+        if (tempDoctors == NULL)
+        {
+            printError("Gagal mengalokasi memori untuk ekspansi dokter!");
+            return false;
+        }
+        hospital->doctors.elements = tempDoctors;
+        hospital->doctors.capacity = newDoctorCapacity;
     }
 
-    // Menambahkan ke UserList
+    int maxId = 0;
+    for (int i = 0; i < hospital->users.nEff; i++) {
+        if (hospital->users.elements[i].id > maxId)
+        {
+            maxId = hospital->users.elements[i].id;
+        }
+    }
+    int newDoctorId = maxId + 1;
+
     User *newUser = &hospital->users.elements[hospital->users.nEff];
-    newUser->id = hospital->users.nEff + 1;
-    strcpy(newUser->username, username);
+    newUser->id = newDoctorId;
+    strcpy(newUser->username, inputUsername);
     if (!enigmaEncrypt(password, newUser->password.encryptedContent, 100))
     {
         printError("Gagal mengenkripsi password!");
@@ -91,10 +79,9 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
     }
     newUser->role = DOCTOR;
 
-    // Menambahkan ke DoctorList
     Doctor *newDoctor = &hospital->doctors.elements[hospital->doctors.nEff];
-    newDoctor->id = newUser->id;
-    strcpy(newDoctor->username, username);
+    newDoctor->id = newDoctorId;
+    strcpy(newDoctor->username, inputUsername);
     strcpy(newDoctor->specialization, specialization);
     newDoctor->aura = 0;
     newDoctor->bananaRich = 100.0f;
@@ -103,9 +90,9 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
     hospital->users.nEff++;
     hospital->doctors.nEff++;
 
-    // Membuat pesan sukses
-    char successMsg[100] = "Dokter ";
-    strcat(successMsg, username);
+    char successMsg[100] = "";
+    strcat(successMsg, "Dokter ");
+    strcat(successMsg, inputUsername);
     strcat(successMsg, " berhasil ditambahkan!");
     printSuccess(successMsg);
     return true;
@@ -172,7 +159,7 @@ boolean assignDoctor(Hospital *hospital, Session *session, const char *username,
         return false;
     }
 
-    if (room->doctorID != -1)
+    if (room->doctorId != -1)
     {
         printError("Ruangan sudah ditempati dokter lain!");
         return false;
@@ -187,14 +174,14 @@ boolean assignDoctor(Hospital *hospital, Session *session, const char *username,
             {
                 if (strcmp(hospital->layout.elements[i][j].code, doctor->room) == 0)
                 {
-                    hospital->layout.elements[i][j].doctorID = -1;
+                    hospital->layout.elements[i][j].doctorId = -1;
                     break;
                 }
             }
         }
     }
 
-    room->doctorID = doctor->id;
+    room->doctorId = doctor->id;
     strcpy(doctor->room, roomCode);
 
     // Membuat pesan sukses

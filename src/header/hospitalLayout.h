@@ -16,10 +16,11 @@
  * Parameter:
  *   - `hospital (Hospital*)`: Pointer ke struktur rumah sakit yang berisi data denah.
  *   - `session (Session*)`: Pointer ke struktur sesi untuk memeriksa akses dan status login.
+ *   - `printHeaderFlag (boolean)`: Flag untuk menentukan apakah header tabel harus dicetak. Jika `true`, header akan dicetak; jika `false`, hanya denah yang ditampilkan.
  * 
  * Return: `void` - Tidak mengembalikan nilai, hanya mencetak denah ke konsol.
  */
-void displayLayout(Hospital *hospital, Session *session);
+void displayLayout(Hospital *hospital, Session *session, boolean printHeaderFlag);
 
 /**
  * Nama Fungsi: `displayRoomDetails`

@@ -157,10 +157,91 @@ void printTableRow(const char **row, int *widths, int n);
  * Deskripsi: Mengubah string yang terdiri dari digit angka menjadi bilangan integer. Fungsi ini melakukan parsing manual tanpa menggunakan pustaka `atoi`. Jika string mengandung karakter non-digit, fungsi akan mengembalikan -1.
  *
  * Parameter:
- *   - `str (char*)`: String yang akan dikonversi ke bilangan integer.
+ *   - `str (const char*)`: String yang akan dikonversi ke bilangan integer.
  *
  * Return: `int` — Nilai integer hasil konversi, atau -1 jika input tidak valid.
  */
-int stringToInt(char *str);
+int stringToInt(const char *str);
+
+// Removed integerToString and floatToString declarations (again)
+
+/**
+ * Nama Fungsi: `integerToString`
+ * Deskripsi: Mengubah integer menjadi string.
+ * Parameter:
+ *   - value (int): Nilai integer yang akan dikonversi.
+ *   - buffer (char*): Buffer untuk menyimpan string hasil konversi.
+ *   - bufferSize (int): Ukuran buffer.
+ * Return: `boolean` - True jika konversi berhasil, false jika buffer terlalu kecil.
+ */
+boolean integerToString(int value, char *buffer, int bufferSize);
+
+/**
+ * Nama Fungsi: `floatToString`
+ * Deskripsi: Mengubah float menjadi string dengan presisi tertentu.
+ * Parameter:
+ *   - value (float): Nilai float yang akan dikonversi.
+ *   - buffer (char*): Buffer untuk menyimpan string hasil konversi.
+ *   - bufferSize (int): Ukuran buffer.
+ *   - precision (int): Jumlah digit di belakang koma.
+ * Return: `boolean` - True jika konversi berhasil, false jika buffer terlalu kecil.
+ */
+boolean floatToString(float value, char *buffer, int bufferSize, int precision);
+
+/**
+ * Nama Fungsi: `isUsernameTaken`
+ *
+ * Deskripsi: Memeriksa apakah username sudah terdaftar dalam sistem (case-insensitive).
+ *
+ * Parameter:
+ *   - `hospital (Hospital*)`: Pointer ke struktur rumah sakit (menggunakan typedef).
+ *   - `username (const char*)`: Username yang akan diperiksa.
+ *
+ * Return: `_Bool` - True jika username sudah terdaftar, false jika belum. (Using _Bool directly)
+ */
+_Bool isUsernameTaken(Hospital *hospital, const char *username);
+
+/**
+ * Nama Fungsi: `readStringWithSpaces`
+ * Deskripsi: Membaca sebuah string dari input standar yang mungkin mengandung spasi,
+ *            hingga newline atau bufferSize-1 karakter. Membersihkan newline dari buffer.
+ * Parameter:
+ *   - buffer (char*): Array tempat string disimpan.
+ *   - bufferSize (int): Ukuran penuh buffer.
+ *   - prompt (const char*): Prompt yang ditampilkan sebelum membaca input.
+ * Return: `boolean` - True jika input berhasil dibaca (meskipun kosong), false jika error.
+ */
+boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt);
+
+/**
+ * Nama Fungsi: `readUsernameWithTrim`
+ * Deskripsi: Membaca username dari input standar, mengizinkan spasi, dan melakukan trim.
+ *            Mirip dengan readStringWithSpaces, namun dikhususkan untuk username.
+ * Parameter:
+ *   - buffer (char*): Array tempat string disimpan.
+ *   - bufferSize (int): Ukuran penuh buffer.
+ *   - prompt (const char*): Prompt yang ditampilkan sebelum membaca input.
+ * Return: `boolean` - True jika input berhasil dibaca, false jika error.
+ */
+boolean readUsernameWithTrim(char *buffer, int bufferSize, const char *prompt);
+
+/**
+ * Nama Fungsi: `customCharToLower`
+ * Deskripsi: Mengubah sebuah karakter menjadi lowercase jika ia uppercase.
+ * Parameter:
+ *   - c (char): Karakter input.
+ * Return: `char` - Karakter lowercase atau karakter original jika bukan uppercase.
+ */
+char customCharToLower(char c);
+
+/**
+ * Nama Fungsi: `customCaseInsensitiveStrcmp`
+ * Deskripsi: Membandingkan dua string secara case-insensitive.
+ * Parameter:
+ *   - s1 (const char*): String pertama.
+ *   - s2 (const char*): String kedua.
+ * Return: `int` - 0 jika identik (ignore case), <0 jika s1<s2, >0 jika s1>s2.
+ */
+int customCaseInsensitiveStrcmp(const char *s1, const char *s2);
 
 #endif // UTILS_H

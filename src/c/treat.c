@@ -1,4 +1,5 @@
 #include "treat.h"
+#include "myQueue.h" // Added for new queue functions
 
 boolean treatPatient(Hospital *hospital, Session *session, const char *patientUsername)
 {
@@ -91,66 +92,67 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
     }
 
     // Memeriksa antrian di HospitalQueueList
-    boolean patientInQueue = false;
-    if (hospital->queues.nRooms > 0)
-    {
-        for (int i = 0; i < hospital->queues.nRooms; i++)
-        {
-            Queue *queue = &hospital->queues.queues[i];
-            if (strcmp(queue->roomCode, doctor->room) == 0)
-            {
-                for (int j = queue->idxHead; j <= queue->idxTail; j++)
-                {
-                    if (queue->buffer[j].patientID == patient->id)
-                    {
-                        patientInQueue = true;
-                        break;
-                    }
-                }
+    // Patient must be at the front of the queue for the doctor's room.
+    Queue *roomQueue = NULL;
+    if (hospital->queues.nRooms > 0) {
+        for (int i = 0; i < hospital->queues.nRooms; i++) {
+            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0) {
+                roomQueue = &hospital->queues.queues[i];
                 break;
             }
         }
     }
-    if (!patientInQueue)
-    {
-        printError("Pasien tidak ditemukan dalam antrian ruangan dokter!");
+
+    if (roomQueue == NULL || isQueueEmpty(roomQueue)) {
+        printError("Antrian untuk ruangan dokter ini kosong atau tidak ditemukan.");
         return false;
     }
 
-    // Mencari diseaseID berdasarkan patient->disease
-    int diseaseID = -1;
+    int firstPatientId = -1;
+    if (!peekQueue(roomQueue, &firstPatientId)) {
+        printError("Tidak dapat melihat pasien di depan antrian.");
+        return false;
+    }
+
+    if (firstPatientId != patient->id) {
+        printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
+        return false;
+    }
+
+    // Mencari diseaseId berdasarkan patient->disease
+    int diseaseId = -1;
     if (hospital->diseases.nEff > 0)
     {
         for (int i = 0; i < hospital->diseases.nEff; i++)
         {
             if (strcmp(hospital->diseases.elements[i].name, patient->disease) == 0)
             {
-                diseaseID = hospital->diseases.elements[i].id;
+                diseaseId = hospital->diseases.elements[i].id;
                 break;
             }
         }
     }
-    if (diseaseID == -1)
+    if (diseaseId == -1)
     {
         printError("Penyakit pasien tidak ditemukan dalam database!");
         return false;
     }
 
-    // Meresepkan obat berdasarkan diseaseID, diurutkan berdasarkan doseOrder
+    // Meresepkan obat berdasarkan diseaseId, diurutkan berdasarkan doseOrder
     if (hospital->prescriptions.nEff > 0)
     {
         // Mengumpulkan semua resep untuk penyakit
         struct
         {
-            int medicationID;
+            int medicationId;
             int doseOrder;
         } prescriptions[100];
         int prescriptionCount = 0;
         for (int i = 0; i < hospital->prescriptions.nEff; i++)
         {
-            if (hospital->prescriptions.elements[i].diseaseID == diseaseID)
+            if (hospital->prescriptions.elements[i].diseaseId == diseaseId)
             {
-                prescriptions[prescriptionCount].medicationID = hospital->prescriptions.elements[i].medicationID;
+                prescriptions[prescriptionCount].medicationId = hospital->prescriptions.elements[i].medicationId;
                 prescriptions[prescriptionCount].doseOrder = hospital->prescriptions.elements[i].doseOrder;
                 prescriptionCount++;
             }
@@ -163,11 +165,11 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
             {
                 if (prescriptions[j].doseOrder > prescriptions[j + 1].doseOrder)
                 {
-                    int tempID = prescriptions[j].medicationID;
+                    int tempId = prescriptions[j].medicationId;
                     int tempOrder = prescriptions[j].doseOrder;
-                    prescriptions[j].medicationID = prescriptions[j + 1].medicationID;
+                    prescriptions[j].medicationId = prescriptions[j + 1].medicationId;
                     prescriptions[j].doseOrder = prescriptions[j + 1].doseOrder;
-                    prescriptions[j + 1].medicationID = tempID;
+                    prescriptions[j + 1].medicationId = tempId;
                     prescriptions[j + 1].doseOrder = tempOrder;
                 }
             }
@@ -178,8 +180,8 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
         {
             if (patient->medicationsPrescribed.nEff < patient->medicationsPrescribed.capacity)
             {
-                patient->medicationsPrescribed.medicationID[patient->medicationsPrescribed.nEff++] =
-                    prescriptions[i].medicationID;
+                patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff++] =
+                    prescriptions[i].medicationId;
             }
             else
             {
@@ -190,6 +192,23 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
     }
 
     patient->treatedStatus = true;
+
+    // Dequeue patient after treatment
+    int dequeuedPatientId = -1;
+    if (dequeue(roomQueue, &dequeuedPatientId)) {
+        if (dequeuedPatientId != patient->id) {
+            // This would be a serious inconsistency error.
+            // Log it or handle as critical error. For now, print and proceed.
+            printError("Error: Pasien yang di-dequeue berbeda dari pasien yang diobati!");
+        }
+        // Update patient's queue status
+        patient->queueRoom[0] = '\0';
+        patient->queuePosition = 0; // Or -1, indicating not in queue
+    } else {
+        // Failed to dequeue, this is also an issue.
+        printError("Error: Gagal men-dequeue pasien setelah pengobatan!");
+        // Decide if this should be a fatal error for the function call
+    }
 
     // Tampilkan hasil
     printHeader("Resep Obat");
@@ -205,7 +224,7 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
         {
             for (int j = 0; j < hospital->medications.nEff; j++)
             {
-                if (hospital->medications.elements[j].id == patient->medicationsPrescribed.medicationID[i])
+                if (hospital->medications.elements[j].id == patient->medicationsPrescribed.medicationId[i])
                 {
                     char medMsg[100] = "";
                     strcat(medMsg, "  ");

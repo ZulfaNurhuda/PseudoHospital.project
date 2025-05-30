@@ -1,4 +1,5 @@
 #include "diagnose.h"
+#include "myQueue.h" // Added for new queue functions
 
 boolean diagnosePatient(Hospital *hospital, Session *session, const char *patientUsername)
 {
@@ -81,29 +82,42 @@ boolean diagnosePatient(Hospital *hospital, Session *session, const char *patien
     }
 
     // Memeriksa antrian di HospitalQueueList
-    boolean patientInQueue = false;
-    if (hospital->queues.nRooms > 0)
-    {
-        for (int i = 0; i < hospital->queues.nRooms; i++)
-        {
-            Queue *queue = &hospital->queues.queues[i];
-            if (strcmp(queue->roomCode, doctor->room) == 0)
-            {
-                for (int j = queue->idxHead; j <= queue->idxTail; j++)
-                {
-                    if (queue->buffer[j].patientID == patient->id)
-                    {
-                        patientInQueue = true;
-                        break;
-                    }
-                }
+    // Patient must be at the front of the queue for the doctor's room.
+    Queue *roomQueue = NULL;
+    if (hospital->queues.nRooms > 0) {
+        for (int i = 0; i < hospital->queues.nRooms; i++) {
+            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0) {
+                roomQueue = &hospital->queues.queues[i];
                 break;
             }
         }
     }
-    if (!patientInQueue)
-    {
-        printError("Pasien tidak ditemukan dalam antrian ruangan dokter!");
+
+    if (roomQueue == NULL || isQueueEmpty(roomQueue)) {
+        printError("Antrian untuk ruangan dokter ini kosong atau tidak ditemukan.");
+        return false;
+    }
+
+    int firstPatientId = -1;
+    if (!peekQueue(roomQueue, &firstPatientId)) {
+        // This case should ideally be covered by isQueueEmpty, but as a safeguard:
+        printError("Tidak dapat melihat pasien di depan antrian.");
+        return false;
+    }
+
+    if (firstPatientId != patient->id) {
+        printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
+        // Optionally, find the username of the patient who IS at the front for a more informative message.
+        // char frontPatientUsername[50] = "Unknown";
+        // for(int i=0; i < hospital->patients.nEff; ++i){
+        //    if(hospital->patients.elements[i].id == firstPatientId){
+        //        strcpy(frontPatientUsername, hospital->patients.elements[i].username);
+        //        break;
+        //    }
+        // }
+        // char errMsg[150];
+        // sprintf(errMsg, "Pasien %s berada di depan antrian.", frontPatientUsername);
+        // printError(errMsg);
         return false;
     }
 
@@ -118,6 +132,7 @@ boolean diagnosePatient(Hospital *hospital, Session *session, const char *patien
                 patient->systolicBloodPressure >= d->systolicBloodPressureMin && patient->systolicBloodPressure <= d->systolicBloodPressureMax &&
                 patient->diastolicBloodPressure >= d->diastolicBloodPressureMin && patient->diastolicBloodPressure <= d->diastolicBloodPressureMax &&
                 patient->heartRate >= d->heartRateMin && patient->heartRate <= d->heartRateMax &&
+                patient->oxygenSaturation >= d->oxygenSaturationMin && patient->oxygenSaturation <= d->oxygenSaturationMax && // <-- New check
                 patient->bloodSugarLevel >= d->bloodSugarLevelMin && patient->bloodSugarLevel <= d->bloodSugarLevelMax &&
                 patient->weight >= d->weightMin && patient->weight <= d->weightMax &&
                 patient->height >= d->heightMin && patient->height <= d->heightMax &&

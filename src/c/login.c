@@ -55,7 +55,7 @@ boolean login(Hospital *hospital, Session *session, const char *username, const 
             }
             if (strcmp(hospital->users.elements[i].password.encryptedContent, encryptedPassword) == 0)
             {
-                session->userID = hospital->users.elements[i].id;
+                session->userId = hospital->users.elements[i].id;
                 strcpy(session->username, username);
                 session->role = hospital->users.elements[i].role;
                 session->isLoggedIn = true;

@@ -1,4 +1,7 @@
 #include "canGoHome.h"
+#include "myQueue.h" // For isQueueEmpty, QueueNode, free, etc.
+#include <stdlib.h>  // For free, NULL
+#include <string.h>  // For strcmp
 
 boolean canGoHome(Hospital *hospital, Session *session)
 {
@@ -66,7 +69,7 @@ boolean canGoHome(Hospital *hospital, Session *session)
         {
             for (int i = 0; i <= patient->medicationsTaken.top; i++)
             {
-                if (patient->medicationsTaken.medicationID[i] != patient->medicationsPrescribed.medicationID[i])
+                if (patient->medicationsTaken.medicationId[i] != patient->medicationsPrescribed.medicationId[i])
                 {
                     correctOrder = false;
                     break;
@@ -90,11 +93,11 @@ boolean canGoHome(Hospital *hospital, Session *session)
             {
                 for (int i = 0; i < hospital->treatmentHistory.nEff; i++)
                 {
-                    if (hospital->treatmentHistory.elements[i].patientID == patient->id)
+                    if (hospital->treatmentHistory.elements[i].patientId == patient->id)
                     {
                         for (int j = 0; j < hospital->doctors.nEff; j++)
                         {
-                            if (hospital->doctors.elements[j].id == hospital->treatmentHistory.elements[i].doctorID)
+                            if (hospital->doctors.elements[j].id == hospital->treatmentHistory.elements[i].doctorId)
                             {
                                 hospital->doctors.elements[j].aura += 1.0;
                                 break;
@@ -105,32 +108,59 @@ boolean canGoHome(Hospital *hospital, Session *session)
                 }
             }
 
-            // Menghapus pasien dari antrian
-            if (hospital->queues.nRooms > 0 && patient->queueRoom[0] != '\0')
-            {
-                for (int i = 0; i < hospital->queues.nRooms; i++)
-                {
-                    Queue *queue = &hospital->queues.queues[i];
-                    if (strcmp(queue->roomCode, patient->queueRoom) == 0)
-                    {
-                        for (int j = queue->idxHead; j <= queue->idxTail; j++)
-                        {
-                            if (queue->buffer[j].patientID == patient->id)
-                            {
-                                // Geser elemen setelah pasien
-                                for (int k = j; k < queue->idxTail; k++)
-                                {
-                                    queue->buffer[k] = queue->buffer[k + 1];
-                                }
-                                queue->idxTail--;
-                                break;
-                            }
-                        }
+            // Menghapus pasien dari antrian (if they are still in one, which is an inconsistency)
+            // This is a cleanup step. Normal dequeueing should happen in treatPatient.
+            if (patient->queueRoom[0] != '\0') {
+                Queue *targetQueue = NULL;
+                // Find the queue based on patient->queueRoom
+                // Iterate all queue slots as nRooms might not be perfectly managed or room might be inactive
+                for (int i = 0; i < hospital->queues.capacity; i++) {
+                    if (hospital->queues.queues[i].roomCode[0] != '\0' && 
+                        strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0) {
+                        targetQueue = &hospital->queues.queues[i];
                         break;
                     }
                 }
-                // Reset queueRoom pasien
-                patient->queueRoom[0] = '\0';
+
+                if (targetQueue != NULL && !isQueueEmpty(targetQueue)) {
+                    QueueNode *current = targetQueue->front;
+                    QueueNode *prev = NULL;
+                    boolean foundAndRemoved = false;
+
+                    while (current != NULL) {
+                        if (current->info.patientId == patient->id) {
+                            foundAndRemoved = true;
+                            if (prev == NULL) { // Patient is at the front
+                                targetQueue->front = current->next;
+                                if (targetQueue->front == NULL) { // Queue became empty
+                                    targetQueue->rear = NULL;
+                                }
+                            } else { // Patient is in the middle or at the end
+                                prev->next = current->next;
+                                if (current->next == NULL) { // Patient was at the end
+                                    targetQueue->rear = prev;
+                                }
+                            }
+                            free(current); 
+                            targetQueue->size--;
+                            break; 
+                        }
+                        prev = current;
+                        current = current->next;
+                    }
+
+                    if (foundAndRemoved) {
+                        patient->queueRoom[0] = '\0';
+                        patient->queuePosition = 0; 
+                        // Optional: Call updatePatientPositionsInQueue(hospital, targetQueue) if positions of others matter here
+                        // For canGoHome, probably not critical as this patient is leaving.
+                    }
+                } else {
+                    // Patient thinks they are in a queue, but the queue doesn't exist or is empty.
+                    // This is an inconsistency. Clear their queue status.
+                    patient->queueRoom[0] = '\0';
+                    patient->queuePosition = 0;
+                }
             }
         }
     }
