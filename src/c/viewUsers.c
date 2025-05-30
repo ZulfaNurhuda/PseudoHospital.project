@@ -179,44 +179,17 @@ void displayDoctors(Hospital *hospital, Session *session)
         char idStr[10], auraStr[10];
         // Convert ID to string
         int id = doctor->id;
-        if (id < 10)
+        if (!integerToString(id, idStr, sizeof(idStr)))
         {
-            idStr[0] = '0' + id;
-            idStr[1] = '\0';
+            return printError("Gagal mengonversi ID ke string!");
         }
-        else if (id < 100)
-        {
-            idStr[0] = '0' + (id / 10);
-            idStr[1] = '0' + (id % 10);
-            idStr[2] = '\0';
-        }
-        else
-        {
-            idStr[0] = '1';
-            idStr[1] = '0';
-            idStr[2] = '0';
-            idStr[3] = '\0';
-        }
-        // Convert aura to string
+
         int aura = doctor->aura;
-        if (aura < 10)
+        if (!integerToString(aura, auraStr, sizeof(auraStr)))
         {
-            auraStr[0] = '0' + aura;
-            auraStr[1] = '\0';
+            return printError("Gagal mengonversi aura ke string!");
         }
-        else if (aura < 100)
-        {
-            auraStr[0] = '0' + (aura / 10);
-            auraStr[1] = '0' + (aura % 10);
-            auraStr[2] = '\0';
-        }
-        else
-        {
-            auraStr[0] = '1';
-            auraStr[1] = '0';
-            auraStr[2] = '0';
-            auraStr[3] = '\0';
-        }
+
         const char *row[] = {idStr, doctor->username, auraStr};
         printTableRow(row, widths, 3);
     }

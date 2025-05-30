@@ -20,7 +20,7 @@ void displayQueue(Hospital *hospital, Session *session)
     }
 
     printHeader("Status Antrian");
-    displayLayout(hospital, session);
+    displayLayout(hospital, session, false);
 
     boolean hasRoomsWithDoctor = false;
     for (int i = 0; i < hospital->layout.rowEff; i++)
@@ -28,7 +28,7 @@ void displayQueue(Hospital *hospital, Session *session)
         for (int j = 0; j < hospital->layout.colEff; j++)
         {
             Room *room = &hospital->layout.elements[i][j];
-            if (room->doctorID != -1)
+            if (room->doctorId != -1)
             {
                 hasRoomsWithDoctor = true;
                 // Header
@@ -39,24 +39,11 @@ void displayQueue(Hospital *hospital, Session *session)
                 // Tabel kapasitas
                 char capacityStr[20];
                 int capacity = room->capacity;
-                if (capacity < 10)
+                if (!integerToString(capacity, capacityStr, sizeof(capacityStr)))
                 {
-                    capacityStr[0] = '0' + capacity;
-                    capacityStr[1] = '\0';
+                    return printError("Kapasitas ruangan tidak valid!");
                 }
-                else if (capacity < 100)
-                {
-                    capacityStr[0] = '0' + (capacity / 10);
-                    capacityStr[1] = '0' + (capacity % 10);
-                    capacityStr[2] = '\0';
-                }
-                else
-                {
-                    capacityStr[0] = '1';
-                    capacityStr[1] = '0';
-                    capacityStr[2] = '0';
-                    capacityStr[3] = '\0';
-                }
+
                 const char *row1[] = {"Kapasitas", capacityStr};
                 int widths[] = {15, 20};
                 printTableBorder(widths, 2, 1);
@@ -68,7 +55,7 @@ void displayQueue(Hospital *hospital, Session *session)
                 char *doctorName = NULL;
                 for (int k = 0; k < hospital->doctors.nEff; k++)
                 {
-                    if (hospital->doctors.elements[k].id == room->doctorID)
+                    if (hospital->doctors.elements[k].id == room->doctorId)
                     {
                         doctorName = hospital->doctors.elements[k].username;
                         break;
@@ -96,7 +83,7 @@ void displayQueue(Hospital *hospital, Session *session)
                         boolean found = false;
                         for (int l = 0; l < hospital->patients.nEff; l++)
                         {
-                            if (hospital->patients.elements[l].id == room->patientInRoom.patientID[k])
+                            if (hospital->patients.elements[l].id == room->patientInRoom.patientId[k])
                             {
                                 printf(COLOR_YELLOW "  %d. %s\n" COLOR_RESET, k + 1, hospital->patients.elements[l].username);
                                 found = true;
@@ -132,7 +119,7 @@ void displayQueue(Hospital *hospital, Session *session)
                                 boolean patientFoundInList = false;
                                 for (int m = 0; m < hospital->patients.nEff; m++)
                                 {
-                                    if (hospital->patients.elements[m].id == currentNode->info.patientID)
+                                    if (hospital->patients.elements[m].id == currentNode->info.patientId)
                                     {
                                         printf(COLOR_YELLOW "  %d. %s\n" COLOR_RESET, position, hospital->patients.elements[m].username);
                                         patientFoundInList = true;
@@ -141,7 +128,7 @@ void displayQueue(Hospital *hospital, Session *session)
                                 }
                                 if (!patientFoundInList)
                                 {
-                                    printf(COLOR_YELLOW "  %d. Pasien ID %d tidak ditemukan dalam daftar pasien utama\n" COLOR_RESET, position, currentNode->info.patientID);
+                                    printf(COLOR_YELLOW "  %d. Pasien ID %d tidak ditemukan dalam daftar pasien utama\n" COLOR_RESET, position, currentNode->info.patientId);
                                 }
                                 currentNode = currentNode->next;
                                 position++;

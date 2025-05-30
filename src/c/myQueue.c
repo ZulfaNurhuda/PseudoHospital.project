@@ -39,10 +39,10 @@ int queueSize(const Queue *q) {
     return q->size;
 }
 
-// Adds an element (patientID) to the rear of the queue.
+// Adds an element (patientId) to the rear of the queue.
 // Returns true if successful, false otherwise (e.g., q is NULL).
 // safeMalloc handles memory allocation failure by exiting.
-boolean enqueue(Queue *q, int patientID) {
+boolean enqueue(Queue *q, int patientId) {
     if (q == NULL) {
         // printError("Error: Queue pointer is NULL in enqueue.\n");
         return false;
@@ -53,7 +53,7 @@ boolean enqueue(Queue *q, int patientID) {
         printError("Gagal alokasi memori untuk node antrian baru!");
         return false; // Allocation failed
     }
-    newNode->info.patientID = patientID;
+    newNode->info.patientId = patientId;
     newNode->next = NULL;
 
     if (isQueueEmpty(q)) {
@@ -68,22 +68,22 @@ boolean enqueue(Queue *q, int patientID) {
 }
 
 // Removes an element from the front of the queue.
-// Returns true and stores patientID if successful, false if queue is empty or q is NULL.
-boolean dequeue(Queue *q, int *patientID) {
+// Returns true and stores patientId if successful, false if queue is empty or q is NULL.
+boolean dequeue(Queue *q, int *patientId) {
     if (q == NULL) {
         // printError("Error: Queue pointer is NULL in dequeue.\n");
-        if (patientID != NULL) *patientID = -1; // Indicate error or invalid ID
+        if (patientId != NULL) *patientId = -1; // Indicate error or invalid Id
         return false;
     }
     if (isQueueEmpty(q)) {
         // This is a valid operational state, usually not an "error" to print.
-        if (patientID != NULL) *patientID = -1; // Indicate queue was empty
+        if (patientId != NULL) *patientId = -1; // Indicate queue was empty
         return false;
     }
 
     QueueNode *temp = q->front;
-    if (patientID != NULL) { // Allow patientID to be NULL if caller doesn't need the value
-        *patientID = temp->info.patientID;
+    if (patientId != NULL) { // Allow patientId to be NULL if caller doesn't need the value
+        *patientId = temp->info.patientId;
     }
     
     q->front = q->front->next;
@@ -97,21 +97,21 @@ boolean dequeue(Queue *q, int *patientID) {
 }
 
 // Peeks at the front element of the queue without removing it.
-// Returns true and stores patientID if successful, false if queue is empty or q is NULL.
-boolean peekQueue(const Queue *q, int *patientID) {
+// Returns true and stores patientId if successful, false if queue is empty or q is NULL.
+boolean peekQueue(const Queue *q, int *patientId) {
     if (q == NULL) {
         // printError("Error: Queue pointer is NULL in peekQueue.\n");
-        if (patientID != NULL) *patientID = -1;
+        if (patientId != NULL) *patientId = -1;
         return false;
     }
     if (isQueueEmpty(q)) {
         // Valid operational state.
-        if (patientID != NULL) *patientID = -1;
+        if (patientId != NULL) *patientId = -1;
         return false;
     }
     
-    if (patientID != NULL) { // Allow patientID to be NULL
-        *patientID = q->front->info.patientID;
+    if (patientId != NULL) { // Allow patientId to be NULL
+        *patientId = q->front->info.patientId;
     }
     return true;
 }

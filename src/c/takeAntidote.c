@@ -50,7 +50,7 @@ boolean takeAntidote(Hospital *hospital, Session *session)
         return false;
     }
 
-    int lastMedicationId = patient->medicationsTaken.medicationID[patient->medicationsTaken.top--];
+    int lastMedicationId = patient->medicationsTaken.medicationId[patient->medicationsTaken.top--];
     if (patient->life < 3)
     {
         patient->life++;

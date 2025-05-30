@@ -171,8 +171,8 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
     if (hospital->treatmentHistory.nEff < hospital->treatmentHistory.capacity)
     {
         TreatmentHistory *history = &hospital->treatmentHistory.elements[hospital->treatmentHistory.nEff++];
-        history->patientID = patient->id;
-        history->doctorID = doctor->id;
+        history->patientId = patient->id;
+        history->doctorId = doctor->id;
         strcpy(history->room, doctor->room);
         history->examinationDate = 20250509; // Asumsi tanggal saat ini (YYYYMMDD)
         history->treatmentStatus = false;    // Belum selesai

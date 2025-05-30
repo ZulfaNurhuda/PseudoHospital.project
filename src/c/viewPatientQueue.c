@@ -80,16 +80,16 @@ void viewMySpecificQueueStatus(Hospital *hospital, Session *session) {
     QueueNode *currentNode = roomQueue->front;
     while(currentNode != NULL) {
         currentPosition++;
-        if(currentNode->info.patientID == patient->id) {
+        if(currentNode->info.patientId == patient->id) {
             actualPositionInList = currentPosition;
             break;
         }
         currentNode = currentNode->next;
     }
 
-    if (actualPositionInList == 0) { // Patient ID not found in the queue structure
+    if (actualPositionInList == 0) { // Patient Id not found in the queue structure
         char errorMsg[250]; // Increased buffer
-        // sprintf(errorMsg, "Inkonsistensi data: Anda terdaftar di antrian %s tapi ID Anda tidak ditemukan dalam struktur antrian.", patient->queueRoom);
+        // sprintf(errorMsg, "Inkonsistensi data: Anda terdaftar di antrian %s tapi Id Anda tidak ditemukan dalam struktur antrian.", patient->queueRoom);
         strcpy(errorMsg, "Inkonsistensi data: Anda terdaftar di antrian ");
         strcat(errorMsg, patient->queueRoom);
         strcat(errorMsg, " tapi ID Anda tidak ditemukan dalam struktur antrian.");

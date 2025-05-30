@@ -1,6 +1,6 @@
 #include "hospitalLayout.h"
 
-void displayLayout(Hospital *hospital, Session *session)
+void displayLayout(Hospital *hospital, Session *session, boolean printHeaderFlag)
 {
     if (hospital == NULL || session == NULL)
     {
@@ -18,7 +18,7 @@ void displayLayout(Hospital *hospital, Session *session)
         return;
     }
 
-    printHeader("Denah Rumah Sakit");
+    if (printHeaderFlag) printHeader("Denah Rumah Sakit");
 
     printf("┌");
     for (int j = 0; j < hospital->layout.colEff; j++)
@@ -144,7 +144,7 @@ void displayRoomDetails(Hospital *hospital, Session *session, const char *roomCo
 
     // Dokter
     char doctorStr[50];
-    if (room->doctorID == -1 || hospital->doctors.nEff <= 0)
+    if (room->doctorId == -1 || hospital->doctors.nEff <= 0)
     {
         strcpy(doctorStr, "Tidak ada dokter");
     }
@@ -153,7 +153,7 @@ void displayRoomDetails(Hospital *hospital, Session *session, const char *roomCo
         boolean found = false;
         for (int i = 0; i < hospital->doctors.nEff; i++)
         {
-            if (hospital->doctors.elements[i].id == room->doctorID)
+            if (hospital->doctors.elements[i].id == room->doctorId)
             {
                 strcpy(doctorStr, hospital->doctors.elements[i].username);
                 found = true;
@@ -189,7 +189,7 @@ void displayRoomDetails(Hospital *hospital, Session *session, const char *roomCo
             boolean found = false;
             for (int j = 0; j < hospital->patients.nEff; j++)
             {
-                if (hospital->patients.elements[j].id == room->patientInRoom.patientID[i])
+                if (hospital->patients.elements[j].id == room->patientInRoom.patientId[i])
                 {
                     char idStr[20];
                     strcpy(idStr, i + 1 + "0");

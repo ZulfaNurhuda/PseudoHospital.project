@@ -98,19 +98,19 @@ boolean diagnosePatient(Hospital *hospital, Session *session, const char *patien
         return false;
     }
 
-    int firstPatientID = -1;
-    if (!peekQueue(roomQueue, &firstPatientID)) {
+    int firstPatientId = -1;
+    if (!peekQueue(roomQueue, &firstPatientId)) {
         // This case should ideally be covered by isQueueEmpty, but as a safeguard:
         printError("Tidak dapat melihat pasien di depan antrian.");
         return false;
     }
 
-    if (firstPatientID != patient->id) {
+    if (firstPatientId != patient->id) {
         printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
         // Optionally, find the username of the patient who IS at the front for a more informative message.
         // char frontPatientUsername[50] = "Unknown";
         // for(int i=0; i < hospital->patients.nEff; ++i){
-        //    if(hospital->patients.elements[i].id == firstPatientID){
+        //    if(hospital->patients.elements[i].id == firstPatientId){
         //        strcpy(frontPatientUsername, hospital->patients.elements[i].username);
         //        break;
         //    }

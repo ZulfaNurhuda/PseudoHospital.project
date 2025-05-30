@@ -33,7 +33,7 @@ static void updatePatientPositionsInQueue(Hospital *hospital, Queue *q) {
             boolean stillInQueue = false;
             QueueNode *scanner = q->front;
             while(scanner != NULL) {
-                if(scanner->info.patientID == hospital->patients.elements[i].id) {
+                if(scanner->info.patientId == hospital->patients.elements[i].id) {
                     stillInQueue = true;
                     break;
                 }
@@ -52,7 +52,7 @@ static void updatePatientPositionsInQueue(Hospital *hospital, Queue *q) {
     int pos = 1;
     while (current_node != NULL) {
         for (int i = 0; i < hospital->patients.nEff; i++) {
-            if (hospital->patients.elements[i].id == current_node->info.patientID) {
+            if (hospital->patients.elements[i].id == current_node->info.patientId) {
                 if (strcmp(hospital->patients.elements[i].queueRoom, q->roomCode) == 0) { // Double check they are for this queue
                      hospital->patients.elements[i].queuePosition = pos;
                 }
@@ -90,17 +90,17 @@ boolean skipPatientInQueue(Hospital *hospital, Session *session, const char *roo
         return false;
     }
 
-    int patientIDToSkip;
-    if (!dequeue(q, &patientIDToSkip)) { 
+    int patientIdToSkip;
+    if (!dequeue(q, &patientIdToSkip)) { 
         printError("Gagal mengambil pasien dari depan antrian saat skip.");
         return false;
     }
-    if (!enqueue(q, patientIDToSkip)) { 
+    if (!enqueue(q, patientIdToSkip)) { 
         printError("Gagal menambahkan pasien ke akhir antrian saat skip.");
         // Attempt to restore: enqueue at front. This is a simplified recovery.
         // A more robust recovery would involve creating a new node and inserting at front.
         // For now, the state might be inconsistent if this second enqueue fails.
-        // Consider adding a function like: boolean enqueueAtFront(Queue* q, int patientID);
+        // Consider adding a function like: boolean enqueueAtFront(Queue* q, int patientId);
         return false; 
     }
 
@@ -178,18 +178,18 @@ boolean cancelPatientFromQueue(Hospital *hospital, Session *session, const char 
     }
     
     boolean removed = false;
-    int patientIDToCancel = patientToCancel->id;
+    int patientIdToCancel = patientToCancel->id;
 
-    int firstPatientID;
-    if (peekQueue(q, &firstPatientID) && firstPatientID == patientIDToCancel) {
-        if (dequeue(q, &firstPatientID)) { 
+    int firstPatientId;
+    if (peekQueue(q, &firstPatientId) && firstPatientId == patientIdToCancel) {
+        if (dequeue(q, &firstPatientId)) { 
             removed = true;
         }
     } else { 
         QueueNode *current = q->front;
         QueueNode *prev = NULL;
         while (current != NULL) {
-            if (current->info.patientID == patientIDToCancel) {
+            if (current->info.patientId == patientIdToCancel) {
                 if (prev == NULL) { 
                     q->front = current->next; 
                 } else {
@@ -214,7 +214,7 @@ boolean cancelPatientFromQueue(Hospital *hospital, Session *session, const char 
     if (!removed) {
         char errMsg[250]; // Increased buffer size
         char idStr[12];
-        if (!integerToString(patientIDToCancel, idStr, sizeof(idStr))) {
+        if (!integerToString(patientIdToCancel, idStr, sizeof(idStr))) {
             strcpy(idStr, "ERR");
         }
         strcpy(errMsg, "Pasien ");

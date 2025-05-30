@@ -23,11 +23,11 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             if (i >= newRowCount || j >= newColCount)
             {
                 Room *room = &hospital->layout.elements[i][j];
-                if (room->doctorID != -1)
+                if (room->doctorId != -1)
                 {
                     for (int k = 0; k < hospital->doctors.nEff; k++)
                     {
-                        if (hospital->doctors.elements[k].id == room->doctorID)
+                        if (hospital->doctors.elements[k].id == room->doctorId)
                         {
                             char errorMessage[100] = "Ruangan ";
                             strcat(errorMessage, room->code);
@@ -61,10 +61,10 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             printError("Gagal alokasi memori untuk layout baru (cols)!");
             for (int k = 0; k < i; k++) { // Free successfully allocated rows
                 if (newLayout[k] != NULL) { // Should not be NULL if loop for k ran
-                    // Free patientInRoom.patientID within each column of row k
+                    // Free patientInRoom.patientId within each column of row k
                     for (int l = 0; l < newColCount; l++) { // Assuming newColCount columns were intended for prior rows
-                        if (newLayout[k][l].patientInRoom.patientID != NULL) {
-                             free(newLayout[k][l].patientInRoom.patientID);
+                        if (newLayout[k][l].patientInRoom.patientId != NULL) {
+                             free(newLayout[k][l].patientInRoom.patientId);
                         }
                     }
                     free(newLayout[k]);
@@ -73,9 +73,9 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             free(newLayout);
             return false;
         }
-        // Initialize patientInRoom.patientID pointers to NULL for this new row
+        // Initialize patientInRoom.patientId pointers to NULL for this new row
         for (int j = 0; j < newColCount; j++) {
-            newLayout[i][j].patientInRoom.patientID = NULL;
+            newLayout[i][j].patientInRoom.patientId = NULL;
         }
 
         for (int j = 0; j < newColCount; j++)
@@ -100,14 +100,14 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             }
             strcpy(newLayout[i][j].code, code); // strcpy is fine as 'code' is now built safely
             newLayout[i][j].capacity = 3;
-            newLayout[i][j].doctorID = -1;
-            newLayout[i][j].patientInRoom.patientID = (int *)safeMalloc(3 * sizeof(int));
-            if (newLayout[i][j].patientInRoom.patientID == NULL) {
-                printError("Gagal alokasi memori untuk patientInRoom.patientID di layout baru!");
-                // Cleanup: free all patientInRoom.patientID in current row up to column j-1
+            newLayout[i][j].doctorId = -1;
+            newLayout[i][j].patientInRoom.patientId = (int *)safeMalloc(3 * sizeof(int));
+            if (newLayout[i][j].patientInRoom.patientId == NULL) {
+                printError("Gagal alokasi memori untuk patientInRoom.patientId di layout baru!");
+                // Cleanup: free all patientInRoom.patientId in current row up to column j-1
                 for (int m = 0; m < j; m++) {
-                    if (newLayout[i][m].patientInRoom.patientID != NULL) {
-                        free(newLayout[i][m].patientInRoom.patientID);
+                    if (newLayout[i][m].patientInRoom.patientId != NULL) {
+                        free(newLayout[i][m].patientInRoom.patientId);
                     }
                 }
                 // Free current row i itself
@@ -116,8 +116,8 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
                 for (int k = 0; k < i; k++) {
                     if (newLayout[k] != NULL) {
                         for (int l = 0; l < newColCount; l++) {
-                            if (newLayout[k][l].patientInRoom.patientID != NULL) {
-                               free(newLayout[k][l].patientInRoom.patientID);
+                            if (newLayout[k][l].patientInRoom.patientId != NULL) {
+                               free(newLayout[k][l].patientInRoom.patientId);
                             }
                         }
                         free(newLayout[k]);
@@ -136,11 +136,11 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
     {
         for (int j = 0; j < hospital->layout.colEff && j < newColCount; j++)
         {
-            newLayout[i][j].doctorID = hospital->layout.elements[i][j].doctorID;
+            newLayout[i][j].doctorId = hospital->layout.elements[i][j].doctorId;
             newLayout[i][j].patientInRoom.nEff = hospital->layout.elements[i][j].patientInRoom.nEff;
             for (int k = 0; k < hospital->layout.elements[i][j].patientInRoom.nEff; k++)
             {
-                newLayout[i][j].patientInRoom.patientID[k] = hospital->layout.elements[i][j].patientInRoom.patientID[k];
+                newLayout[i][j].patientInRoom.patientId[k] = hospital->layout.elements[i][j].patientInRoom.patientId[k];
             }
         }
     }
@@ -150,7 +150,7 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
     {
         for (int j = 0; j < hospital->layout.colEff; j++)
         {
-            free(hospital->layout.elements[i][j].patientInRoom.patientID);
+            free(hospital->layout.elements[i][j].patientInRoom.patientId);
         }
         free(hospital->layout.elements[i]);
     }
@@ -181,9 +181,9 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             // Iterate through patients in this queue and update their status
             QueueNode *currentNode = q_to_clear->front;
             while (currentNode != NULL) {
-                int patientID_in_queue = currentNode->info.patientID;
+                int patientId_in_queue = currentNode->info.patientId;
                 for (int p_idx = 0; p_idx < hospital->patients.nEff; p_idx++) {
-                    if (hospital->patients.elements[p_idx].id == patientID_in_queue) {
+                    if (hospital->patients.elements[p_idx].id == patientId_in_queue) {
                         if (strcmp(hospital->patients.elements[p_idx].queueRoom, q_to_clear->roomCode) == 0) {
                             hospital->patients.elements[p_idx].queueRoom[0] = '\0';
                             hospital->patients.elements[p_idx].queuePosition = 0;
@@ -195,9 +195,9 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             }
             
             // Clear the queue itself (dequeue all nodes)
-            int dummyPatientID;
+            int dummyPatientId;
             while(!isQueueEmpty(q_to_clear)) {
-                dequeue(q_to_clear, &dummyPatientID);
+                dequeue(q_to_clear, &dummyPatientId);
             }
             // Optionally, mark this queue slot as inactive if nRooms is managed strictly
             // q_to_clear->roomCode[0] = '\0'; 
@@ -301,7 +301,7 @@ boolean moveDoctor(Hospital *hospital, Session *session, const char *username, c
     }
 
     Room *newRoom = &hospital->layout.elements[row][col];
-    if (newRoom->doctorID != -1)
+    if (newRoom->doctorId != -1)
     {
         printError("Ruangan sudah ditempati dokter lain!");
         return false;
@@ -316,14 +316,14 @@ boolean moveDoctor(Hospital *hospital, Session *session, const char *username, c
             {
                 if (strcmp(hospital->layout.elements[i][j].code, doctor->room) == 0)
                 {
-                    hospital->layout.elements[i][j].doctorID = -1;
+                    hospital->layout.elements[i][j].doctorId = -1;
                     break;
                 }
             }
         }
     }
 
-    newRoom->doctorID = doctor->id;
+    newRoom->doctorId = doctor->id;
     strcpy(doctor->room, newRoomCode);
 
     printHeader("Pemindahan Dokter");

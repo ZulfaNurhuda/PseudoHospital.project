@@ -5,7 +5,8 @@
 #include "boolean.h"
 
 // >>> Untuk Menambahkan Representasi dari Tipe Data Enum dari Role
-typedef enum {
+typedef enum
+{
     MANAGER,
     DOCTOR,
     PATIENT
@@ -136,7 +137,7 @@ typedef struct
 
 typedef struct
 {
-    int *patientID;
+    int *patientId;
     int capacity;
     int nEff;
 } PatientInRoom;
@@ -146,7 +147,7 @@ typedef struct
 {
     char code[5]; // Contoh: "A1", "B2", dll.
     int capacity;
-    int doctorID; // ID dokter yang menempati ruangan ini
+    int doctorId; // ID dokter yang menempati ruangan ini
 
     // Data pasien yang berada dalam ruangan
     PatientInRoom patientInRoom;
@@ -231,8 +232,8 @@ typedef struct
 /* ADT Sederhana - untuk representasi data resep obat */
 typedef struct
 {
-    int medicationID;
-    int diseaseID;
+    int medicationId;
+    int diseaseId;
     int doseOrder; // Urutan minum obat
 } MedicationPrescription;
 
@@ -253,21 +254,23 @@ typedef struct
 /* ADT Sederhana - untuk informasi pasien dalam antrian */
 typedef struct
 {
-    int patientID;
+    int patientId;
 } QueueInfo;
 
 /* Node untuk Linked List Queue */
-typedef struct QueueNode {
+typedef struct QueueNode
+{
     QueueInfo info;
     struct QueueNode *next;
 } QueueNode;
 
 /* ADT Queue - untuk implementasi antrian pasien per ruangan (Linked List) */
-typedef struct {
-    char roomCode[5];   // Kode ruangan (misalnya: "A1", "B2", dll)
-    QueueNode *front;   // Pointer ke node depan antrian
-    QueueNode *rear;    // Pointer ke node belakang antrian
-    int size;           // Jumlah elemen dalam antrian
+typedef struct
+{
+    char roomCode[5]; // Kode ruangan (misalnya: "A1", "B2", dll)
+    QueueNode *front; // Pointer ke node depan antrian
+    QueueNode *rear;  // Pointer ke node belakang antrian
+    int size;         // Jumlah elemen dalam antrian
 } Queue;
 
 /* ADT List - untuk kumpulan antrian di rumah sakit */
@@ -299,8 +302,8 @@ typedef struct
 /* ADT Sederhana - untuk mencatat riwayat pengobatan pasien */
 typedef struct
 {
-    int patientID;
-    int doctorID;
+    int patientId;
+    int doctorId;
     char room[5];
     int examinationDate;     // Bisa menggunakan timestamp atau struktur date
     boolean treatmentStatus; // false: belum selesai, true: selesai
@@ -323,9 +326,9 @@ typedef struct
 /* ADT Sederhana - untuk mengelola sesi login pengguna */
 typedef struct
 {
-    int userID;    // ID pengguna yang sedang login
+    int userId;         // ID pengguna yang sedang login
     char username[50];  // Username pengguna
-    Role role;      // Role: "MANAJER", "DOKTER", atau "PASIEN"
+    Role role;          // Role: "MANAJER", "DOKTER", atau "PASIEN"
     boolean isLoggedIn; // Status login: true (login) atau false (logout)
 } Session;
 

@@ -45,8 +45,8 @@ static boolean localContainsCaseInsensitiveSubstring(const char *text, const cha
     return false;
 }
 
-// Static comparison function for Users by ID
-static int compareUsersByID(const void *a, const void *b) {
+// Static comparison function for Users by Id
+static int compareUsersById(const void *a, const void *b) {
     User *userA = (User *)a;
     User *userB = (User *)b;
     if (userA->id < userB->id) return -1;
@@ -54,8 +54,8 @@ static int compareUsersByID(const void *a, const void *b) {
     return 0;
 }
 
-// Static comparison function for Patients by ID
-static int comparePatientsByID(const void *a, const void *b) {
+// Static comparison function for Patients by Id
+static int comparePatientsById(const void *a, const void *b) {
     Patient *patientA = (Patient *)a;
     Patient *patientB = (Patient *)b;
     if (patientA->id < patientB->id) return -1;
@@ -63,8 +63,8 @@ static int comparePatientsByID(const void *a, const void *b) {
     return 0;
 }
 
-// Static comparison function for Doctors by ID
-static int compareDoctorsByID(const void *a, const void *b) {
+// Static comparison function for Doctors by Id
+static int compareDoctorsById(const void *a, const void *b) {
     Doctor *doctorA = (Doctor *)a;
     Doctor *doctorB = (Doctor *)b;
     if (doctorA->id < doctorB->id) return -1;
@@ -211,17 +211,17 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
 
     boolean overallFound = false; 
     boolean printedTableHeaders = false;
-    int widths[] = {5, 20, 10, 20}; // ID, Username, Role, Penyakit
+    int widths[] = {5, 20, 10, 20}; // Id, Username, Role, Penyakit
     const char *headers[] = {"ID", "Username", "Role", "Penyakit"};
     // Table headers are now printed conditionally when the first result is found.
 
-    char idStr[12];      // Buffer for ID string
+    char idStr[12];      // Buffer for Id string
     char roleStr[20];    // Buffer for Role string
     char diseaseStr[50]; // Buffer for Disease string (max 50 as per Patient struct)
 
     if (byId) {
         int targetId = stringToInt(query);
-        // Simplified error check for ID format, actual "not found" is handled by overallFound
+        // Simplified error check for Id format, actual "not found" is handled by overallFound
         if (targetId == -1 && strcmp(query, "-1") != 0 && strcmp(query, "0") != 0) {
              if (strcmp(query,"-1")!=0) { // if query is not "-1" or "0" but stringToInt returned -1
                 printError("ID pencarian tidak valid (harus berupa angka).");
@@ -231,8 +231,8 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
         }
         
         User keyUser; keyUser.id = targetId;
-        qsort(hospital->users.elements, hospital->users.nEff, sizeof(User), compareUsersByID);
-        User *foundUser = customBinarySearchUsers(&keyUser, hospital->users.elements, hospital->users.nEff, compareUsersByID);
+        qsort(hospital->users.elements, hospital->users.nEff, sizeof(User), compareUsersById);
+        User *foundUser = customBinarySearchUsers(&keyUser, hospital->users.elements, hospital->users.nEff, compareUsersById);
 
         if (foundUser != NULL) {
             if (!printedTableHeaders) {
@@ -329,7 +329,7 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
     if (overallFound) {
         printTableBorder(widths, 4, 3);
     } else {
-        // If headers were printed, it implies an ID search for a validly formatted ID that wasn't found.
+        // If headers were printed, it implies an Id search for a validly formatted Id that wasn't found.
         // So, close the table. Otherwise, just print the message.
         if (printedTableHeaders) { 
              printTableBorder(widths, 4, 3);
@@ -361,7 +361,7 @@ void findPatient(Hospital *hospital, Session *session, const char *query, boolea
 
     boolean overallFound = false; 
     boolean printedTableHeaders = false;
-    int widths[] = {5, 20, 50}; // ID, Username, Penyakit (diseaseStr width increased)
+    int widths[] = {5, 20, 50}; // Id, Username, Penyakit (diseaseStr width increased)
     const char *headers[] = {"ID", "Username", "Penyakit"};
     char idStr[12];
     char diseaseStr[51]; // Max disease name 50 + null
@@ -410,8 +410,8 @@ void findPatient(Hospital *hospital, Session *session, const char *query, boolea
             printf(COLOR_YELLOW "Pasien dengan ID '%s' tidak ditemukan.\n" COLOR_RESET, query); return;
         }
         Patient keyPatient; keyPatient.id = targetId;
-        qsort(hospital->patients.elements, hospital->patients.nEff, sizeof(Patient), comparePatientsByID);
-        Patient *foundPatient = customBinarySearchPatients(&keyPatient, hospital->patients.elements, hospital->patients.nEff, comparePatientsByID);
+        qsort(hospital->patients.elements, hospital->patients.nEff, sizeof(Patient), comparePatientsById);
+        Patient *foundPatient = customBinarySearchPatients(&keyPatient, hospital->patients.elements, hospital->patients.nEff, comparePatientsById);
         if (foundPatient != NULL) {
             if (!printedTableHeaders) {
                 printTableBorder(widths, 3, 1); printTableRow(headers, widths, 3); printTableBorder(widths, 3, 2);
@@ -519,9 +519,9 @@ void findDoctor(Hospital *hospital, Session *session, const char *query, boolean
         Doctor keyDoctor;
         keyDoctor.id = targetId;
 
-        qsort(hospital->doctors.elements, hospital->doctors.nEff, sizeof(Doctor), compareDoctorsByID);
-        // Doctor *foundDoctor = (Doctor *)bsearch(&keyDoctor, hospital->doctors.elements, hospital->doctors.nEff, sizeof(Doctor), compareDoctorsByID);
-        Doctor *foundDoctor = customBinarySearchDoctors(&keyDoctor, hospital->doctors.elements, hospital->doctors.nEff, compareDoctorsByID);
+        qsort(hospital->doctors.elements, hospital->doctors.nEff, sizeof(Doctor), compareDoctorsById);
+        // Doctor *foundDoctor = (Doctor *)bsearch(&keyDoctor, hospital->doctors.elements, hospital->doctors.nEff, sizeof(Doctor), compareDoctorsById);
+        Doctor *foundDoctor = customBinarySearchDoctors(&keyDoctor, hospital->doctors.elements, hospital->doctors.nEff, compareDoctorsById);
 
         if (foundDoctor != NULL) {
             found = true;

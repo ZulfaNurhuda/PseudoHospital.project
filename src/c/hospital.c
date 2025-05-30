@@ -75,10 +75,10 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
         if (hospital->layout.elements[i] == NULL) {
             printError("Gagal alokasi memori untuk Layout (cols)!");
             for (int k = 0; k < i; k++) { // Free previously allocated rows
-                // Need to free patientInRoom.patientID within each column of row k first
+                // Need to free patientInRoom.patientId within each column of row k first
                 for (int l = 0; l < roomCols; l++) {
-                    if (hospital->layout.elements[k] != NULL && hospital->layout.elements[k][l].patientInRoom.patientID != NULL) {
-                         free(hospital->layout.elements[k][l].patientInRoom.patientID);
+                    if (hospital->layout.elements[k] != NULL && hospital->layout.elements[k][l].patientInRoom.patientId != NULL) {
+                         free(hospital->layout.elements[k][l].patientInRoom.patientId);
                     }
                 }
                 free(hospital->layout.elements[k]);
@@ -89,9 +89,9 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
             free(hospital->doctors.elements); hospital->doctors.elements = NULL;
             return false;
         }
-        // Initialize patientInRoom.patientID pointers to NULL for this row
+        // Initialize patientInRoom.patientId pointers to NULL for this row
         for (int j = 0; j < roomCols; j++) {
-            hospital->layout.elements[i][j].patientInRoom.patientID = NULL;
+            hospital->layout.elements[i][j].patientInRoom.patientId = NULL;
         }
 
         for (int j = 0; j < roomCols; j++)
@@ -123,23 +123,23 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
             // customSafeStrcpy(hospital->layout.elements[i][j].code, code, sizeof(hospital->layout.elements[i][j].code));
             strcpy(hospital->layout.elements[i][j].code, code); // Assuming .code is large enough
             hospital->layout.elements[i][j].capacity = 3;
-            hospital->layout.elements[i][j].doctorID = -1;
-            hospital->layout.elements[i][j].patientInRoom.patientID = (int *)safeMalloc(3 * sizeof(int));
-            if (hospital->layout.elements[i][j].patientInRoom.patientID == NULL) {
-                printError("Gagal alokasi memori untuk patientInRoom.patientID!");
-                // Cleanup: free all patientInRoom.patientID in current row up to column j-1
+            hospital->layout.elements[i][j].doctorId = -1;
+            hospital->layout.elements[i][j].patientInRoom.patientId = (int *)safeMalloc(3 * sizeof(int));
+            if (hospital->layout.elements[i][j].patientInRoom.patientId == NULL) {
+                printError("Gagal alokasi memori untuk patientInRoom.patientId!");
+                // Cleanup: free all patientInRoom.patientId in current row up to column j-1
                 for (int m = 0; m < j; m++) {
-                    if (hospital->layout.elements[i][m].patientInRoom.patientID != NULL) {
-                        free(hospital->layout.elements[i][m].patientInRoom.patientID);
+                    if (hospital->layout.elements[i][m].patientInRoom.patientId != NULL) {
+                        free(hospital->layout.elements[i][m].patientInRoom.patientId);
                     }
                 }
                 // Free current row i
                 free(hospital->layout.elements[i]);
                 // Free previously allocated full rows (0 to i-1)
                 for (int k = 0; k < i; k++) {
-                    for (int l = 0; l < roomCols; l++) { // Free patientID arrays in these rows
-                        if (hospital->layout.elements[k] != NULL && hospital->layout.elements[k][l].patientInRoom.patientID != NULL) {
-                           free(hospital->layout.elements[k][l].patientInRoom.patientID);
+                    for (int l = 0; l < roomCols; l++) { // Free patientId arrays in these rows
+                        if (hospital->layout.elements[k] != NULL && hospital->layout.elements[k][l].patientInRoom.patientId != NULL) {
+                           free(hospital->layout.elements[k][l].patientInRoom.patientId);
                         }
                     }
                     free(hospital->layout.elements[k]);
@@ -167,8 +167,8 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
         for (int i = 0; i < roomRows; i++) {
             if (hospital->layout.elements[i] != NULL) {
                 for (int j = 0; j < roomCols; j++) {
-                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
-                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    if (hospital->layout.elements[i][j].patientInRoom.patientId != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientId);
                     }
                 }
                 free(hospital->layout.elements[i]);
@@ -198,8 +198,8 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
         for (int i = 0; i < roomRows; i++) {
             if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
                 for (int j = 0; j < roomCols; j++) {
-                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
-                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    if (hospital->layout.elements[i][j].patientInRoom.patientId != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientId);
                     }
                 }
                 free(hospital->layout.elements[i]);
@@ -236,8 +236,8 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
         for (int i = 0; i < roomRows; i++) {
             if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
                 for (int j = 0; j < roomCols; j++) {
-                     if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
-                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                     if (hospital->layout.elements[i][j].patientInRoom.patientId != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientId);
                     }
                 }
                 free(hospital->layout.elements[i]);
@@ -275,8 +275,8 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
         for (int i = 0; i < roomRows; i++) {
             if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
                 for (int j = 0; j < roomCols; j++) {
-                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
-                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    if (hospital->layout.elements[i][j].patientInRoom.patientId != NULL) {
+                        free(hospital->layout.elements[i][j].patientInRoom.patientId);
                     }
                 }
                 free(hospital->layout.elements[i]);
@@ -322,8 +322,8 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
         for (int i = 0; i < roomRows; i++) {
             if (hospital->layout.elements != NULL && hospital->layout.elements[i] != NULL) {
                 for (int j = 0; j < roomCols; j++) {
-                    if (hospital->layout.elements[i][j].patientInRoom.patientID != NULL) {
-                         free(hospital->layout.elements[i][j].patientInRoom.patientID);
+                    if (hospital->layout.elements[i][j].patientInRoom.patientId != NULL) {
+                         free(hospital->layout.elements[i][j].patientInRoom.patientId);
                     }
                 }
                 free(hospital->layout.elements[i]);
@@ -356,13 +356,13 @@ void freeHospital(Hospital *hospital)
     {
         // Iterate through each patient and free their medication lists FIRST
         for (int i = 0; i < hospital->patients.nEff; i++) {
-            if (hospital->patients.elements[i].medicationsPrescribed.medicationID != NULL) {
-                free(hospital->patients.elements[i].medicationsPrescribed.medicationID);
-                hospital->patients.elements[i].medicationsPrescribed.medicationID = NULL;
+            if (hospital->patients.elements[i].medicationsPrescribed.medicationId != NULL) {
+                free(hospital->patients.elements[i].medicationsPrescribed.medicationId);
+                hospital->patients.elements[i].medicationsPrescribed.medicationId = NULL;
             }
-            if (hospital->patients.elements[i].medicationsTaken.medicationID != NULL) {
-                free(hospital->patients.elements[i].medicationsTaken.medicationID);
-                hospital->patients.elements[i].medicationsTaken.medicationID = NULL;
+            if (hospital->patients.elements[i].medicationsTaken.medicationId != NULL) {
+                free(hospital->patients.elements[i].medicationsTaken.medicationId);
+                hospital->patients.elements[i].medicationsTaken.medicationId = NULL;
             }
         }
         // Now, it's safe to free the list of patients itself
@@ -382,10 +382,10 @@ void freeHospital(Hospital *hospital)
             {
                 for (int j = 0; j < hospital->layout.colCapacity; j++)
                 {
-                    if (hospital->layout.elements[i][j].patientInRoom.patientID)
+                    if (hospital->layout.elements[i][j].patientInRoom.patientId)
                     {
-                        free(hospital->layout.elements[i][j].patientInRoom.patientID);
-                        hospital->layout.elements[i][j].patientInRoom.patientID = NULL;
+                        free(hospital->layout.elements[i][j].patientInRoom.patientId);
+                        hospital->layout.elements[i][j].patientInRoom.patientId = NULL;
                     }
                 }
                 free(hospital->layout.elements[i]);
@@ -458,13 +458,13 @@ boolean deletePatient(Hospital *hospital, int patientId)
     }
 
     // Free medication arrays for the patient being deleted
-    if (hospital->patients.elements[patientIndex].medicationsPrescribed.medicationID != NULL) {
-        free(hospital->patients.elements[patientIndex].medicationsPrescribed.medicationID);
-        hospital->patients.elements[patientIndex].medicationsPrescribed.medicationID = NULL;
+    if (hospital->patients.elements[patientIndex].medicationsPrescribed.medicationId != NULL) {
+        free(hospital->patients.elements[patientIndex].medicationsPrescribed.medicationId);
+        hospital->patients.elements[patientIndex].medicationsPrescribed.medicationId = NULL;
     }
-    if (hospital->patients.elements[patientIndex].medicationsTaken.medicationID != NULL) {
-        free(hospital->patients.elements[patientIndex].medicationsTaken.medicationID);
-        hospital->patients.elements[patientIndex].medicationsTaken.medicationID = NULL;
+    if (hospital->patients.elements[patientIndex].medicationsTaken.medicationId != NULL) {
+        free(hospital->patients.elements[patientIndex].medicationsTaken.medicationId);
+        hospital->patients.elements[patientIndex].medicationsTaken.medicationId = NULL;
     }
 
     // Shift elements in PatientList
@@ -507,7 +507,7 @@ boolean deletePatient(Hospital *hospital, int patientId)
         QueueNode *prev = NULL;
 
         while (current != NULL) {
-            if (current->info.patientID == patientId) {
+            if (current->info.patientId == patientId) {
                 if (prev == NULL) { // Patient is at the front
                     q->front = current->next;
                 } else {
@@ -549,11 +549,11 @@ boolean deletePatient(Hospital *hospital, int patientId)
             Room *room = &hospital->layout.elements[i][j];
             for (int k = 0; k < room->patientInRoom.nEff; k++)
             {
-                if (room->patientInRoom.patientID[k] == patientId)
+                if (room->patientInRoom.patientId[k] == patientId)
                 {
                     for (int l = k; l < room->patientInRoom.nEff - 1; l++)
                     {
-                        room->patientInRoom.patientID[l] = room->patientInRoom.patientID[l + 1];
+                        room->patientInRoom.patientId[l] = room->patientInRoom.patientId[l + 1];
                     }
                     room->patientInRoom.nEff--;
                     break;
@@ -566,7 +566,7 @@ boolean deletePatient(Hospital *hospital, int patientId)
     int historyIndex = -1;
     for (int i = 0; i < hospital->treatmentHistory.nEff; i++)
     {
-        if (hospital->treatmentHistory.elements[i].patientID == patientId)
+        if (hospital->treatmentHistory.elements[i].patientId == patientId)
         {
             historyIndex = i;
             break;

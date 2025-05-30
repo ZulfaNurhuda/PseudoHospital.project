@@ -80,7 +80,7 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
     }
 
     // Memeriksa urutan obat
-    int expectedMedication = patient->medicationsPrescribed.medicationID[patient->medicationsTaken.top + 1];
+    int expectedMedication = patient->medicationsPrescribed.medicationId[patient->medicationsTaken.top + 1];
     if (expectedMedication != medicationId)
     {
         patient->life--;
@@ -114,7 +114,7 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
             printError("Pasien meninggal!");
             deletePatient(hospital, patient->id);
             session->isLoggedIn = false;
-            session->userID = -1;
+            session->userId = -1;
             session->username[0] = '\0';
             session->role = -1;
         }
@@ -124,7 +124,7 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
     // Menambahkan obat ke stack
     if (patient->medicationsTaken.top + 1 < patient->medicationsTaken.capacity)
     {
-        patient->medicationsTaken.medicationID[++patient->medicationsTaken.top] = medicationId;
+        patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = medicationId;
     }
     else
     {

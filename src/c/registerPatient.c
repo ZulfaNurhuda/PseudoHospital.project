@@ -114,8 +114,8 @@ boolean registerPatient(Hospital *hospital, Session *session, const char *inputU
     newPatient->diagnosedStatus = false;
     newPatient->treatedStatus = false;
 
-    newPatient->medicationsPrescribed.medicationID = (int *)safeMalloc(10 * sizeof(int));
-    if (newPatient->medicationsPrescribed.medicationID == NULL) {
+    newPatient->medicationsPrescribed.medicationId = (int *)safeMalloc(10 * sizeof(int));
+    if (newPatient->medicationsPrescribed.medicationId == NULL) {
         printError("Gagal alokasi memori untuk resep pasien!");
         // No nEff increment yet, so no need to roll back user/patient count
         return false;
@@ -123,11 +123,11 @@ boolean registerPatient(Hospital *hospital, Session *session, const char *inputU
     newPatient->medicationsPrescribed.capacity = 10;
     newPatient->medicationsPrescribed.nEff = 0;
 
-    newPatient->medicationsTaken.medicationID = (int *)safeMalloc(10 * sizeof(int));
-    if (newPatient->medicationsTaken.medicationID == NULL) {
+    newPatient->medicationsTaken.medicationId = (int *)safeMalloc(10 * sizeof(int));
+    if (newPatient->medicationsTaken.medicationId == NULL) {
         printError("Gagal alokasi memori untuk obat yang diminum pasien!");
-        free(newPatient->medicationsPrescribed.medicationID); // Free the previously allocated memory
-        newPatient->medicationsPrescribed.medicationID = NULL;
+        free(newPatient->medicationsPrescribed.medicationId); // Free the previously allocated memory
+        newPatient->medicationsPrescribed.medicationId = NULL;
         // No nEff increment yet
         return false;
     }

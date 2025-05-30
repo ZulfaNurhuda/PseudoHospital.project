@@ -13,7 +13,7 @@ boolean logout(Session *session)
         return false;
     }
 
-    session->userID = -1;
+    session->userId = -1;
     session->username[0] = '\0';
     session->role = -1;
     session->isLoggedIn = false;

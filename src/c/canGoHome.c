@@ -69,7 +69,7 @@ boolean canGoHome(Hospital *hospital, Session *session)
         {
             for (int i = 0; i <= patient->medicationsTaken.top; i++)
             {
-                if (patient->medicationsTaken.medicationID[i] != patient->medicationsPrescribed.medicationID[i])
+                if (patient->medicationsTaken.medicationId[i] != patient->medicationsPrescribed.medicationId[i])
                 {
                     correctOrder = false;
                     break;
@@ -93,11 +93,11 @@ boolean canGoHome(Hospital *hospital, Session *session)
             {
                 for (int i = 0; i < hospital->treatmentHistory.nEff; i++)
                 {
-                    if (hospital->treatmentHistory.elements[i].patientID == patient->id)
+                    if (hospital->treatmentHistory.elements[i].patientId == patient->id)
                     {
                         for (int j = 0; j < hospital->doctors.nEff; j++)
                         {
-                            if (hospital->doctors.elements[j].id == hospital->treatmentHistory.elements[i].doctorID)
+                            if (hospital->doctors.elements[j].id == hospital->treatmentHistory.elements[i].doctorId)
                             {
                                 hospital->doctors.elements[j].aura += 1.0;
                                 break;
@@ -128,7 +128,7 @@ boolean canGoHome(Hospital *hospital, Session *session)
                     boolean foundAndRemoved = false;
 
                     while (current != NULL) {
-                        if (current->info.patientID == patient->id) {
+                        if (current->info.patientId == patient->id) {
                             foundAndRemoved = true;
                             if (prev == NULL) { // Patient is at the front
                                 targetQueue->front = current->next;

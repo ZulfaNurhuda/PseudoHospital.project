@@ -159,7 +159,7 @@ boolean assignDoctor(Hospital *hospital, Session *session, const char *username,
         return false;
     }
 
-    if (room->doctorID != -1)
+    if (room->doctorId != -1)
     {
         printError("Ruangan sudah ditempati dokter lain!");
         return false;
@@ -174,14 +174,14 @@ boolean assignDoctor(Hospital *hospital, Session *session, const char *username,
             {
                 if (strcmp(hospital->layout.elements[i][j].code, doctor->room) == 0)
                 {
-                    hospital->layout.elements[i][j].doctorID = -1;
+                    hospital->layout.elements[i][j].doctorId = -1;
                     break;
                 }
             }
         }
     }
 
-    room->doctorID = doctor->id;
+    room->doctorId = doctor->id;
     strcpy(doctor->room, roomCode);
 
     // Membuat pesan sukses
