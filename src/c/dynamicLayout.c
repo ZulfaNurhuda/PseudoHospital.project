@@ -59,9 +59,15 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
                 colStr[index++] = (col % 10) + '0';
                 col /= 10;
             }
-            for (int k = index - 1; k >= 0; k--)
-                strncat(code, &colStr[k], 1);
-            strcpy(newLayout[i][j].code, code);
+            for (int k = index - 1; k >= 0; k--) {
+                // strncat(code, &colStr[k], 1);
+                int currentLen = strlen(code);
+                if (currentLen < sizeof(code) - 1) {
+                    code[currentLen] = colStr[k];
+                    code[currentLen+1] = '\0';
+                }
+            }
+            strcpy(newLayout[i][j].code, code); // strcpy is fine as 'code' is now built safely
             newLayout[i][j].capacity = 3;
             newLayout[i][j].doctorID = -1;
             newLayout[i][j].patientInRoom.patientID = (int *)safeMalloc(3 * sizeof(int));

@@ -1,4 +1,5 @@
 #include "viewQueue.h"
+#include "myQueue.h" // Added for new queue functions
 
 void displayQueue(Hospital *hospital, Session *session)
 {
@@ -117,29 +118,33 @@ void displayQueue(Hospital *hospital, Session *session)
                     if (strcmp(hospital->queues.queues[k].roomCode, room->code) == 0)
                     {
                         foundQueue = true;
-                        Queue *queue = &hospital->queues.queues[k];
-                        if (queue->idxHead == -1 || hospital->patients.nEff <= 0)
+                        Queue *currentQueue = &hospital->queues.queues[k];
+                        if (isQueueEmpty(currentQueue) || hospital->patients.nEff <= 0)
                         {
                             printf(COLOR_YELLOW "  Tidak ada pasien di antrian\n" COLOR_RESET);
                         }
                         else
                         {
-                            for (int l = queue->idxHead; l <= queue->idxTail; l++)
+                            QueueNode *currentNode = currentQueue->front;
+                            int position = 1;
+                            while (currentNode != NULL)
                             {
-                                boolean found = false;
+                                boolean patientFoundInList = false;
                                 for (int m = 0; m < hospital->patients.nEff; m++)
                                 {
-                                    if (hospital->patients.elements[m].id == queue->buffer[l].patientID)
+                                    if (hospital->patients.elements[m].id == currentNode->info.patientID)
                                     {
-                                        printf(COLOR_YELLOW "  %d. %s\n" COLOR_RESET, l - queue->idxHead + 1, hospital->patients.elements[m].username);
-                                        found = true;
+                                        printf(COLOR_YELLOW "  %d. %s\n" COLOR_RESET, position, hospital->patients.elements[m].username);
+                                        patientFoundInList = true;
                                         break;
                                     }
                                 }
-                                if (!found)
+                                if (!patientFoundInList)
                                 {
-                                    printf(COLOR_YELLOW "  %d. Pasien tidak ditemukan\n" COLOR_RESET, l - queue->idxHead + 1);
+                                    printf(COLOR_YELLOW "  %d. Pasien ID %d tidak ditemukan dalam daftar pasien utama\n" COLOR_RESET, position, currentNode->info.patientID);
                                 }
+                                currentNode = currentNode->next;
+                                position++;
                             }
                         }
                         break;

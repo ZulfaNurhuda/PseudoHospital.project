@@ -38,13 +38,13 @@ typedef struct
     Role role;             // "MANAJER", "DOKTER", atau "PASIEN"
 } User;
 
-/* ADT List - untuk penyimpanan kumpulan user */
+/* ADT Map (array-based) - untuk penyimpanan kumpulan user */ // Changed comment
 typedef struct
 {
     User *elements;
     int capacity;
     int nEff;
-} UserList;
+} UserMap; // Renamed
 
 // >>> ADT PASIEN
 
@@ -183,6 +183,8 @@ typedef struct
     int diastolicBloodPressureMax;
     int heartRateMin;
     int heartRateMax;
+    float oxygenSaturationMin;
+    float oxygenSaturationMax;
     float bloodSugarLevelMin;
     float bloodSugarLevelMax;
     float weightMin;
@@ -254,14 +256,18 @@ typedef struct
     int patientID;
 } QueueInfo;
 
-/* ADT Queue - untuk implementasi antrian pasien per ruangan */
-typedef struct
-{
-    char roomCode[5]; // Kode ruangan (misalnya: "A1", "B2", dll)
-    QueueInfo *buffer;
-    int idxHead;
-    int idxTail;
-    int capacity;
+/* Node untuk Linked List Queue */
+typedef struct QueueNode {
+    QueueInfo info;
+    struct QueueNode *next;
+} QueueNode;
+
+/* ADT Queue - untuk implementasi antrian pasien per ruangan (Linked List) */
+typedef struct {
+    char roomCode[5];   // Kode ruangan (misalnya: "A1", "B2", dll)
+    QueueNode *front;   // Pointer ke node depan antrian
+    QueueNode *rear;    // Pointer ke node belakang antrian
+    int size;           // Jumlah elemen dalam antrian
 } Queue;
 
 /* ADT List - untuk kumpulan antrian di rumah sakit */
@@ -333,7 +339,7 @@ typedef struct
 typedef struct
 {
     // Pengguna
-    UserList users;
+    UserMap users; // Renamed
     PatientList patients;
     DoctorList doctors;
 

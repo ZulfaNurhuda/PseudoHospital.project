@@ -1,140 +1,114 @@
 #include "myQueue.h"
+#include <string.h> // For strncpy
+#include "utils.h"  // For printError, safeMalloc (although safeMalloc typically exits on error)
 
-void myQueue(Hospital *hospital, Session *session)
-{
-    if (hospital == NULL || session == NULL)
-    {
-        printError("Struktur rumah sakit atau sesi tidak valid!");
-        return;
+// Initializes a Queue (front/rear to NULL, size to 0).
+void initializeQueue(Queue *q, const char* roomCode) {
+    if (q == NULL) {
+        // Depending on project's error handling, might print an error or assert
+        // printError("Error: Queue pointer is NULL in initializeQueue.\n");
+        return; // Or handle error more gracefully if possible
     }
-    if (!session->isLoggedIn || session->role != PATIENT)
-    {
-        printError("Akses ditolak! Hanya Pasien yang dapat melihat antrian.");
-        return;
+    q->front = NULL;
+    q->rear = NULL;
+    q->size = 0;
+    if (roomCode != NULL) {
+        // customSafeStrcpy(q->roomCode, roomCode, sizeof(q->roomCode));
+        strcpy(q->roomCode, roomCode); // Assuming q->roomCode is always large enough
+    } else {
+        q->roomCode[0] = '\0'; // Default to empty string if roomCode is NULL
     }
+}
 
-    if (hospital->patients.nEff == 0)
-    {
-        printError("Tidak ada pasien terdaftar!");
-        return;
+// Checks if the queue is empty.
+boolean isQueueEmpty(const Queue *q) {
+    if (q == NULL) {
+        // printError("Error: Queue pointer is NULL in isQueueEmpty.\n");
+        return true; // Consistent with queueSize returning 0 for NULL queue
     }
-    int patientIdx = -1;
-    for (int i = 0; i < hospital->patients.nEff; i++)
-    {
-        if (strcmp(hospital->patients.elements[i].username, session->username) == 0)
-        {
-            patientIdx = i;
-            break;
-        }
-    }
-    if (patientIdx == -1)
-    {
-        printError("Pasien tidak ditemukan!");
-        return;
-    }
+    // return q->front == NULL; // This also works if size is not maintained or for extra check
+    return q->size == 0; // More reliable if q->size is accurately maintained
+}
 
-    Patient *patient = &hospital->patients.elements[patientIdx];
-    if (patient->queueRoom[0] == '\0')
-    {
-        printHeader("Status Antrian");
-        printSuccess("Anda tidak terdaftar dalam antrian apapun.");
-        return;
+// Returns the number of elements in the queue.
+int queueSize(const Queue *q) {
+    if (q == NULL) {
+        // printError("Error: Queue pointer is NULL in queueSize.\n");
+        return 0; 
     }
+    return q->size;
+}
 
-    if (hospital->queues.nRooms == 0)
-    {
-        printError("Tidak ada antrian terdaftar!");
-        return;
-    }
-    int queueIdx = -1;
-    for (int i = 0; i < hospital->queues.nRooms; i++)
-    {
-        if (strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0)
-        {
-            queueIdx = i;
-            break;
-        }
-    }
-    if (queueIdx == -1)
-    {
-        printError("Antrian tidak ditemukan!");
-        return;
+// Adds an element (patientID) to the rear of the queue.
+// Returns true if successful, false otherwise (e.g., q is NULL).
+// safeMalloc handles memory allocation failure by exiting.
+boolean enqueue(Queue *q, int patientID) {
+    if (q == NULL) {
+        // printError("Error: Queue pointer is NULL in enqueue.\n");
+        return false;
     }
 
-    Queue *queue = &hospital->queues.queues[queueIdx];
-    char doctorName[50] = "Tidak ada";
-    if (hospital->doctors.nEff > 0)
-    {
-        for (int i = 0; i < hospital->doctors.nEff; i++)
-        {
-            if (strcmp(hospital->doctors.elements[i].room, patient->queueRoom) == 0)
-            {
-                strcpy(doctorName, hospital->doctors.elements[i].username);
-                break;
-            }
-        }
+    QueueNode *newNode = (QueueNode *)safeMalloc(sizeof(QueueNode));
+    // Assuming safeMalloc exits on failure, newNode will be valid here.
+    newNode->info.patientID = patientID;
+    newNode->next = NULL;
+
+    if (isQueueEmpty(q)) {
+        q->front = newNode;
+        q->rear = newNode;
+    } else {
+        q->rear->next = newNode;
+        q->rear = newNode; // Update rear to the new node
+    }
+    q->size++;
+    return true;
+}
+
+// Removes an element from the front of the queue.
+// Returns true and stores patientID if successful, false if queue is empty or q is NULL.
+boolean dequeue(Queue *q, int *patientID) {
+    if (q == NULL) {
+        // printError("Error: Queue pointer is NULL in dequeue.\n");
+        if (patientID != NULL) *patientID = -1; // Indicate error or invalid ID
+        return false;
+    }
+    if (isQueueEmpty(q)) {
+        // This is a valid operational state, usually not an "error" to print.
+        if (patientID != NULL) *patientID = -1; // Indicate queue was empty
+        return false;
     }
 
-    // Memeriksa konsistensi queuePosition
-    int actualPosition = -1;
-    for (int i = queue->idxHead; i <= queue->idxTail; i++)
-    {
-        if (queue->buffer[i].patientID == patient->id)
-        {
-            actualPosition = i - queue->idxHead + 1;
-            break;
-        }
+    QueueNode *temp = q->front;
+    if (patientID != NULL) { // Allow patientID to be NULL if caller doesn't need the value
+        *patientID = temp->info.patientID;
     }
-    if (actualPosition == -1 || actualPosition != patient->queuePosition)
-    {
-        printError("Data posisi antrian tidak konsisten!");
-        return;
+    
+    q->front = q->front->next;
+    if (q->front == NULL) { // If queue becomes empty after dequeue
+        q->rear = NULL;
     }
+    
+    free(temp); // Free the dequeued node
+    q->size--;
+    return true;
+}
 
-    printHeader("Status Antrian");
-    int widths[] = {15, 20, 20, 10};
-    const char *headers[] = {"Dokter", "Ruangan", "Posisi", "Total"};
-    printTableRow(headers, widths, 4);
-    printTableBorder(widths, 4, 1);
-
-    char positionStr[10] = "";
-    char totalStr[10] = "";
-    int position = patient->queuePosition;
-    int total = queue->idxTail - queue->idxHead + 1;
-    int k = 0;
-    if (position == 0)
-        positionStr[k++] = '0';
-    else
-        while (position > 0)
-        {
-            positionStr[k++] = (position % 10) + '0';
-            position /= 10;
-        }
-    for (int m = 0; m < k / 2; m++)
-    {
-        char temp = positionStr[m];
-        positionStr[m] = positionStr[k - 1 - m];
-        positionStr[k - 1 - m] = temp;
+// Peeks at the front element of the queue without removing it.
+// Returns true and stores patientID if successful, false if queue is empty or q is NULL.
+boolean peekQueue(const Queue *q, int *patientID) {
+    if (q == NULL) {
+        // printError("Error: Queue pointer is NULL in peekQueue.\n");
+        if (patientID != NULL) *patientID = -1;
+        return false;
     }
-    positionStr[k] = '\0';
-    k = 0;
-    if (total == 0)
-        totalStr[k++] = '0';
-    else
-        while (total > 0)
-        {
-            totalStr[k++] = (total % 10) + '0';
-            total /= 10;
-        }
-    for (int m = 0; m < k / 2; m++)
-    {
-        char temp = totalStr[m];
-        totalStr[m] = totalStr[k - 1 - m];
-        totalStr[k - 1 - m] = temp;
+    if (isQueueEmpty(q)) {
+        // Valid operational state.
+        if (patientID != NULL) *patientID = -1;
+        return false;
     }
-    totalStr[k] = '\0';
-
-    const char *row[] = {doctorName, patient->queueRoom, positionStr, totalStr};
-    printTableRow(row, widths, 4);
-    printTableBorder(widths, 4, 3);
+    
+    if (patientID != NULL) { // Allow patientID to be NULL
+        *patientID = q->front->info.patientID;
+    }
+    return true;
 }

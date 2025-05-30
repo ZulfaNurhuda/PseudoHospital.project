@@ -168,19 +168,46 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(command, "CARIPASIEN") == 0)
         {
-            char query[50];
+            char query[51]; // Increased size for potential spaces + null terminator
             boolean by_id = false;
-            printf("Cari berdasarkan ID? (1=Ya, 0=Tidak): ");
+            boolean by_disease = false; // New flag
+
+            printf("Cari berdasarkan?\n1. ID\n2. Nama\n3. Penyakit\n");
             int choice;
-            if (!readValidInt(&choice, "Masukkan pilihan: "))
-                continue;
-            by_id = choice == 1;
-            if (!readValidString(query, 50, "Masukkan query: ", false))
-            {
-                printError("Query tidak valid!");
+            if (!readValidInt(&choice, ">>> Pilihan: ")) {
                 continue;
             }
-            findPatient(&hospital, &session, query, by_id);
+
+            if (choice == 1) { // ID
+                by_id = true;
+                by_disease = false;
+                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID user: ", false)) { // Allow non-alphanumeric for ID if it's just numbers
+                    printError("Input ID tidak valid!");
+                    continue;
+                }
+            } else if (choice == 2) { // Nama
+                by_id = false;
+                by_disease = false;
+                // Using readValidString for now as per simplified task.
+                // If names can truly have spaces and that's desired, this should also be readStringWithSpaces.
+                // For this subtask, only disease input is changed to readStringWithSpaces.
+                if (!readValidString(query, sizeof(query), ">>> Masukkan nama user: ", false)) { 
+                    printError("Input Nama tidak valid!");
+                    continue;
+                }
+            } else if (choice == 3) { // Penyakit
+                by_id = false;
+                by_disease = true;
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama penyakit: ")) {
+                    printError("Input Penyakit tidak valid!");
+                    continue;
+                }
+            } else {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+            // Temporarily modify findPatient call signature, actual function will be changed later.
+            findPatient(&hospital, &session, query, by_id, by_disease); 
         }
         else if (strcmp(command, "CARIDOKTER") == 0)
         {

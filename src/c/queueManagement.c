@@ -1,315 +1,298 @@
 #include "queueManagement.h"
+#include "myQueue.h" // For linked-list queue operations
+#include "utils.h"   // For printError, printSuccess, etc.
+#include <string.h>  // For strcmp, strcpy, sprintf
+#include <stdio.h>   // For sprintf
 
-boolean skipQueue(Hospital *hospital, Session *session)
-{
-    if (hospital == NULL || session == NULL)
-    {
-        printError("Struktur rumah sakit atau sesi tidak valid!");
-        return false;
-    }
-    if (!session->isLoggedIn || session->role != PATIENT)
-    {
-        printError("Akses ditolak! Hanya Pasien yang dapat melewati antrian.");
-        return false;
-    }
-
-    if (hospital->patients.nEff == 0)
-    {
-        printError("Tidak ada pasien terdaftar!");
-        return false;
-    }
-    int patientIdx = -1;
-    for (int i = 0; i < hospital->patients.nEff; i++)
-    {
-        if (strcmp(hospital->patients.elements[i].username, session->username) == 0)
-        {
-            patientIdx = i;
-            break;
+// Helper function to find a queue by its room code
+static Queue* findQueueByRoomCode(Hospital *hospital, const char *roomCode) {
+    if (hospital == NULL || roomCode == NULL || roomCode[0] == '\0') return NULL;
+    for (int i = 0; i < hospital->queues.nRooms; i++) { // Assuming nRooms correctly tracks active queues with codes
+        if (strcmp(hospital->queues.queues[i].roomCode, roomCode) == 0) {
+            return &hospital->queues.queues[i];
         }
     }
-    if (patientIdx == -1)
-    {
-        printError("Pasien tidak ditemukan!");
-        return false;
-    }
-
-    Patient *patient = &hospital->patients.elements[patientIdx];
-    if (patient->queueRoom[0] == '\0')
-    {
-        printError("Anda tidak terdaftar dalam antrian apapun!");
-        return false;
-    }
-
-    if (hospital->queues.nRooms == 0)
-    {
-        printError("Tidak ada antrian terdaftar!");
-        return false;
-    }
-    int queueIdx = -1;
-    for (int i = 0; i < hospital->queues.nRooms; i++)
-    {
-        if (strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0)
-        {
-            queueIdx = i;
-            break;
+    // If not found among nRooms, check full capacity if queues can be sparsely activated
+    for (int i = 0; i < hospital->queues.capacity; i++) {
+         if (hospital->queues.queues[i].roomCode[0] != '\0' && strcmp(hospital->queues.queues[i].roomCode, roomCode) == 0) {
+            return &hospital->queues.queues[i];
         }
     }
-    if (queueIdx == -1)
-    {
-        printError("Antrian tidak ditemukan!");
-        return false;
-    }
+    return NULL;
+}
 
-    Queue *queue = &hospital->queues.queues[queueIdx];
-    if (queue->idxHead == -1 || queue->idxTail == -1)
-    {
-        printError("Antrian kosong!");
-        return false;
+// Helper function to update queue positions for all patients in a specific queue
+static void updatePatientPositionsInQueue(Hospital *hospital, Queue *q) {
+    if (q == NULL || hospital == NULL) {
+        return;
     }
-
-    int patientQueuePos = -1;
-    for (int i = queue->idxHead; i <= queue->idxTail; i++)
-    {
-        if (queue->buffer[i].patientID == patient->id)
-        {
-            patientQueuePos = i;
-            break;
-        }
-    }
-    if (patientQueuePos == -1)
-    {
-        printError("Pasien tidak ditemukan dalam antrian!");
-        return false;
-    }
-
-    if (patientQueuePos == queue->idxHead)
-    {
-        printError("Anda sudah berada di posisi pertama antrian!");
-        return false;
-    }
-
-    QueueInfo temp = queue->buffer[patientQueuePos];
-    for (int i = patientQueuePos; i > queue->idxHead; i--)
-    {
-        queue->buffer[i] = queue->buffer[i - 1];
-    }
-    queue->buffer[queue->idxHead] = temp;
-
-    for (int i = 0; i < hospital->patients.nEff; i++)
-    {
-        if (strcmp(hospital->patients.elements[i].queueRoom, patient->queueRoom) == 0)
-        {
-            for (int j = queue->idxHead; j <= queue->idxTail; j++)
-            {
-                if (queue->buffer[j].patientID == hospital->patients.elements[i].id)
-                {
-                    hospital->patients.elements[i].queuePosition = j - queue->idxHead + 1;
+    // First, clear positions of patients who might have been in this queue but are no longer
+    // This is important if a patient is cancelled and the queue becomes empty.
+    for (int i = 0; i < hospital->patients.nEff; i++) {
+        if (strcmp(hospital->patients.elements[i].queueRoom, q->roomCode) == 0) { // If they thought they were in this room
+            boolean stillInQueue = false;
+            QueueNode *scanner = q->front;
+            while(scanner != NULL) {
+                if(scanner->info.patientID == hospital->patients.elements[i].id) {
+                    stillInQueue = true;
                     break;
                 }
+                scanner = scanner->next;
+            }
+            if (!stillInQueue) { // If not in the queue structure anymore
+                hospital->patients.elements[i].queuePosition = 0; 
+                // hospital->patients.elements[i].queueRoom[0] = '\0'; // This should be done by the calling function (cancel/dequeue)
             }
         }
     }
 
-    char doctorName[50] = "Tidak ada";
-    if (hospital->doctors.nEff > 0)
-    {
-        for (int i = 0; i < hospital->doctors.nEff; i++)
-        {
-            if (strcmp(hospital->doctors.elements[i].room, patient->queueRoom) == 0)
-            {
-                strcpy(doctorName, hospital->doctors.elements[i].username);
-                break;
+    if (isQueueEmpty(q)) return; // No positions to update if queue is empty
+
+    QueueNode *current_node = q->front;
+    int pos = 1;
+    while (current_node != NULL) {
+        for (int i = 0; i < hospital->patients.nEff; i++) {
+            if (hospital->patients.elements[i].id == current_node->info.patientID) {
+                if (strcmp(hospital->patients.elements[i].queueRoom, q->roomCode) == 0) { // Double check they are for this queue
+                     hospital->patients.elements[i].queuePosition = pos;
+                }
+                break; 
             }
         }
+        current_node = current_node->next;
+        pos++;
+    }
+}
+
+// Function for Manager to move the first patient in a queue to the end of the queue.
+boolean skipPatientInQueue(Hospital *hospital, Session *session, const char *roomCode) {
+    if (hospital == NULL || session == NULL || roomCode == NULL) {
+        printError("Data input tidak valid untuk skip antrian.");
+        return false;
+    }
+    if (!session->isLoggedIn || session->role != MANAGER) {
+        printError("Akses ditolak! Hanya Manajer yang dapat melakukan operasi skip antrian.");
+        return false;
     }
 
-    printHeader("Lewati Antrian");
-    int widths[] = {15, 20, 20, 10};
-    const char *headers[] = {"Dokter", "Ruangan", "Posisi Baru", "Total"};
-    printTableRow(headers, widths, 4);
-    printTableBorder(widths, 4, 1);
-
-    char positionStr[10] = "";
-    int k = 0;
-    int pos = patient->queuePosition;
-    if (pos == 0)
-        positionStr[k++] = '0';
-    else
-        while (pos > 0)
-        {
-            positionStr[k++] = (pos % 10) + '0';
-            pos /= 10;
-        }
-    for (int m = 0; m < k / 2; m++)
-    {
-        char temp = positionStr[m];
-        positionStr[m] = positionStr[k - 1 - m];
-        positionStr[k - 1 - m] = temp;
+    Queue *q = findQueueByRoomCode(hospital, roomCode);
+    if (q == NULL) {
+        char err[100];
+        // sprintf(err, "Antrian untuk ruangan %s tidak ditemukan.", roomCode);
+        strcpy(err, "Antrian untuk ruangan ");
+        strcat(err, roomCode);
+        strcat(err, " tidak ditemukan.");
+        printError(err);
+        return false;
     }
-    positionStr[k] = '\0';
-
-    char totalStr[10] = "";
-    k = 0;
-    int total = queue->idxTail - queue->idxHead + 1;
-    if (total == 0)
-        totalStr[k++] = '0';
-    else
-        while (total > 0)
-        {
-            totalStr[k++] = (total % 10) + '0';
-            total /= 10;
-        }
-    for (int m = 0; m < k / 2; m++)
-    {
-        char temp = totalStr[m];
-        totalStr[m] = totalStr[k - 1 - m];
-        totalStr[k - 1 - m] = temp;
+    if (isQueueEmpty(q) || queueSize(q) < 2) {
+        printError("Tidak cukup pasien dalam antrian untuk melakukan skip (perlu minimal 2).");
+        return false;
     }
-    totalStr[k] = '\0';
 
-    const char *row[] = {doctorName, patient->queueRoom, positionStr, totalStr};
-    printTableRow(row, widths, 4);
-    printTableBorder(widths, 4, 3);
+    int patientIDToSkip;
+    if (!dequeue(q, &patientIDToSkip)) { 
+        printError("Gagal mengambil pasien dari depan antrian saat skip.");
+        return false;
+    }
+    if (!enqueue(q, patientIDToSkip)) { 
+        printError("Gagal menambahkan pasien ke akhir antrian saat skip.");
+        // Attempt to restore: enqueue at front. This is a simplified recovery.
+        // A more robust recovery would involve creating a new node and inserting at front.
+        // For now, the state might be inconsistent if this second enqueue fails.
+        // Consider adding a function like: boolean enqueueAtFront(Queue* q, int patientID);
+        return false; 
+    }
 
-    printSuccess("Berhasil melewati antrian!");
+    updatePatientPositionsInQueue(hospital, q);
+    
+    char successMsg[150];
+    // sprintf(successMsg, "Pasien terdepan di antrian ruangan %s telah dipindahkan ke akhir. Antrian diperbarui.", roomCode);
+    strcpy(successMsg, "Pasien terdepan di antrian ruangan ");
+    strcat(successMsg, roomCode);
+    strcat(successMsg, " telah dipindahkan ke akhir. Antrian diperbarui.");
+    printSuccess(successMsg);
     return true;
 }
 
-boolean cancelQueue(Hospital *hospital, Session *session)
-{
-    if (hospital == NULL || session == NULL)
-    {
-        printError("Struktur rumah sakit atau sesi tidak valid!");
+// Function for a Patient to cancel their own queue, or Manager to cancel any patient's queue.
+boolean cancelPatientFromQueue(Hospital *hospital, Session *session, const char *patientUsernameToCancel) {
+    if (hospital == NULL || session == NULL || patientUsernameToCancel == NULL) {
+        printError("Data input tidak valid untuk pembatalan antrian.");
         return false;
     }
-    if (!session->isLoggedIn || session->role != PATIENT)
-    {
-        printError("Akses ditolak! Hanya Pasien yang dapat membatalkan antrian.");
+    if (!session->isLoggedIn) {
+        printError("Akses ditolak. Silakan login terlebih dahulu.");
         return false;
     }
 
-    if (hospital->patients.nEff == 0)
-    {
-        printError("Tidak ada pasien terdaftar!");
-        return false;
-    }
-    int patientIdx = -1;
-    for (int i = 0; i < hospital->patients.nEff; i++)
-    {
-        if (strcmp(hospital->patients.elements[i].username, session->username) == 0)
-        {
-            patientIdx = i;
+    int patientToCancelIdx = -1;
+    for (int i = 0; i < hospital->patients.nEff; i++) {
+        if (strcmp(hospital->patients.elements[i].username, patientUsernameToCancel) == 0) {
+            patientToCancelIdx = i;
             break;
         }
     }
-    if (patientIdx == -1)
-    {
-        printError("Pasien tidak ditemukan!");
+    if (patientToCancelIdx == -1) {
+        char err[100];
+        // sprintf(err,"Pasien '%s' yang akan dibatalkan antriannya tidak ditemukan.", patientUsernameToCancel);
+        strcpy(err, "Pasien '");
+        strcat(err, patientUsernameToCancel);
+        strcat(err, "' yang akan dibatalkan antriannya tidak ditemukan.");
+        printError(err);
+        return false;
+    }
+    Patient *patientToCancel = &hospital->patients.elements[patientToCancelIdx];
+
+    if (session->role == PATIENT && strcmp(session->username, patientUsernameToCancel) != 0) {
+        printError("Akses ditolak! Pasien hanya dapat membatalkan antriannya sendiri.");
         return false;
     }
 
-    Patient *patient = &hospital->patients.elements[patientIdx];
-    if (patient->queueRoom[0] == '\0')
-    {
-        printError("Anda tidak terdaftar dalam antrian apapun!");
+    if (patientToCancel->queueRoom[0] == '\0') {
+        char errMsg[100];
+        // sprintf(errMsg, "Pasien %s tidak sedang dalam antrian apapun.", patientUsernameToCancel);
+        strcpy(errMsg, "Pasien ");
+        strcat(errMsg, patientUsernameToCancel);
+        strcat(errMsg, " tidak sedang dalam antrian apapun.");
+        printError(errMsg);
         return false;
     }
 
-    if (hospital->queues.nRooms == 0)
-    {
-        printError("Tidak ada antrian terdaftar!");
+    char originalRoomCode[5]; // Store for messages and patient list update
+    strcpy(originalRoomCode, patientToCancel->queueRoom);
+    Queue *q = findQueueByRoomCode(hospital, originalRoomCode);
+
+    if (q == NULL) { // Check if queue actually exists
+        char errMsg[150];
+        // sprintf(errMsg, "Error: Antrian untuk ruangan %s (tempat pasien %s terdaftar) tidak ditemukan dalam sistem.", originalRoomCode, patientUsernameToCancel);
+        strcpy(errMsg, "Error: Antrian untuk ruangan ");
+        strcat(errMsg, originalRoomCode);
+        strcat(errMsg, " (tempat pasien ");
+        strcat(errMsg, patientUsernameToCancel);
+        strcat(errMsg, " terdaftar) tidak ditemukan dalam sistem.");
+        printError(errMsg);
+        patientToCancel->queueRoom[0] = '\0'; // Correct patient's state
+        patientToCancel->queuePosition = 0;
         return false;
     }
-    int queueIdx = -1;
-    for (int i = 0; i < hospital->queues.nRooms; i++)
-    {
-        if (strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0)
-        {
-            queueIdx = i;
-            break;
+    
+    boolean removed = false;
+    int patientIDToCancel = patientToCancel->id;
+
+    int firstPatientID;
+    if (peekQueue(q, &firstPatientID) && firstPatientID == patientIDToCancel) {
+        if (dequeue(q, &firstPatientID)) { 
+            removed = true;
         }
-    }
-    if (queueIdx == -1)
-    {
-        printError("Antrian tidak ditemukan!");
-        return false;
-    }
-
-    Queue *queue = &hospital->queues.queues[queueIdx];
-    if (queue->idxHead == -1 || queue->idxTail == -1)
-    {
-        printError("Antrian kosong!");
-        return false;
-    }
-
-    int patientQueuePos = -1;
-    for (int i = queue->idxHead; i <= queue->idxTail; i++)
-    {
-        if (queue->buffer[i].patientID == patient->id)
-        {
-            patientQueuePos = i;
-            break;
-        }
-    }
-    if (patientQueuePos == -1)
-    {
-        printError("Pasien tidak ditemukan dalam antrian!");
-        return false;
-    }
-
-    for (int i = patientQueuePos; i < queue->idxTail; i++)
-    {
-        queue->buffer[i] = queue->buffer[i + 1];
-    }
-    queue->idxTail--;
-    if (queue->idxHead > queue->idxTail)
-    {
-        queue->idxHead = -1;
-        queue->idxTail = -1;
-    }
-
-    for (int i = 0; i < hospital->patients.nEff; i++)
-    {
-        if (strcmp(hospital->patients.elements[i].queueRoom, patient->queueRoom) == 0)
-        {
-            for (int j = queue->idxHead; j <= queue->idxTail; j++)
-            {
-                if (queue->buffer[j].patientID == hospital->patients.elements[i].id)
-                {
-                    hospital->patients.elements[i].queuePosition = j - queue->idxHead + 1;
-                    break;
+    } else { 
+        QueueNode *current = q->front;
+        QueueNode *prev = NULL;
+        while (current != NULL) {
+            if (current->info.patientID == patientIDToCancel) {
+                if (prev == NULL) { 
+                    q->front = current->next; 
+                } else {
+                    prev->next = current->next;
                 }
-            }
-        }
-    }
-
-    char canceledRoom[50];
-    strcpy(canceledRoom, patient->queueRoom);
-    patient->queueRoom[0] = '\0';
-    patient->queuePosition = 0;
-
-    char doctorName[50] = "Tidak ada";
-    if (hospital->doctors.nEff > 0)
-    {
-        for (int i = 0; i < hospital->doctors.nEff; i++)
-        {
-            if (strcmp(hospital->doctors.elements[i].room, canceledRoom) == 0)
-            {
-                strcpy(doctorName, hospital->doctors.elements[i].username);
+                if (current == q->rear) { 
+                    q->rear = prev; 
+                }
+                free(current);
+                q->size--;
+                removed = true;
                 break;
             }
+            prev = current;
+            current = current->next;
+        }
+        if (q->front == NULL) { 
+            q->rear = NULL;
         }
     }
 
-    printHeader("Pembatalan Antrian");
-    int widths[] = {15, 20};
-    const char *headers[] = {"Dokter", "Ruangan"};
-    printTableRow(headers, widths, 4);
-    printTableBorder(widths, 2, 1);
-    const char *row[] = {doctorName, canceledRoom};
-    printTableRow(row, widths, 2);
-    printTableBorder(widths, 2, 3);
+    if (!removed) {
+        char errMsg[250]; // Increased buffer size
+        char idStr[12];
+        // Replacing call to integerToString with direct manual logic for patientIDToCancel
+        char tempManualIdStr[20]; // Temporary buffer for manual conversion
+        int k_manual = 0;
+        if (patientIDToCancel == 0) {
+            tempManualIdStr[k_manual++] = '0';
+        } else {
+            long long tempVal_manual = patientIDToCancel;
+            boolean isNeg_manual = false;
+            if (tempVal_manual < 0) {
+                isNeg_manual = true;
+                tempVal_manual = -tempVal_manual;
+            }
+            int numDigits_manual = 0;
+            long long valCopy_manual = tempVal_manual;
+            if (valCopy_manual == 0 && patientIDToCancel != 0) numDigits_manual = 0;
+            else if (valCopy_manual == 0) numDigits_manual = 1;
+            else while (valCopy_manual > 0) { valCopy_manual /= 10; numDigits_manual++; }
+            
+            k_manual = numDigits_manual;
+            if (tempVal_manual == 0 && patientIDToCancel != 0) { /* empty */ }
+            else if (tempVal_manual == 0) tempManualIdStr[0] = '0';
+            else {
+                 while (tempVal_manual > 0) {
+                    tempManualIdStr[--k_manual] = (tempVal_manual % 10) + '0';
+                    tempVal_manual /= 10;
+                }
+            }
+            k_manual = numDigits_manual; // Reset k_manual to end of digits
 
-    printSuccess("Antrian berhasil dibatalkan!");
-    return true;
+            if (isNeg_manual) {
+                for (int m_manual = k_manual; m_manual > 0; m_manual--) {
+                    tempManualIdStr[m_manual] = tempManualIdStr[m_manual-1];
+                }
+                tempManualIdStr[0] = '-';
+                k_manual++;
+            }
+        }
+        tempManualIdStr[k_manual] = '\0';
+        // Copy to idStr, check size
+        if (k_manual < sizeof(idStr)) { // k_manual is length here
+             strcpy(idStr, tempManualIdStr);
+        } else {
+             strcpy(idStr, "BIG"); // ID too big for idStr buffer
+        }
+
+        strcpy(errMsg, "Pasien ");
+        strcat(errMsg, patientToCancel->username);
+        strcat(errMsg, " (ID: ");
+        strcat(errMsg, idStr);
+        strcat(errMsg, ") secara teknis tidak ditemukan dalam struktur antrian ");
+        strcat(errMsg, originalRoomCode);
+        strcat(errMsg, " meskipun terdaftar di sana. Data mungkin korup.");
+        printError(errMsg);
+        // Fall-through to clear patient's state anyway
+    }
+
+    // Clear patient's queue status definitively
+    patientToCancel->queueRoom[0] = '\0';
+    patientToCancel->queuePosition = 0;
+
+    if (q != NULL) { // q could be NULL if findQueueByRoomCode failed initially but we proceeded to clear patient state
+      updatePatientPositionsInQueue(hospital, q); 
+    }
+    
+    char successMsg[200]; // Increased buffer size
+    if (removed) {
+        // sprintf(successMsg, "Antrian untuk pasien %s di ruangan %s berhasil dibatalkan.", patientUsernameToCancel, originalRoomCode);
+        strcpy(successMsg, "Antrian untuk pasien ");
+        strcat(successMsg, patientUsernameToCancel);
+        strcat(successMsg, " di ruangan ");
+        strcat(successMsg, originalRoomCode);
+        strcat(successMsg, " berhasil dibatalkan.");
+    } else {
+        // If not technically "removed" from queue structure but patient state is cleared due to inconsistency
+        // sprintf(successMsg, "Status antrian untuk pasien %s telah dibersihkan karena inkonsistensi data.", patientUsernameToCancel);
+        strcpy(successMsg, "Status antrian untuk pasien ");
+        strcat(successMsg, patientUsernameToCancel);
+        strcat(successMsg, " telah dibersihkan karena inkonsistensi data.");
+    }
+    printSuccess(successMsg);
+    return true; // Return true because patient is no longer in queue from their perspective
 }

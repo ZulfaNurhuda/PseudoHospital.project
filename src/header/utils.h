@@ -163,4 +163,54 @@ void printTableRow(const char **row, int *widths, int n);
  */
 int stringToInt(char *str);
 
+// Removed integerToString and floatToString declarations (again)
+
+/**
+ * Nama Fungsi: `integerToString`
+ * Deskripsi: Mengubah integer menjadi string.
+ * Parameter:
+ *   - value (int): Nilai integer yang akan dikonversi.
+ *   - buffer (char*): Buffer untuk menyimpan string hasil konversi.
+ *   - bufferSize (int): Ukuran buffer.
+ * Return: `boolean` - True jika konversi berhasil, false jika buffer terlalu kecil.
+ */
+boolean integerToString(int value, char *buffer, int bufferSize);
+
+/**
+ * Nama Fungsi: `floatToString`
+ * Deskripsi: Mengubah float menjadi string dengan presisi tertentu.
+ * Parameter:
+ *   - value (float): Nilai float yang akan dikonversi.
+ *   - buffer (char*): Buffer untuk menyimpan string hasil konversi.
+ *   - bufferSize (int): Ukuran buffer.
+ *   - precision (int): Jumlah digit di belakang koma.
+ * Return: `boolean` - True jika konversi berhasil, false jika buffer terlalu kecil.
+ */
+boolean floatToString(float value, char *buffer, int bufferSize, int precision);
+
+/**
+ * Nama Fungsi: `isUsernameTaken`
+ *
+ * Deskripsi: Memeriksa apakah username sudah terdaftar dalam sistem (case-insensitive).
+ *
+ * Parameter:
+ *   - `hospital (struct Hospital*)`: Pointer ke struktur rumah sakit.
+ *   - `username (const char*)`: Username yang akan diperiksa.
+ *
+ * Return: `boolean` - True jika username sudah terdaftar, false jika belum.
+ */
+boolean isUsernameTaken(struct Hospital *hospital, const char *username);
+
+/**
+ * Nama Fungsi: `readStringWithSpaces`
+ * Deskripsi: Membaca sebuah string dari input standar yang mungkin mengandung spasi,
+ *            hingga newline atau bufferSize-1 karakter. Membersihkan newline dari buffer.
+ * Parameter:
+ *   - buffer (char*): Array tempat string disimpan.
+ *   - bufferSize (int): Ukuran penuh buffer.
+ *   - prompt (const char*): Prompt yang ditampilkan sebelum membaca input.
+ * Return: `boolean` - True jika input berhasil dibaca (meskipun kosong), false jika error.
+ */
+boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt);
+
 #endif // UTILS_H

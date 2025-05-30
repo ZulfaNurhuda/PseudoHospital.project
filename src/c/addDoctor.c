@@ -1,41 +1,7 @@
 #include "addDoctor.h"
-
-// Fungsi untuk memeriksa apakah username sudah ada
-static boolean isUsernameTaken(Hospital *hospital, const char *username)
-{
-    char lowerUsername[strlen(username) + 1];
-    for (int i = 0; i < strlen(username); i++)
-    {
-        char c = username[i];
-        if (c >= 'A' && c <= 'Z')
-        {
-            c = c + ('a' - 'A');
-        }
-        lowerUsername[i] = c;
-    }
-    lowerUsername[strlen(username)] = '\0';
-
-    for (int i = 0; i < hospital->users.nEff; i++)
-    {
-        char lowerElementUsername[strlen(hospital->users.elements[i].username) + 1];
-        for (int j = 0; j < strlen(hospital->users.elements[i].username); j++)
-        {
-            char c = hospital->users.elements[i].username[j];
-            if (c >= 'A' && c <= 'Z')
-            {
-                c = c + ('a' - 'A');
-            }
-            lowerElementUsername[j] = c;
-        }
-        lowerElementUsername[strlen(hospital->users.elements[i].username)] = '\0';
-
-        if (strcmp(lowerUsername, lowerElementUsername) == 0)
-        {
-            return true;
-        }
-    }
-    return false;
-}
+// #include "stringSet.h" // Removed as StringSet ADT was deleted
+// utils.h should provide isUsernameTaken, ensure it's included if not via addDoctor.h
+// No local static isUsernameTaken needed here anymore.
 
 boolean addDoctor(Hospital *hospital, Session *session, const char *username, const char *password, const char *specialization)
 {
@@ -68,9 +34,9 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
         return false;
     }
 
-    if (isUsernameTaken(hospital, username))
-    {
-        printError("Username sudah terdaftar!");
+    // Check username uniqueness using the utility isUsernameTaken function
+    if (isUsernameTaken(hospital, username)) { // This now calls the util version
+        printError("Username sudah terdaftar!"); // F10 spec message
         return false;
     }
 
@@ -80,9 +46,17 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
         return false;
     }
 
-    // Menambahkan ke UserList
+    // Menambahkan ke UserMap
+    int max_id = 0;
+    for (int i = 0; i < hospital->users.nEff; i++) {
+        if (hospital->users.elements[i].id > max_id) {
+            max_id = hospital->users.elements[i].id;
+        }
+    }
+    int new_doctor_id = max_id + 1;
+
     User *newUser = &hospital->users.elements[hospital->users.nEff];
-    newUser->id = hospital->users.nEff + 1;
+    newUser->id = new_doctor_id;
     strcpy(newUser->username, username);
     if (!enigmaEncrypt(password, newUser->password.encryptedContent, 100))
     {
@@ -93,7 +67,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
 
     // Menambahkan ke DoctorList
     Doctor *newDoctor = &hospital->doctors.elements[hospital->doctors.nEff];
-    newDoctor->id = newUser->id;
+    newDoctor->id = new_doctor_id; // Use the same new_doctor_id
     strcpy(newDoctor->username, username);
     strcpy(newDoctor->specialization, specialization);
     newDoctor->aura = 0;
@@ -102,6 +76,11 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *username, co
 
     hospital->users.nEff++;
     hospital->doctors.nEff++;
+
+    // Add the new username to the StringSet // This section is removed
+    // if (!addToStringSet(&hospital->registeredUsernames, newUser->username)) {
+    //     printError("Gagal menambahkan username dokter ke daftar unik sistem. Penambahan dokter mungkin tidak konsisten.");
+    // }
 
     // Membuat pesan sukses
     char successMsg[100] = "Dokter ";

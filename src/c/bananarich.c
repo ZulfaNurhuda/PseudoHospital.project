@@ -53,29 +53,48 @@ void viewWallet(Hospital *hospital, Session *session)
             digits[index++] = (intPart % 10) + '0';
             intPart /= 10;
         }
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &digits[i], 1);
+        for (int i = index - 1; i >= 0; i--) {
+            // strncat(tempStr, &digits[i], 1);
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = digits[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
     }
 
     // Tambahkan titik desimal dan bagian desimal
     strcat(tempStr, ".");
     if (decPart < 10)
-        strcat(tempStr, "0");
+        strcat(tempStr, "0"); // Appends "0"
+    
     char decStr[10] = "";
-    int index = 0;
-    while (decPart > 0)
-    {
-        decStr[index++] = (decPart % 10) + '0';
-        decPart /= 10;
-    }
-    if (index == 0)
+    int decIndex = 0; // Renamed to avoid conflict with outer 'index'
+    int tempDecPart = decPart; // Use a temporary variable for manipulation
+
+    // Special case for decPart being 0, ensure "00" is appended if precision is 2
+    if (tempDecPart == 0) {
         strcat(tempStr, "00");
-    else
-    {
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &decStr[i], 1);
-        if (index == 1)
-            strcat(tempStr, "0");
+    } else {
+        while (tempDecPart > 0) {
+            if (decIndex >= 9) break; // Prevent overflow on decStr
+            decStr[decIndex++] = (tempDecPart % 10) + '0';
+            tempDecPart /= 10;
+        }
+        // decStr now holds digits in reverse, e.g., for .25, it's "52"
+
+        // Append digits from decStr in correct order
+        for (int i = decIndex - 1; i >= 0; i--) {
+            // strncat(tempStr, &decStr[i], 1);
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = decStr[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
+        if (decIndex == 1) { // If only one decimal digit (e.g., .5), append a '0' to make it .50
+             strcat(tempStr, "0");
+        }
     }
 
     // Tambahkan warna kuning dan unit
@@ -122,29 +141,43 @@ void viewFinancial(Hospital *hospital, Session *session)
             digits[index++] = (intPart % 10) + '0';
             intPart /= 10;
         }
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &digits[i], 1);
+        for (int i = index - 1; i >= 0; i--) {
+            // strncat(tempStr, &digits[i], 1);
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = digits[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
     }
 
     // Tambahkan titik desimal dan bagian desimal
     strcat(tempStr, ".");
     if (decPart < 10)
         strcat(tempStr, "0");
+    
     char decStr[10] = "";
-    int index = 0;
-    while (decPart > 0)
-    {
-        decStr[index++] = (decPart % 10) + '0';
-        decPart /= 10;
-    }
-    if (index == 0)
+    int decIndex = 0; // Renamed
+    int tempDecPart = decPart;
+
+    if (tempDecPart == 0) {
         strcat(tempStr, "00");
-    else
-    {
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &decStr[i], 1);
-        if (index == 1)
-            strcat(tempStr, "0");
+    } else {
+        while (tempDecPart > 0) {
+            if (decIndex >= 9) break;
+            decStr[decIndex++] = (tempDecPart % 10) + '0';
+            tempDecPart /= 10;
+        }
+        for (int i = decIndex - 1; i >= 0; i--) {
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = decStr[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
+        if (decIndex == 1) {
+             strcat(tempStr, "0");
+        }
     }
 
     // Tambahkan unit
@@ -243,27 +276,41 @@ boolean gacha(Hospital *hospital, Session *session)
             digits[index++] = (intPart % 10) + '0';
             intPart /= 10;
         }
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &digits[i], 1);
+        for (int i = index - 1; i >= 0; i--) {
+            // strncat(tempStr, &digits[i], 1);
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = digits[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
     }
     strcat(tempStr, ".");
     if (decPart < 10)
         strcat(tempStr, "0");
+
     char decStr[10] = "";
-    int index = 0;
-    while (decPart > 0)
-    {
-        decStr[index++] = (decPart % 10) + '0';
-        decPart /= 10;
-    }
-    if (index == 0)
+    int decIndex = 0; // Renamed
+    int tempDecPart = decPart;
+    
+    if (tempDecPart == 0) {
         strcat(tempStr, "00");
-    else
-    {
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &decStr[i], 1);
-        if (index == 1)
+    } else {
+        while (tempDecPart > 0) {
+            if (decIndex >= 9) break;
+            decStr[decIndex++] = (tempDecPart % 10) + '0';
+            tempDecPart /= 10;
+        }
+        for (int i = decIndex - 1; i >= 0; i--) {
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = decStr[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
+        if (decIndex == 1) {
             strcat(tempStr, "0");
+        }
     }
     strcat(beforeStr, tempStr);
     strcat(beforeStr, " BananaRich");
@@ -283,27 +330,42 @@ boolean gacha(Hospital *hospital, Session *session)
             digits[index++] = (intPart % 10) + '0';
             intPart /= 10;
         }
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &digits[i], 1);
+        for (int i = index - 1; i >= 0; i--) {
+            // strncat(tempStr, &digits[i], 1);
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = digits[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
     }
     strcat(tempStr, ".");
     if (decPart < 10)
         strcat(tempStr, "0");
-    decStr[0] = '\0';
-    index = 0;
-    while (decPart > 0)
-    {
-        decStr[index++] = (decPart % 10) + '0';
-        decPart /= 10;
-    }
-    if (index == 0)
+
+    // char decStr[10] = ""; // Already declared above loop in this scope
+    decStr[0] = '\0'; // Clear it for reuse
+    int decIndex = 0; // Renamed from index
+    int tempDecPart = decPart;
+
+    if (tempDecPart == 0) {
         strcat(tempStr, "00");
-    else
-    {
-        for (int i = index - 1; i >= 0; i--)
-            strncat(tempStr, &decStr[i], 1);
-        if (index == 1)
+    } else {
+        while (tempDecPart > 0) {
+            if (decIndex >= 9) break;
+            decStr[decIndex++] = (tempDecPart % 10) + '0';
+            tempDecPart /= 10;
+        }
+        for (int i = decIndex - 1; i >= 0; i--) {
+            int currentLen = strlen(tempStr);
+            if (currentLen < sizeof(tempStr) - 1) {
+                tempStr[currentLen] = decStr[i];
+                tempStr[currentLen+1] = '\0';
+            }
+        }
+        if (decIndex == 1) {
             strcat(tempStr, "0");
+        }
     }
     strcat(afterStr, tempStr);
     strcat(afterStr, " BananaRich");
