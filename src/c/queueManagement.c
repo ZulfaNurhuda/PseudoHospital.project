@@ -214,51 +214,9 @@ boolean cancelPatientFromQueue(Hospital *hospital, Session *session, const char 
     if (!removed) {
         char errMsg[250]; // Increased buffer size
         char idStr[12];
-        // Replacing call to integerToString with direct manual logic for patientIDToCancel
-        char tempManualIdStr[20]; // Temporary buffer for manual conversion
-        int k_manual = 0;
-        if (patientIDToCancel == 0) {
-            tempManualIdStr[k_manual++] = '0';
-        } else {
-            long long tempVal_manual = patientIDToCancel;
-            boolean isNeg_manual = false;
-            if (tempVal_manual < 0) {
-                isNeg_manual = true;
-                tempVal_manual = -tempVal_manual;
-            }
-            int numDigits_manual = 0;
-            long long valCopy_manual = tempVal_manual;
-            if (valCopy_manual == 0 && patientIDToCancel != 0) numDigits_manual = 0;
-            else if (valCopy_manual == 0) numDigits_manual = 1;
-            else while (valCopy_manual > 0) { valCopy_manual /= 10; numDigits_manual++; }
-            
-            k_manual = numDigits_manual;
-            if (tempVal_manual == 0 && patientIDToCancel != 0) { /* empty */ }
-            else if (tempVal_manual == 0) tempManualIdStr[0] = '0';
-            else {
-                 while (tempVal_manual > 0) {
-                    tempManualIdStr[--k_manual] = (tempVal_manual % 10) + '0';
-                    tempVal_manual /= 10;
-                }
-            }
-            k_manual = numDigits_manual; // Reset k_manual to end of digits
-
-            if (isNeg_manual) {
-                for (int m_manual = k_manual; m_manual > 0; m_manual--) {
-                    tempManualIdStr[m_manual] = tempManualIdStr[m_manual-1];
-                }
-                tempManualIdStr[0] = '-';
-                k_manual++;
-            }
+        if (!integerToString(patientIDToCancel, idStr, sizeof(idStr))) {
+            strcpy(idStr, "ERR");
         }
-        tempManualIdStr[k_manual] = '\0';
-        // Copy to idStr, check size
-        if (k_manual < sizeof(idStr)) { // k_manual is length here
-             strcpy(idStr, tempManualIdStr);
-        } else {
-             strcpy(idStr, "BIG"); // ID too big for idStr buffer
-        }
-
         strcpy(errMsg, "Pasien ");
         strcat(errMsg, patientToCancel->username);
         strcat(errMsg, " (ID: ");

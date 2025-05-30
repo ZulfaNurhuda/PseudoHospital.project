@@ -297,26 +297,51 @@ boolean deletePatient(Hospital *hospital, int patientId)
         hospital->users.nEff--;
     }
 
-    // Menghapus dari antrian
-    for (int i = 0; i < hospital->queues.nRooms; i++)
+    // Menghapus dari antrian (using linked-list logic)
+    // This logic is similar to parts of cancelPatientFromQueue
+    for (int i = 0; i < hospital->queues.capacity; i++) // Iterate all possible queue slots
     {
-        Queue *queue = &hospital->queues.queues[i];
-        for (int j = queue->idxHead; j <= queue->idxTail; j++)
-        {
-            if (queue->buffer[j].patientID == patientId)
-            {
-                for (int k = j; k < queue->idxTail; k++)
-                {
-                    queue->buffer[k] = queue->buffer[k + 1];
+        Queue *q = &hospital->queues.queues[i];
+        if (q->roomCode[0] == '\0' || isQueueEmpty(q)) { // Skip inactive or empty queues
+            continue;
+        }
+
+        boolean removed = false;
+        QueueNode *current = q->front;
+        QueueNode *prev = NULL;
+
+        while (current != NULL) {
+            if (current->info.patientID == patientId) {
+                if (prev == NULL) { // Patient is at the front
+                    q->front = current->next;
+                } else {
+                    prev->next = current->next;
                 }
-                queue->idxTail--;
-                if (queue->idxTail < queue->idxHead)
-                {
-                    queue->idxHead = -1;
-                    queue->idxTail = -1;
+                if (current == q->rear) { // Patient was at the rear
+                    q->rear = prev;
                 }
-                break;
+                free(current);
+                q->size--;
+                removed = true;
+                break; 
             }
+            prev = current;
+            current = current->next;
+        }
+
+        if (q->front == NULL) { // If list became empty
+            q->rear = NULL;
+        }
+        
+        if (removed) {
+            // Patient found and removed from this queue.
+            // No need to update all patient positions here, as deletePatient
+            // is about removing the patient entirely from the system.
+            // Their own queueRoom and queuePosition will be implicitly invalid
+            // as the patient record itself is removed.
+            // If we needed to update other patients' positions in this queue,
+            // we would call updatePatientPositionsInQueue(hospital, q);
+            break; // Assuming patient can only be in one queue.
         }
     }
 

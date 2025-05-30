@@ -324,7 +324,7 @@ boolean gacha(Hospital *hospital, Session *session)
     else
     {
         char digits[20] = "";
-        index = 0;
+        int index = 0; // Corrected: Added 'int' declaration
         while (intPart > 0)
         {
             digits[index++] = (intPart % 10) + '0';

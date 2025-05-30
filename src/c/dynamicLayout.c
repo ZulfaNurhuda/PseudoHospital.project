@@ -1,4 +1,5 @@
 #include "dynamicLayout.h"
+#include "myQueue.h" // For linked-list queue operations
 
 boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int newColCount)
 {
@@ -119,20 +120,40 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
             col = col * 10 + (code[j] - '0');
         }
         col -= 1; // Konversi ke indeks 0-based
-        if (row >= newRowCount || col >= newColCount)
+        if (row >= newRowCount || col >= newColCount) // If this queue's room is now out of bounds
         {
-            hospital->queues.queues[i].idxHead = -1;
-            hospital->queues.queues[i].idxTail = -1;
-            for (int j = 0; j < hospital->patients.nEff; j++)
-            {
-                if (strcmp(hospital->patients.elements[j].queueRoom, code) == 0)
-                {
-                    hospital->patients.elements[j].queueRoom[0] = '\0';
-                    hospital->patients.elements[j].queuePosition = 0;
+            Queue *q_to_clear = &hospital->queues.queues[i];
+            
+            // Iterate through patients in this queue and update their status
+            QueueNode *currentNode = q_to_clear->front;
+            while (currentNode != NULL) {
+                int patientID_in_queue = currentNode->info.patientID;
+                for (int p_idx = 0; p_idx < hospital->patients.nEff; p_idx++) {
+                    if (hospital->patients.elements[p_idx].id == patientID_in_queue) {
+                        if (strcmp(hospital->patients.elements[p_idx].queueRoom, q_to_clear->roomCode) == 0) {
+                            hospital->patients.elements[p_idx].queueRoom[0] = '\0';
+                            hospital->patients.elements[p_idx].queuePosition = 0;
+                        }
+                        break; 
+                    }
                 }
+                currentNode = currentNode->next;
             }
+            
+            // Clear the queue itself (dequeue all nodes)
+            int dummyPatientID;
+            while(!isQueueEmpty(q_to_clear)) {
+                dequeue(q_to_clear, &dummyPatientID);
+            }
+            // Optionally, mark this queue slot as inactive if nRooms is managed strictly
+            // q_to_clear->roomCode[0] = '\0'; 
+            // This might require re-evaluating how nRooms is used or finding queues.
+            // For now, clearing it ensures no patients are left in a non-existent room's queue.
         }
     }
+    // Note: hospital->queues.nRooms is not adjusted here. If rooms are removed,
+    // nRooms might become an overestimation of active queues with valid roomCodes.
+    // findQueueByRoomCode should still work as it checks roomCode matching.
 
     printHeader("Perubahan Denah");
     int widths[] = {15, 10};

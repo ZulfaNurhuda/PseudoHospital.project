@@ -465,8 +465,8 @@ boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt) {
     if (!integerToString(bufferSize - 1, widthStr, sizeof(widthStr))) {
         printError("Internal error: Could not construct scan width for readStringWithSpaces.");
         // Clear the input buffer before returning false to prevent issues with next input
-        int r1 = scanf("%*[^\n]"); if (r1 == EOF) {} // Suppress unused variable warning if not checking r1
-        scanf("%*c");
+        int r1 = scanf("%*[^\n]"); if (r1 == EOF) { /* Optional: specific handling */ }
+        int r2 = scanf("%*c");    if (r2 == EOF) { /* Optional: specific handling */ }
         buffer[0] = '\0'; 
         return false; 
     }
@@ -493,8 +493,8 @@ boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt) {
     
     // If scanf_result == 1, data was read.
     // Now, consume the rest of the line up to and including the newline.
-    int clear_scan_res_chars = scanf("%*[^\n]"); 
-    if (clear_scan_res_chars == EOF) { 
+    int clearScanResChars = scanf("%*[^\n]"); // Renamed variable
+    if (clearScanResChars == EOF) { 
         // Main read succeeded, but EOF hit during buffer clear.
         // The primary read was successful, so return true.
         return true; 
