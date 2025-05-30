@@ -116,7 +116,7 @@ typedef struct
     int id;
     char username[50];
     char specialization[50];
-    float aura;
+    int aura;
     float bananaRich; // Untuk fitur B03 - BananaRich
     char room[5];     // Contoh: "A1", "B2", dll.
 } Doctor;

@@ -274,8 +274,10 @@ int main(int argc, char *argv[])
             printTableBorder(widths, 2, 2);
             const char *row1[] = {"1.", "ID"};
             const char *row2[] = {"2.", "Nama"};
+            const char *row3[] = {"3.", "Aura"};
             printTableRow(row1, widths, 2);
             printTableRow(row2, widths, 2);
+            printTableRow(row3, widths, 2);
             printTableBorder(widths, 2, 3);
 
             if (!readValidInt(&choiceSortBy, ">>> Pilihan: "))
@@ -344,6 +346,8 @@ int main(int argc, char *argv[])
                 continue;
             }
 
+            printf("\n");
+
             if (choice == 1)
             {
                 byId = true;
@@ -352,6 +356,8 @@ int main(int argc, char *argv[])
                     printError("Input ID tidak valid!");
                     continue;
                 }
+
+                printf("\n");
             }
             else if (choice == 2)
             {
@@ -361,6 +367,8 @@ int main(int argc, char *argv[])
                     printError("Input Nama tidak valid!");
                     continue;
                 }
+
+                printf("\n");
             }
             else
             {
@@ -396,6 +404,8 @@ int main(int argc, char *argv[])
                 continue;
             }
 
+            printf("\n");
+
             if (choice == 1)
             {
                 byId = true;
@@ -405,6 +415,8 @@ int main(int argc, char *argv[])
                     printError("Input ID tidak valid!");
                     continue;
                 }
+
+                printf("\n");
             }
             else if (choice == 2)
             {
@@ -415,6 +427,8 @@ int main(int argc, char *argv[])
                     printError("Input Nama tidak valid!");
                     continue;
                 }
+
+                printf("\n");
             }
             else if (choice == 3)
             {
@@ -425,6 +439,8 @@ int main(int argc, char *argv[])
                     printError("Input Penyakit tidak valid!");
                     continue;
                 }
+
+                printf("\n");
             }
             else
             {
@@ -458,6 +474,8 @@ int main(int argc, char *argv[])
                 continue;
             }
 
+            printf("\n");
+
             if (choice == 1)
             {
                 byId = true;
@@ -466,6 +484,8 @@ int main(int argc, char *argv[])
                     printError("Input ID tidak valid!");
                     continue;
                 }
+
+                printf("\n");
             }
             else if (choice == 2)
             {
@@ -475,6 +495,8 @@ int main(int argc, char *argv[])
                     printError("Input Nama tidak valid!");
                     continue;
                 }
+
+                printf("\n");
             }
             else
             {
