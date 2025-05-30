@@ -1,153 +1,173 @@
 #include "registerPatient.h"
-// #include "stringSet.h" // Removed as StringSet ADT was deleted
-// utils.h should provide isUsernameTaken, ensure it's included if not via registerPatient.h
-// No local static isUsernameTaken needed here anymore.
 
 boolean registerPatient(Hospital *hospital, Session *session, const char *inputUsername, const char *password)
 {
-    // char username[50] will be used to store the trimmed username from inputUsername if needed,
-    // or inputUsername directly if function signature is kept for direct input.
-    // For now, assuming inputUsername is the one read from console.
-    // The prompt asks to change readValidString TO readUsernameWithTrim.
-    // This means the function signature of registerPatient itself doesn't change,
-    // but how 'username' is obtained *before* calling registerPatient would change (in hospitalSystem.c)
-    // OR, if registerPatient itself is responsible for reading, then internal char username[50] is used.
-    // The current structure of hospitalSystem.c reads then calls. So inputUsername is already read.
-    // This task is to modify THIS file, assuming inputUsername is passed.
-    // However, the prompt for this step says "Replace readValidString for username with readUsernameWithTrim"
-    // which implies this function *was* doing the reading.
-    // Let's look at hospitalSystem.c:
-    // else if (strcmp(command, "REGISTERPASIEN") == 0)
-    // {
-    //     char username[50], password[100];
-    //     if (!readValidString(username, 50, "Masukkan username: ", true) || ... )
-    //     registerPatient(&hospital, &session, username, password);
-    // }
-    // So, hospitalSystem.c DOES the reading. This function (registerPatient) gets a username.
-    // The task should be to update hospitalSystem.c for reading, and here we just use the result.
-    //
-    // Re-interpreting: "Replace Username Input" means replace the readValidString in hospitalSystem.c.
-    // And then here, we apply isValidUsername and isUsernameTaken to the passed 'username'.
-    // The prompt is slightly ambiguous if it means to change reading *within* this file or *before* it.
-    // Given the structure, changes are in hospitalSystem.c for reading, and here for validation.
-    // For this file, the main change is the VALIDATION sequence.
-    // The passed `username` is assumed to be already trimmed by `readUsernameWithTrim` (called in hospitalSystem.c).
-
+    // Memeriksa apakah pointer hospital atau session adalah NULL.
+    // Ini adalah pemeriksaan keamanan dasar untuk mencegah dereferensi pointer NULL.
     if (hospital == NULL || session == NULL)
     {
+        // Mencetak pesan error jika salah satu pointer tidak valid.
         printError("Struktur rumah sakit atau sesi tidak valid!");
+        // Mengembalikan false karena registrasi tidak dapat dilanjutkan.
         return false;
     }
-    // The `username` parameter here is the result of `readUsernameWithTrim` from hospitalSystem.c
+
+    // Memeriksa apakah username input atau password adalah NULL atau string kosong.
+    // Username dan password yang valid diperlukan untuk registrasi.
     if (inputUsername == NULL || inputUsername[0] == '\0' || password == NULL || password[0] == '\0')
     {
+        // Mencetak pesan error jika username (setelah trim) atau password tidak valid.
         printError("Username (setelah trim) atau password tidak valid!");
+        // Mengembalikan false karena input tidak valid.
         return false;
     }
+
+    // Memeriksa apakah sesi saat ini sudah dalam keadaan login.
+    // Mencegah pengguna yang sudah login untuk melakukan registrasi.
     if (session->isLoggedIn)
     {
+        // Mencetak pesan error jika pengguna sudah login.
         printError("Anda sudah login! Silakan logout terlebih dahulu.");
+        // Mengembalikan false karena pengguna sudah login.
         return false;
     }
 
-    // 1. Validate format using the new isValidUsername (allows spaces)
-    if (!isValidUsername(inputUsername)) {
-        // Error message from F02 spec for format validation: "Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore."
-        // The existing message from isValidUsername itself might be generic. F02 asks for a specific one here.
+    // Memeriksa apakah format username input valid menggunakan fungsi isValidUsername.
+    // Fungsi ini diasumsikan ada dan melakukan validasi format username.
+    if (!isValidUsername(inputUsername))
+    {
+        // Mencetak pesan error jika username tidak memenuhi kriteria validasi.
         printError("Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore.");
+        // Mengembalikan false karena username tidak valid.
         return false;
     }
 
-    // 2. Check uniqueness using isUsernameTaken (case-insensitive)
-    if (isUsernameTaken(hospital, inputUsername)) { 
-        printError("Registrasi gagal! Pasien dengan nama tersebut sudah terdaftar."); // F02 spec message
+    // Memeriksa apakah username input sudah terdaftar menggunakan fungsi isUsernameTaken.
+    // Fungsi ini diasumsikan ada dan memeriksa keberadaan username di daftar pengguna.
+    if (isUsernameTaken(hospital, inputUsername))
+    {
+        // Mencetak pesan error jika username sudah terdaftar.
+        printError("Registrasi gagal! Pasien dengan nama tersebut sudah terdaftar."); // Pesan sesuai spesifikasi F02
+        // Mengembalikan false karena username sudah ada.
         return false;
     }
 
+    // Memeriksa apakah panjang password kurang dari 6 karakter.
+    // Ini adalah kebijakan keamanan umum untuk memastikan password cukup kuat.
     if (strlen(password) < 6)
     {
+        // Mencetak pesan error jika password terlalu pendek.
         printError("Password harus minimal 6 karakter!");
+        // Mengembalikan false karena password tidak memenuhi syarat panjang minimum.
         return false;
     }
-    // The previous isUsernameTaken check is now done above.
-    // The isValidUsername check is also done above.
-    // The strlen(password) < 6 check can remain here or be moved up.
+
+    // Memeriksa apakah kapasitas untuk pengguna baru atau pasien baru sudah penuh.
+    // nEff adalah jumlah elemen efektif, capacity adalah kapasitas maksimum.
     if (hospital->users.nEff >= hospital->users.capacity || hospital->patients.nEff >= hospital->patients.capacity)
     {
+        // Mencetak pesan error jika kapasitas penuh.
         printError("Kapasitas pengguna atau pasien penuh!");
+        // Mengembalikan false karena tidak ada ruang untuk pengguna/pasien baru.
         return false;
     }
 
-    // Validasi ukuran buffer untuk enkripsi
+    // Validasi ukuran buffer untuk enkripsi password.
+    // Mendapatkan panjang password yang dimasukkan pengguna.
     int passwordLength = strlen(password);
-    if (passwordLength >= 100)
+    // Memeriksa apakah panjang password melebihi batas buffer (misalnya, 99 karakter + null terminator).
+    if (passwordLength >= 100) // Asumsi buffer enkripsi adalah 100
     {
+        // Mencetak pesan error jika password terlalu panjang untuk dienkripsi dengan aman.
         printError("Panjang password terlalu besar untuk dienkripsi!");
+        // Mengembalikan false karena potensi buffer overflow.
         return false;
     }
 
-    // Menambahkan ke UserSet
-    int max_id = 0;
-    for (int i = 0; i < hospital->users.nEff; i++) {
-        if (hospital->users.elements[i].id > max_id) {
-            max_id = hospital->users.elements[i].id;
+    // Mencari ID maksimum yang sudah ada untuk menghasilkan ID baru yang unik.
+    int maxId = 0;
+    for (int i = 0; i < hospital->users.nEff; i++)
+    {
+        if (hospital->users.elements[i].id > maxId)
+        {
+            maxId = hospital->users.elements[i].id;
         }
     }
-    int new_patient_id = max_id + 1;
+    // ID pasien baru adalah ID maksimum yang ada ditambah satu.
+    int newPatientId = maxId + 1;
 
+    // Menambahkan pengguna baru ke dalam daftar pengguna rumah sakit.
+    // Mengambil pointer ke elemen berikutnya yang tersedia di array users.
     User *newUser = &hospital->users.elements[hospital->users.nEff];
-    newUser->id = new_patient_id;
-    strcpy(newUser->username, inputUsername); // Use inputUsername
-    if (!enigmaEncrypt(password, newUser->password.encryptedContent, 100))
+    newUser->id = newPatientId;               // Menetapkan ID pengguna baru.
+    strcpy(newUser->username, inputUsername); // Menyalin username input ke pengguna baru.
+
+    // Mengenkripsi password pengguna baru menggunakan fungsi enigmaEncrypt.
+    // Fungsi ini diasumsikan ada dan melakukan enkripsi.
+    if (!enigmaEncrypt(password, newUser->password.encryptedContent, 100)) // Ukuran buffer 100
     {
+        // Mencetak pesan error jika proses enkripsi gagal.
         printError("Gagal mengenkripsi password!");
+        // Mengembalikan false karena kegagalan enkripsi.
         return false;
     }
-    newUser->role = PATIENT;
+    // Menetapkan peran pengguna baru sebagai PATIENT.
+    // PATIENT diasumsikan sebagai nilai enum atau define.
+    newUser->role = PATIENT; // Asumsi PATIENT adalah enum atau define
 
-    // Menambahkan ke PatientList
+    // Menambahkan pasien baru ke dalam daftar pasien rumah sakit.
+    // Mengambil pointer ke elemen berikutnya yang tersedia di array patients.
     Patient *newPatient = &hospital->patients.elements[hospital->patients.nEff];
-    newPatient->id = new_patient_id; // Use the same new_patient_id
-    strcpy(newPatient->username, inputUsername); // Use inputUsername
-    newPatient->bananaRich = 100.0;
-    newPatient->life = 3;
-    newPatient->diagnosedStatus = false;
-    newPatient->treatedStatus = false;
+    newPatient->id = newPatientId;               // Menetapkan ID pasien baru (sama dengan ID pengguna).
+    strcpy(newPatient->username, inputUsername); // Menyalin username input ke pasien baru.
+    newPatient->bananaRich = 100.0;              // Inisialisasi nilai bananaRich.
+    newPatient->life = 3;                        // Inisialisasi jumlah nyawa pasien.
+    newPatient->diagnosedStatus = false;         // Inisialisasi status diagnosis.
+    newPatient->treatedStatus = false;           // Inisialisasi status perawatan.
 
+    // Mengalokasikan memori untuk daftar resep obat pasien.
+    // safeMalloc diasumsikan sebagai fungsi alokasi memori yang aman.
     newPatient->medicationsPrescribed.medicationId = (int *)safeMalloc(10 * sizeof(int));
-    if (newPatient->medicationsPrescribed.medicationId == NULL) {
+    if (newPatient->medicationsPrescribed.medicationId == NULL)
+    {
+        // Mencetak pesan error jika alokasi memori gagal.
         printError("Gagal alokasi memori untuk resep pasien!");
-        // No nEff increment yet, so no need to roll back user/patient count
+        // Mengembalikan false karena kegagalan alokasi.
+        // Sebaiknya juga membersihkan data pengguna yang mungkin sudah ditambahkan sebagian.
         return false;
     }
-    newPatient->medicationsPrescribed.capacity = 10;
-    newPatient->medicationsPrescribed.nEff = 0;
+    newPatient->medicationsPrescribed.capacity = 10; // Menetapkan kapasitas daftar resep.
+    newPatient->medicationsPrescribed.nEff = 0;      // Inisialisasi jumlah resep efektif.
 
+    // Mengalokasikan memori untuk daftar obat yang sudah diminum pasien.
     newPatient->medicationsTaken.medicationId = (int *)safeMalloc(10 * sizeof(int));
-    if (newPatient->medicationsTaken.medicationId == NULL) {
+    if (newPatient->medicationsTaken.medicationId == NULL)
+    {
+        // Mencetak pesan error jika alokasi memori gagal.
         printError("Gagal alokasi memori untuk obat yang diminum pasien!");
-        free(newPatient->medicationsPrescribed.medicationId); // Free the previously allocated memory
+        // Membebaskan memori yang sudah dialokasikan untuk resep jika terjadi kegagalan di sini.
+        free(newPatient->medicationsPrescribed.medicationId);
         newPatient->medicationsPrescribed.medicationId = NULL;
-        // No nEff increment yet
+        // Mengembalikan false karena kegagalan alokasi.
         return false;
     }
-    newPatient->medicationsTaken.capacity = 10;
-    newPatient->medicationsTaken.top = -1;
-    newPatient->queueRoom[0] = '\0';
-    newPatient->queuePosition = 0;
+    newPatient->medicationsTaken.capacity = 10; // Menetapkan kapasitas daftar obat yang diminum.
+    newPatient->medicationsTaken.top = -1;      // Inisialisasi top untuk stack (jika digunakan sebagai stack).
+    newPatient->queueRoom[0] = '\0';            // Inisialisasi nama ruang antrian.
+    newPatient->queuePosition = 0;              // Inisialisasi posisi antrian.
 
+    // Meningkatkan jumlah pengguna dan pasien efektif di rumah sakit.
     hospital->users.nEff++;
     hospital->patients.nEff++;
 
-    // Add the new username to the StringSet // This section is removed
-    // if (!addToStringSet(&hospital->registeredUsernames, newUser->username)) {
-    //     printError("Gagal menambahkan username ke daftar unik sistem. Registrasi mungkin tidak konsisten.");
-    // }
-
-    // Membuat pesan sukses
-    char successMessage[100] = "Pasien ";
-    strcat(successMessage, inputUsername); // Use inputUsername
+    // Membuat dan mencetak pesan sukses registrasi.
+    char successMessage[100] = ""; // Buffer untuk pesan sukses.
+    // Menggabungkan string untuk membentuk pesan sukses.
+    strcat(successMessage, "Pasien dengan nama ");
+    strcat(successMessage, inputUsername);
     strcat(successMessage, " berhasil terdaftar!");
-    printSuccess(successMessage);
+    printSuccess(successMessage); // Mencetak pesan sukses.
+
+    // Mengembalikan true karena registrasi berhasil.
     return true;
 }
