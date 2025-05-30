@@ -5,7 +5,7 @@ void normalizeCommand(char *command)
     int i = 0, j = 0;
     while (command[i])
     {
-        if (command[i] != ' ' && command[i] != '_')
+        if (command[i] != '_')
         {
             command[j] = (command[i] >= 'a' && command[i] <= 'z') ? command[i] - 32 : command[i];
             j++;
