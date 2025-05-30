@@ -1,6 +1,6 @@
 #include "hospitalSystem.h"
 
-void normalizeCommand(char *command)
+static void normalizeCommand(char *command)
 {
     int i = 0, j = 0;
     while (command[i])
@@ -118,7 +118,16 @@ int main(int argc, char *argv[])
         {
             displayMenu(&session);
         }
-        
+        else if (strcmp(command, "HELP") == 0)
+        {
+            char helpCommand[50];
+            if (!readValidString(helpCommand, 50, "Masukkan nama perintah untuk bantuan: ", false))
+            {
+                printError("Input tidak valid!");
+                continue;
+            }
+            displayHelp(&session, helpCommand);
+        }
         else if (strcmp(command, "LIHATDENAH") == 0)
         {
             displayLayout(&hospital, &session, true);

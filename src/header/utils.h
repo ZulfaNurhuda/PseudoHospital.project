@@ -13,6 +13,8 @@
 #define COLOR_YELLOW "\033[0;33m"
 #define COLOR_BLUE "\033[0;34m"
 #define COLOR_RESET "\033[0m"
+#define FORMAT_BOLD "\x1b[1m"
+#define FORMAT_RESET "\x1b[0m"
 
 /**
  * Nama Fungsi: `safeMalloc`
