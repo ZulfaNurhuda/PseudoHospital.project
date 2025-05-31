@@ -175,7 +175,7 @@ boolean registerPatient(Hospital *hospital, Session *session, const char *inputU
     session->isLoggedIn = true; // Menandai sesi sebagai login.
 
     // Integrasi fitur register dengan fitur login sehingga pengguna tidak perlu login lagi.
-    printf("\n[ℹ️ | Info]: Fitur ini terintegrasi dengan fitur login, kamu tidak perlu login lagi.\n");
+    printf("\n[ℹ️  | Info]: Fitur ini terintegrasi dengan fitur login, kamu tidak perlu login lagi.\n");
     printSuccess(FORMAT_BOLD "Anda langsung masuk sebagai pasien!" FORMAT_RESET);
 
     // Mengembalikan true karena registrasi berhasil.

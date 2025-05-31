@@ -18,15 +18,17 @@ boolean canGoHome(Hospital *hospital, Session *session)
         printError("Tidak ada pasien terdaftar!");
         return false;
     }
+
     int patientIdx = -1;
     for (int i = 0; i < hospital->patients.nEff; i++)
     {
-        if (strcmp(hospital->patients.elements[i].username, session->username) == 0)
+        if (hospital->patients.elements[i].id == session->userId)
         {
             patientIdx = i;
             break;
         }
     }
+
     if (patientIdx == -1)
     {
         printError("Pasien tidak ditemukan!");
@@ -56,12 +58,12 @@ boolean canGoHome(Hospital *hospital, Session *session)
     }
     else
     {
-        // Memeriksa urutan konsumsi obat
         boolean correctOrder = true;
         if (patient->medicationsTaken.top + 1 != patient->medicationsPrescribed.nEff)
         {
             correctOrder = false;
         }
+        
         else
         {
             for (int i = 0; i <= patient->medicationsTaken.top; i++)

@@ -1,5 +1,5 @@
 #include "diagnose.h"
-#include "myQueue.h" // Added for new queue functions
+#include "queuePrimitive.h" // Added for new queue functions
 
 boolean diagnosePatient(Hospital *hospital, Session *session, const char *patientUsername)
 {
@@ -84,40 +84,34 @@ boolean diagnosePatient(Hospital *hospital, Session *session, const char *patien
     // Memeriksa antrian di HospitalQueueList
     // Patient must be at the front of the queue for the doctor's room.
     Queue *roomQueue = NULL;
-    if (hospital->queues.nRooms > 0) {
-        for (int i = 0; i < hospital->queues.nRooms; i++) {
-            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0) {
+    if (hospital->queues.nRooms > 0)
+    {
+        for (int i = 0; i < hospital->queues.nRooms; i++)
+        {
+            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0)
+            {
                 roomQueue = &hospital->queues.queues[i];
                 break;
             }
         }
     }
 
-    if (roomQueue == NULL || isQueueEmpty(roomQueue)) {
+    if (roomQueue == NULL || isQueueEmpty(roomQueue))
+    {
         printError("Antrian untuk ruangan dokter ini kosong atau tidak ditemukan.");
         return false;
     }
 
     int firstPatientId = -1;
-    if (!peekQueue(roomQueue, &firstPatientId)) {
-        // This case should ideally be covered by isQueueEmpty, but as a safeguard:
+    if (!peekQueue(roomQueue, &firstPatientId))
+    {
         printError("Tidak dapat melihat pasien di depan antrian.");
         return false;
     }
-
-    if (firstPatientId != patient->id) {
+    
+    if (firstPatientId != patient->id)
+    {
         printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
-        // Optionally, find the username of the patient who IS at the front for a more informative message.
-        // char frontPatientUsername[50] = "Unknown";
-        // for(int i=0; i < hospital->patients.nEff; ++i){
-        //    if(hospital->patients.elements[i].id == firstPatientId){
-        //        strcpy(frontPatientUsername, hospital->patients.elements[i].username);
-        //        break;
-        //    }
-        // }
-        // char errMsg[150];
-        // sprintf(errMsg, "Pasien %s berada di depan antrian.", frontPatientUsername);
-        // printError(errMsg);
         return false;
     }
 

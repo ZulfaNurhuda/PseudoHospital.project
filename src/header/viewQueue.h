@@ -8,6 +8,7 @@
 #include "abstractDataTypes.h"
 #include "utils.h"
 #include "hospitalLayout.h"
+#include "queuePrimitive.h"
 
 /**
  * Nama Fungsi: `displayQueue`

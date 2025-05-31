@@ -1,5 +1,4 @@
 #include "treat.h"
-#include "myQueue.h" // Added for new queue functions
 
 boolean treatPatient(Hospital *hospital, Session *session, const char *patientUsername)
 {
@@ -94,27 +93,33 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
     // Memeriksa antrian di HospitalQueueList
     // Patient must be at the front of the queue for the doctor's room.
     Queue *roomQueue = NULL;
-    if (hospital->queues.nRooms > 0) {
-        for (int i = 0; i < hospital->queues.nRooms; i++) {
-            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0) {
+    if (hospital->queues.nRooms > 0)
+    {
+        for (int i = 0; i < hospital->queues.nRooms; i++)
+        {
+            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0)
+            {
                 roomQueue = &hospital->queues.queues[i];
                 break;
             }
         }
     }
 
-    if (roomQueue == NULL || isQueueEmpty(roomQueue)) {
+    if (roomQueue == NULL || isQueueEmpty(roomQueue))
+    {
         printError("Antrian untuk ruangan dokter ini kosong atau tidak ditemukan.");
         return false;
     }
 
     int firstPatientId = -1;
-    if (!peekQueue(roomQueue, &firstPatientId)) {
+    if (!peekQueue(roomQueue, &firstPatientId))
+    {
         printError("Tidak dapat melihat pasien di depan antrian.");
         return false;
     }
 
-    if (firstPatientId != patient->id) {
+    if (firstPatientId != patient->id)
+    {
         printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
         return false;
     }
@@ -195,19 +200,18 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
 
     // Dequeue patient after treatment
     int dequeuedPatientId = -1;
-    if (dequeue(roomQueue, &dequeuedPatientId)) {
-        if (dequeuedPatientId != patient->id) {
-            // This would be a serious inconsistency error.
-            // Log it or handle as critical error. For now, print and proceed.
-            printError("Error: Pasien yang di-dequeue berbeda dari pasien yang diobati!");
+    if (dequeue(roomQueue, &dequeuedPatientId))
+    {
+        if (dequeuedPatientId != patient->id)
+        {
+            printError("Pasien yang di-dequeue berbeda dari pasien yang diobati!");
         }
-        // Update patient's queue status
         patient->queueRoom[0] = '\0';
-        patient->queuePosition = 0; // Or -1, indicating not in queue
-    } else {
-        // Failed to dequeue, this is also an issue.
-        printError("Error: Gagal men-dequeue pasien setelah pengobatan!");
-        // Decide if this should be a fatal error for the function call
+        patient->queuePosition = 0;
+    }
+    else
+    {
+        printError("Gagal men-dequeue pasien setelah pengobatan!");
     }
 
     // Tampilkan hasil
