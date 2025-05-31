@@ -1,5 +1,4 @@
 #include "registerCheckup.h"
-#include "myQueue.h" // Added for new queue functions
 
 boolean registerCheckup(Hospital *hospital, Session *session, const char *doctorUsername, float healthData[])
 {
@@ -106,6 +105,7 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
     }
 
     // Menambahkan ke antrian
+    // In registerCheckup function, update queue handling logic
     int queueIdx = -1;
     for (int i = 0; i < hospital->queues.nRooms; i++)
     {
@@ -124,31 +124,16 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
         }
         queueIdx = hospital->queues.nRooms++;
         Queue *newQueue = &hospital->queues.queues[queueIdx];
-        // Initialize Queue using the new function, or ensure it's already initialized by initHospital
-        // For now, let's assume initHospital handled basic initialization (front/rear=NULL, size=0)
-        // We just need to set the roomCode if this is the first time it's used.
-        if (newQueue->roomCode[0] == '\0') { // Check if roomCode is not set
-             // customSafeStrcpy(newQueue->roomCode, doctor->room, sizeof(newQueue->roomCode));
-             strcpy(newQueue->roomCode, doctor->room); // Assuming newQueue->roomCode is always large enough
-        }
-        // If initializeQueue is preferred: initializeQueue(newQueue, doctor->room);
+        initializeQueue(newQueue, doctor->room); // Initialize with linked-list structure
     }
-
     Queue *queueToEnqueue = &hospital->queues.queues[queueIdx];
-    
-    // The linked list queue doesn't have a fixed capacity like the old array buffer.
-    // The main capacity constraint is memory, or if we impose an artificial limit (not done here).
-    // So, the check `if (queue->idxTail - queue->idxHead + 1 >= queue->capacity)` is removed.
-
-    if (!enqueue(queueToEnqueue, patient->id)) {
-        // This typically would only fail if q is NULL (already checked by finding queueIdx)
-        // or if safeMalloc fails (which exits). So, this 'if' might be redundant
-        // unless enqueue is modified to return false for other reasons.
-        printError("Gagal menambahkan pasien ke antrian!"); // Generic error
+    if (!enqueue(queueToEnqueue, patient->id))
+    {
+        printError("Gagal menambahkan pasien ke antrian!");
         return false;
     }
     strcpy(patient->queueRoom, doctor->room);
-    patient->queuePosition = queueSize(queueToEnqueue); // Get current size as position
+    patient->queuePosition = queueSize(queueToEnqueue); // Use size for position
 
     // Menyimpan data kesehatan
     patient->bodyTemperature = healthData[0];

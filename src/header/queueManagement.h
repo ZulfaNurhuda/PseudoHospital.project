@@ -8,6 +8,7 @@
 #include "abstractDataTypes.h"
 #include "utils.h"
 #include "hospital.h"
+#include "queuePrimitive.h"
 
 /**
  * Nama Fungsi: `skipQueue`

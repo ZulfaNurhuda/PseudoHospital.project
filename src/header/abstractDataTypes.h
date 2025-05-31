@@ -5,7 +5,7 @@
 #include "boolean.h"
 
 // >>> Untuk Menambahkan Representasi dari Tipe Data Enum dari Role
-typedef enum
+typedef enum Role
 {
     MANAGER,
     DOCTOR,
@@ -19,7 +19,7 @@ typedef enum
 // >>> ADT PASSWORD TERENKRIPSI
 
 /* ADT Sederhana - untuk penyimpanan password terenkripsi */
-typedef struct
+typedef struct PasswordData
 {
     char encryptedContent[100];
 } PasswordData;
@@ -31,7 +31,7 @@ typedef struct
 // >>> ADT USER
 
 /* ADT Sederhana - untuk representasi data pengguna dasar */
-typedef struct
+typedef struct User
 {
     int id;
     char username[50];
@@ -40,7 +40,7 @@ typedef struct
 } User;
 
 /* ADT Set (array-based) - untuk penyimpanan kumpulan user */ // Changed comment
-typedef struct
+typedef struct UserSet
 {
     User *elements;
     int capacity;
@@ -50,7 +50,7 @@ typedef struct
 // >>> ADT PASIEN
 
 /* ADT List - untuk penyimpanan obat yang diresepkan dokter */
-typedef struct
+typedef struct PatientMedicationPrescribedList
 {
     int *medicationId;
     int capacity;
@@ -58,7 +58,7 @@ typedef struct
 } PatientMedicationPrescribedList;
 
 /* ADT Stack - untuk penyimpanan data obat yang telah diminum */
-typedef struct
+typedef struct PatientMedicationTakenList
 {
     int *medicationId;
     int capacity;
@@ -66,7 +66,7 @@ typedef struct
 } PatientMedicationTakenList;
 
 /* ADT Sederhana - untuk representasi data pasien */
-typedef struct
+typedef struct Patient
 {
     int id;
     char username[50];
@@ -101,7 +101,7 @@ typedef struct
 } Patient;
 
 /* ADT List - untuk daftar pasien yang dinamis */
-typedef struct
+typedef struct PatientList
 {
     Patient *elements;
     int capacity;
@@ -111,18 +111,18 @@ typedef struct
 // >>> ADT DOKTER
 
 /* ADT Sederhana - untuk representasi data dokter */
-typedef struct
+typedef struct Doctor
 {
     int id;
     char username[50];
     char specialization[50];
-    float aura;
+    int aura;
     float bananaRich; // Untuk fitur B03 - BananaRich
     char room[5];     // Contoh: "A1", "B2", dll.
 } Doctor;
 
 /* ADT List - untuk daftar dokter yang dinamis */
-typedef struct
+typedef struct DoctorList
 {
     Doctor *elements;
     int capacity;
@@ -135,7 +135,7 @@ typedef struct
 
 // >>> ADT RUANGAN
 
-typedef struct
+typedef struct PatientInRoom
 {
     int *patientId;
     int capacity;
@@ -143,7 +143,7 @@ typedef struct
 } PatientInRoom;
 
 /* ADT Sederhana - untuk representasi data ruangan */
-typedef struct
+typedef struct Room
 {
     char code[5]; // Contoh: "A1", "B2", dll.
     int capacity;
@@ -156,7 +156,7 @@ typedef struct
 // >>> ADT DENAH
 
 /* ADT Matrix - untuk representasi denah rumah sakit 2D */
-typedef struct
+typedef struct Layout
 {
     Room **elements; // Matrix dari pointer ke Ruangan
     int rowCapacity;
@@ -172,7 +172,7 @@ typedef struct
 // >>> ADT PENYAKIT
 
 /* ADT Sederhana - untuk representasi data penyakit */
-typedef struct
+typedef struct Disease
 {
     int id;
     char name[50];
@@ -199,7 +199,7 @@ typedef struct
 } Disease;
 
 /* ADT List - untuk penyimpanan daftar penyakit */
-typedef struct
+typedef struct DiseaseList
 {
     Disease *elements;
     int capacity;
@@ -213,14 +213,14 @@ typedef struct
 // >>> ADT OBAT
 
 /* ADT Sederhana - untuk representasi data obat */
-typedef struct
+typedef struct Medication
 {
     int id;
     char name[50];
 } Medication;
 
 /* ADT List - untuk penyimpanan daftar obat */
-typedef struct
+typedef struct MedicationList
 {
     Medication *elements;
     int capacity;
@@ -230,7 +230,7 @@ typedef struct
 // >>> ADT RESEP
 
 /* ADT Sederhana - untuk representasi data resep obat */
-typedef struct
+typedef struct MedicationPrescription
 {
     int medicationId;
     int diseaseId;
@@ -238,7 +238,7 @@ typedef struct
 } MedicationPrescription;
 
 /* ADT List - untuk penyimpanan daftar resep */
-typedef struct
+typedef struct PrescriptionList
 {
     MedicationPrescription *elements;
     int capacity;
@@ -252,7 +252,7 @@ typedef struct
 // >>> ADT QUEUE UNTUK ANTRIAN PASIEN PER RUANGAN
 
 /* ADT Sederhana - untuk informasi pasien dalam antrian */
-typedef struct
+typedef struct QueueInfo
 {
     int patientId;
 } QueueInfo;
@@ -262,19 +262,20 @@ typedef struct QueueNode
 {
     QueueInfo info;
     struct QueueNode *next;
+    struct QueueNode *prev;
 } QueueNode;
 
 /* ADT Queue - untuk implementasi antrian pasien per ruangan (Linked List) */
-typedef struct
+typedef struct Queue
 {
     char roomCode[5]; // Kode ruangan (misalnya: "A1", "B2", dll)
-    QueueNode *front; // Pointer ke node depan antrian
-    QueueNode *rear;  // Pointer ke node belakang antrian
-    int size;         // Jumlah elemen dalam antrian
+    QueueNode *head;
+    QueueNode *tail;
+    int size;
 } Queue;
 
 /* ADT List - untuk kumpulan antrian di rumah sakit */
-typedef struct
+typedef struct HospitalQueueList
 {
     Queue *queues; // Array of Queues
     int nRooms;    // Jumlah ruangan yang memiliki antrian
@@ -288,7 +289,7 @@ typedef struct
 // >>> ADT UNTUK MANAJEMEN KEUANGAN RUMAH SAKIT
 
 /* ADT Sederhana - untuk pengelolaan data keuangan rumah sakit */
-typedef struct
+typedef struct HospitalFinance
 {
     float hospitalBalance;
 } HospitalFinance;
@@ -300,7 +301,7 @@ typedef struct
 // >>> ADT RIWAYAT PENGOBATAN
 
 /* ADT Sederhana - untuk mencatat riwayat pengobatan pasien */
-typedef struct
+typedef struct TreatmentHistory
 {
     int patientId;
     int doctorId;
@@ -310,7 +311,7 @@ typedef struct
 } TreatmentHistory;
 
 /* ADT List - untuk penyimpanan riwayat pengobatan */
-typedef struct
+typedef struct TreatmentHistoryList
 {
     TreatmentHistory *elements;
     int capacity;
@@ -324,7 +325,7 @@ typedef struct
 // >> ADT SESION
 
 /* ADT Sederhana - untuk mengelola sesi login pengguna */
-typedef struct
+typedef struct Session
 {
     int userId;         // ID pengguna yang sedang login
     char username[50];  // Username pengguna
@@ -339,7 +340,7 @@ typedef struct
 // +===============================================================+
 
 /* ADT Sederhana - untuk integrasi seluruh komponen dalam satu struktur */
-typedef struct
+typedef struct Hospital
 {
     // Pengguna
     UserSet users; // Renamed

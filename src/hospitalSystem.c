@@ -1,11 +1,11 @@
 #include "hospitalSystem.h"
 
-void normalizeCommand(char *command)
+static void normalizeCommand(char *command)
 {
     int i = 0, j = 0;
     while (command[i])
     {
-        if (command[i] != ' ' && command[i] != '_')
+        if (command[i] != '_')
         {
             command[j] = (command[i] >= 'a' && command[i] <= 'z') ? command[i] - 32 : command[i];
             j++;
@@ -43,16 +43,6 @@ int main(int argc, char *argv[])
         printError("Inisialisasi rumah sakit gagal. Program dihentikan.");
         return 1;
     }
-
-    hospital.users.elements[0].id = 1;
-    strcpy(hospital.users.elements[0].username, "NimonsDawg");
-    if (!enigmaEncrypt("admoontothemoon", hospital.users.elements[0].password.encryptedContent, 100))
-    {
-        printError("Gagal mengenkripsi password!");
-        return 1;
-    }
-    hospital.users.elements[0].role = MANAGER;
-    hospital.users.nEff++;
 
     session.isLoggedIn = false;
     session.userId = -1;
@@ -118,7 +108,16 @@ int main(int argc, char *argv[])
         {
             displayMenu(&session);
         }
-        
+        else if (strcmp(command, "HELP") == 0)
+        {
+            char helpCommand[50];
+            if (!readValidString(helpCommand, 50, "Masukkan nama perintah untuk bantuan: ", false))
+            {
+                printError("Input tidak valid!");
+                continue;
+            }
+            displayHelp(&session, helpCommand);
+        }
         else if (strcmp(command, "LIHATDENAH") == 0)
         {
             displayLayout(&hospital, &session, true);
@@ -133,118 +132,370 @@ int main(int argc, char *argv[])
             }
             displayRoomDetails(&hospital, &session, roomCode);
         }
-        
+
         else if (strcmp(command, "LIHATUSER") == 0)
         {
-            displayUsers(&hospital, &session);
+            int choiceSortBy;
+            int choiceSortOrder;
+
+            int widths[] = {5, 20};
+            const char *headers[] = {"No.", "Urutan berdasarkan"};
+            printTableBorder(widths, 2, 1);
+            printTableRow(headers, widths, 2);
+            printTableBorder(widths, 2, 2);
+            const char *row1[] = {"1.", "ID"};
+            const char *row2[] = {"2.", "Nama"};
+            printTableRow(row1, widths, 2);
+            printTableRow(row2, widths, 2);
+            printTableBorder(widths, 2, 3);
+
+            if (!readValidInt(&choiceSortBy, ">>> Pilihan: "))
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            if (choiceSortBy < 1 || choiceSortBy > 2)
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            printf("\n");
+
+            // Menampilkan menu urutan sorting dalam format tabel
+            int _widths[] = {5, 20};
+            const char *_headers[] = {"No.", "Urutan Sorting"};
+            printTableBorder(_widths, 2, 1);
+            printTableRow(_headers, _widths, 2);
+            printTableBorder(_widths, 2, 2);
+            const char *_row1[] = {"1.", "ASC (A-Z)"};
+            const char *_row2[] = {"2.", "DESC (Z-A)"};
+            printTableRow(_row1, _widths, 2);
+            printTableRow(_row2, _widths, 2);
+            printTableBorder(_widths, 2, 3);
+
+            if (!readValidInt(&choiceSortOrder, ">>> Pilihan: "))
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            if (choiceSortOrder < 1 || choiceSortOrder > 2)
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            printf("\n");
+
+            displayUsers(&hospital, &session, choiceSortBy, choiceSortOrder);
         }
+
+        // Untuk command "LIHATPASIEN"
         else if (strcmp(command, "LIHATPASIEN") == 0)
         {
-            displayPatients(&hospital, &session);
+            int choiceSortBy;
+            int choiceSortOrder;
+
+            int widths[] = {5, 20};
+            const char *headers[] = {"No.", "Urutan berdasarkan"};
+            printTableBorder(widths, 2, 1);
+            printTableRow(headers, widths, 2);
+            printTableBorder(widths, 2, 2);
+            const char *row1[] = {"1.", "ID"};
+            const char *row2[] = {"2.", "Nama"};
+            printTableRow(row1, widths, 2);
+            printTableRow(row2, widths, 2);
+            printTableBorder(widths, 2, 3);
+
+            if (!readValidInt(&choiceSortBy, ">>> Pilihan: "))
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            if (choiceSortBy < 1 || choiceSortBy > 2)
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            printf("\n");
+
+            int _widths[] = {5, 20};
+            const char *_headers[] = {"No.", "Urutan Sorting"};
+            printTableBorder(_widths, 2, 1);
+            printTableRow(_headers, _widths, 2);
+            printTableBorder(_widths, 2, 2);
+            const char *_row1[] = {"1.", "ASC (A-Z)"};
+            const char *_row2[] = {"2.", "DESC (Z-A)"};
+            printTableRow(_row1, _widths, 2);
+            printTableRow(_row2, _widths, 2);
+            printTableBorder(_widths, 2, 3);
+
+            if (!readValidInt(&choiceSortOrder, ">>> Pilihan: "))
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            if (choiceSortOrder < 1 || choiceSortOrder > 2)
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            printf("\n");
+
+            displayPatients(&hospital, &session, choiceSortBy, choiceSortOrder);
         }
+
+        // Untuk command "LIHATDOKTER"
         else if (strcmp(command, "LIHATDOKTER") == 0)
         {
-            displayDoctors(&hospital, &session);
+            int choiceSortBy;
+            int choiceSortOrder;
+
+            int widths[] = {5, 20};
+            const char *headers[] = {"No.", "Urutan berdasarkan"};
+            printTableBorder(widths, 2, 1);
+            printTableRow(headers, widths, 2);
+            printTableBorder(widths, 2, 2);
+            const char *row1[] = {"1.", "ID"};
+            const char *row2[] = {"2.", "Nama"};
+            const char *row3[] = {"3.", "Aura"};
+            printTableRow(row1, widths, 2);
+            printTableRow(row2, widths, 2);
+            printTableRow(row3, widths, 2);
+            printTableBorder(widths, 2, 3);
+
+            if (!readValidInt(&choiceSortBy, ">>> Pilihan: "))
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            if (choiceSortBy < 1 || choiceSortBy > 2)
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            printf("\n");
+
+            int _widths[] = {5, 20};
+            const char *_headers[] = {"No.", "Urutan Sorting"};
+            printTableBorder(_widths, 2, 1);
+            printTableRow(_headers, _widths, 2);
+            printTableBorder(_widths, 2, 2);
+            const char *_row1[] = {"1.", "ASC (A-Z)"};
+            const char *_row2[] = {"2.", "DESC (Z-A)"};
+            printTableRow(_row1, _widths, 2);
+            printTableRow(_row2, _widths, 2);
+            printTableBorder(_widths, 2, 3);
+
+            if (!readValidInt(&choiceSortOrder, ">>> Pilihan: "))
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            if (choiceSortOrder < 1 || choiceSortOrder > 2)
+            {
+                printError("Pilihan tidak valid!");
+                continue;
+            }
+
+            printf("\n");
+
+            displayDoctors(&hospital, &session, choiceSortBy, choiceSortOrder);
         }
-        
+
+        // Untuk command "CARIUSER"
         else if (strcmp(command, "CARIUSER") == 0)
         {
             char query[50];
             boolean byId = false;
-            printf("Cari berdasarkan?\n1. ID\n2. Nama\n");
+
+            int widths[] = {5, 20};
+            const char *headers[] = {"No.", "Cari berdasarkan"};
+            printTableBorder(widths, 2, 1);
+            printTableRow(headers, widths, 2);
+            printTableBorder(widths, 2, 2);
+            const char *row1[] = {"1.", "ID"};
+            const char *row2[] = {"2.", "Nama"};
+            printTableRow(row1, widths, 2);
+            printTableRow(row2, widths, 2);
+            printTableBorder(widths, 2, 3);
+
             int choice;
-            if (!readValidInt(&choice, ">>> Pilihan: ")) {
+            if (!readValidInt(&choice, ">>> Pilihan: "))
+            {
                 printError("Pilihan tidak valid!");
                 continue;
             }
-            
-            if (choice == 1) {
+
+            printf("\n");
+
+            if (choice == 1)
+            {
                 byId = true;
-                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID user: ", false)) {
+                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID user: ", false))
+                {
                     printError("Input ID tidak valid!");
                     continue;
                 }
-            } else if (choice == 2) {
+
+                printf("\n");
+            }
+            else if (choice == 2)
+            {
                 byId = false;
-                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama user: ")) {
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama user: "))
+                {
                     printError("Input Nama tidak valid!");
                     continue;
                 }
-            } else {
+
+                printf("\n");
+            }
+            else
+            {
                 printError("Pilihan tidak valid!");
                 continue;
             }
             findUser(&hospital, &session, query, byId);
         }
+
+        // Untuk command "CARIPASIEN"
         else if (strcmp(command, "CARIPASIEN") == 0)
         {
-            char query[50]; 
+            char query[50];
             boolean byId = false;
-            boolean byDisease = false; 
+            boolean byDisease = false;
 
-            printf("Cari berdasarkan?\n1. ID\n2. Nama\n3. Penyakit\n");
+            int widths[] = {5, 20};
+            const char *headers[] = {"No.", "Cari berdasarkan"};
+            printTableBorder(widths, 2, 1);
+            printTableRow(headers, widths, 2);
+            printTableBorder(widths, 2, 2);
+            const char *row1[] = {"1.", "ID"};
+            const char *row2[] = {"2.", "Nama"};
+            const char *row3[] = {"3.", "Penyakit"};
+            printTableRow(row1, widths, 2);
+            printTableRow(row2, widths, 2);
+            printTableRow(row3, widths, 2);
+            printTableBorder(widths, 2, 3);
+
             int choice;
-            if (!readValidInt(&choice, ">>> Pilihan: ")) {
+            if (!readValidInt(&choice, ">>> Pilihan: "))
+            {
                 continue;
             }
 
-            if (choice == 1) { 
+            printf("\n");
+
+            if (choice == 1)
+            {
                 byId = true;
                 byDisease = false;
-                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID user: ", false)) {
+                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID user: ", false))
+                {
                     printError("Input ID tidak valid!");
                     continue;
                 }
-            } else if (choice == 2) { 
+
+                printf("\n");
+            }
+            else if (choice == 2)
+            {
                 byId = false;
                 byDisease = false;
-                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama user: ")) { 
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama user: "))
+                {
                     printError("Input Nama tidak valid!");
                     continue;
                 }
-            } else if (choice == 3) { 
+
+                printf("\n");
+            }
+            else if (choice == 3)
+            {
                 byId = false;
                 byDisease = true;
-                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama penyakit: ")) {
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama penyakit: "))
+                {
                     printError("Input Penyakit tidak valid!");
                     continue;
                 }
-            } else {
+
+                printf("\n");
+            }
+            else
+            {
                 printError("Pilihan tidak valid!");
                 continue;
             }
-            findPatient(&hospital, &session, query, byId, byDisease); 
+            findPatient(&hospital, &session, query, byId, byDisease);
         }
+
+        // Untuk command "CARIDOKTER"
         else if (strcmp(command, "CARIDOKTER") == 0)
         {
-            char query[51]; 
+            char query[51];
             boolean byId = false;
-            printf("Cari berdasarkan?\n1. ID\n2. Nama\n");
+
+            int widths[] = {5, 20};
+            const char *headers[] = {"No.", "Cari berdasarkan"};
+            printTableBorder(widths, 2, 1);
+            printTableRow(headers, widths, 2);
+            printTableBorder(widths, 2, 2);
+            const char *row1[] = {"1.", "ID"};
+            const char *row2[] = {"2.", "Nama"};
+            printTableRow(row1, widths, 2);
+            printTableRow(row2, widths, 2);
+            printTableBorder(widths, 2, 3);
+
             int choice;
-            if (!readValidInt(&choice, ">>> Pilihan: ")) {
+            if (!readValidInt(&choice, ">>> Pilihan: "))
+            {
                 printError("Pilihan tidak valid!");
                 continue;
             }
 
-            if (choice == 1) {
+            printf("\n");
+
+            if (choice == 1)
+            {
                 byId = true;
-                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID dokter: ", false)) {
+                if (!readValidString(query, sizeof(query), ">>> Masukkan nomor ID dokter: ", false))
+                {
                     printError("Input ID tidak valid!");
                     continue;
                 }
-            } else if (choice == 2) {
+
+                printf("\n");
+            }
+            else if (choice == 2)
+            {
                 byId = false;
-                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama dokter: ")) {
+                if (!readStringWithSpaces(query, sizeof(query), ">>> Masukkan nama dokter: "))
+                {
                     printError("Input Nama tidak valid!");
                     continue;
                 }
-            } else {
+
+                printf("\n");
+            }
+            else
+            {
                 printError("Pilihan tidak valid!");
                 continue;
             }
             findDoctor(&hospital, &session, query, byId);
         }
-        
+
         else if (strcmp(command, "LIHATANTRIAN") == 0)
         {
             displayQueue(&hospital, &session);
