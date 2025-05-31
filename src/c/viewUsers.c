@@ -132,7 +132,7 @@ int compareDoctorByAuraDesc(const void *a, const void *b)
 // Menerima pointer ke UserSet yang akan diurutkan,
 // kriteria pengurutan (sortBy: 1 untuk ID, lainnya (misal 2) untuk Nama),
 // dan urutan pengurutan (sortOrder: 1 untuk Ascending, lainnya (misal 2) untuk Descending).
-void sortUser(UserSet *userList, int sortBy, int sortOrder)
+void sortUser(UserSet *userSet, int sortBy, int sortOrder)
 {
     // Memeriksa kriteria pengurutan.
     if (sortBy == 1) // Jika diurutkan berdasarkan ID.
@@ -142,26 +142,26 @@ void sortUser(UserSet *userList, int sortBy, int sortOrder)
         {
             // Menggunakan fungsi standar qsort untuk mengurutkan array.
             // Parameter:
-            //   1. userList->elements: pointer ke elemen pertama array yang akan diurutkan.
-            //   2. userList->nEff: jumlah elemen dalam array.
+            //   1. userSet->elements: pointer ke elemen pertama array yang akan diurutkan.
+            //   2. userSet->nEff: jumlah elemen dalam array.
             //   3. sizeof(User): ukuran (dalam byte) dari satu elemen array.
             //   4. compareUserByIdAsc: pointer ke fungsi pembanding yang akan digunakan.
-            qsort(userList->elements, userList->nEff, sizeof(User), compareUserByIdAsc);
+            qsort(userSet->elements, userSet->nEff, sizeof(User), compareUserByIdAsc);
         }
         else // Jika Descending (sortOrder bukan 1).
         {
-            qsort(userList->elements, userList->nEff, sizeof(User), compareUserByIdDesc);
+            qsort(userSet->elements, userSet->nEff, sizeof(User), compareUserByIdDesc);
         }
     }
     else // Jika diurutkan berdasarkan Nama (sortBy bukan 1).
     {
         if (sortOrder == 1) // Jika Ascending.
         {
-            qsort(userList->elements, userList->nEff, sizeof(User), compareUserByNameAsc);
+            qsort(userSet->elements, userSet->nEff, sizeof(User), compareUserByNameAsc);
         }
         else // Jika Descending.
         {
-            qsort(userList->elements, userList->nEff, sizeof(User), compareUserByNameDesc);
+            qsort(userSet->elements, userSet->nEff, sizeof(User), compareUserByNameDesc);
         }
     }
 }

@@ -1,6 +1,4 @@
-#include "myQueue.h"
-#include <string.h> // For strncpy
-#include "utils.h"  // For printError, safeMalloc (although safeMalloc typically exits on error)
+#include "queuePrimitive.h"
 
 // Initializes a Queue (front/rear to NULL, size to 0).
 void initializeQueue(Queue *q, const char* roomCode) {
@@ -9,9 +7,9 @@ void initializeQueue(Queue *q, const char* roomCode) {
         // printError("Error: Queue pointer is NULL in initializeQueue.\n");
         return; // Or handle error more gracefully if possible
     }
-    q->front = NULL;
-    q->rear = NULL;
-    q->size = 0;
+    q->head = NULL;
+    q->tail = NULL;
+    
     if (roomCode != NULL) {
         // customSafeStrcpy(q->roomCode, roomCode, sizeof(q->roomCode));
         strcpy(q->roomCode, roomCode); // Assuming q->roomCode is always large enough
