@@ -271,6 +271,7 @@ typedef struct Queue
     char roomCode[5]; // Kode ruangan (misalnya: "A1", "B2", dll)
     QueueNode *head;
     QueueNode *tail;
+    int size;
 } Queue;
 
 /* ADT List - untuk kumpulan antrian di rumah sakit */

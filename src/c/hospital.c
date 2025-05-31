@@ -102,9 +102,9 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
             // Lakukan cleanup untuk baris-baris yang sudah berhasil dialokasikan sebelumnya.
             for (int k = 0; k < i; k++)
             { // Loop hingga baris sebelum baris yang gagal (indeks i).
-                // Di dalam setiap kolom dari baris k yang sudah dialokasikan,
-                // perlu membebaskan `patientInRoom.patientId` jika sudah dialokasikan.
-                // Ini karena `patientInRoom.patientId` dialokasikan per ruangan.
+              // Di dalam setiap kolom dari baris k yang sudah dialokasikan,
+              // perlu membebaskan `patientInRoom.patientId` jika sudah dialokasikan.
+              // Ini karena `patientInRoom.patientId` dialokasikan per ruangan.
                 for (int l = 0; l < roomCols; l++)
                 {
                     // Memeriksa apakah elemen baris k tidak NULL (sudah dialokasikan)
@@ -116,7 +116,7 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
                     }
                 }
                 free(hospital->layout.elements[k]); // Bebaskan memori untuk array kolom pada baris k.
-                // Sebaiknya set ke NULL: hospital->layout.elements[k] = NULL; (tidak ada di skrip asli)
+                                                    // Sebaiknya set ke NULL: hospital->layout.elements[k] = NULL; (tidak ada di skrip asli)
             }
             // Bebaskan array pointer baris itu sendiri.
             free(hospital->layout.elements);
@@ -206,7 +206,7 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
                 // 3. Bebaskan semua baris yang sudah dialokasikan penuh sebelumnya (dari baris 0 hingga i-1).
                 for (int k = 0; k < i; k++)
                 { // Loop untuk setiap baris yang sudah dialokasikan penuh.
-                    // Untuk setiap baris k, bebaskan `patientId` di setiap kolomnya.
+                  // Untuk setiap baris k, bebaskan `patientId` di setiap kolomnya.
                     for (int l = 0; l < roomCols; l++)
                     {
                         if (hospital->layout.elements[k] != NULL && hospital->layout.elements[k][l].patientInRoom.patientId != NULL)
@@ -216,7 +216,7 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
                         }
                     }
                     free(hospital->layout.elements[k]); // Bebaskan memori untuk array kolom pada baris k.
-                    // hospital->layout.elements[k] = NULL; // Sebaiknya
+                                                        // hospital->layout.elements[k] = NULL; // Sebaiknya
                 }
                 // 4. Bebaskan array pointer baris utama (`layout.elements`) dan semua alokasi tingkat atas lainnya.
                 free(hospital->layout.elements);
@@ -252,7 +252,7 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
             { // Periksa apakah pointer baris i valid.
                 for (int j = 0; j < roomCols; j++)
                 { // Loop melalui setiap kolom.
-                    // Periksa apakah `patientId` di dalam `Room [i][j]` sudah dialokasikan.
+                  // Periksa apakah `patientId` di dalam `Room [i][j]` sudah dialokasikan.
                     if (hospital->layout.elements[i][j].patientInRoom.patientId != NULL)
                     {
                         free(hospital->layout.elements[i][j].patientInRoom.patientId);
@@ -275,12 +275,12 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
     hospital->queues.capacity = roomRows * roomCols; // Kapasitas total slot antrian yang dialokasikan.
     hospital->queues.nRooms = 0;                     // Awalnya, jumlah ruangan yang memiliki antrian aktif (dan terdaftar di sini) adalah 0.
     // Inisialisasi setiap antrian dalam array `hospital->queues.queues`.
+    // Perubahan: Menggunakan fungsi `initializeQueue` untuk inisialisasi setiap antrian.
     for (int i = 0; i < hospital->queues.capacity; i++)
-    {                                                  // Loop hingga kapasitas yang dialokasikan.
-        hospital->queues.queues[i].front = NULL;       // Pointer depan antrian (untuk linked list) diinisialisasi NULL.
-        hospital->queues.queues[i].rear = NULL;        // Pointer belakang antrian diinisialisasi NULL.
-        hospital->queues.queues[i].size = 0;           // Ukuran antrian (jumlah pasien) awal adalah 0.
-        hospital->queues.queues[i].roomCode[0] = '\0'; // Kode ruangan untuk antrian ini, diinisialisasi string kosong. Akan diisi saat antrian aktif digunakan.
+    { // Loop hingga kapasitas yang dialokasikan.
+        // Memanggil fungsi `initializeQueue` untuk menginisialisasi antrian ke-i.
+        // Argumen kedua "" mungkin adalah roomCode default atau placeholder.
+        initializeQueue(&hospital->queues.queues[i], "");
     }
 
     // Inisialisasi DiseaseList (daftar penyakit yang diketahui sistem).
@@ -290,7 +290,7 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
     {
         printError("Gagal alokasi memori untuk DiseaseList!");
         // Cleanup penuh untuk semua yang sudah dialokasikan sebelumnya.
-        free(hospital->queues.queues);
+        free(hospital->queues.queues); // Bebaskan array antrian yang baru saja mungkin berhasil dialokasikan.
         hospital->queues.queues = NULL;
         // Cleanup untuk layout (disalin dari atas, idealnya menggunakan fungsi helper untuk menghindari duplikasi kode).
         for (int i = 0; i < roomRows; i++)
@@ -489,25 +489,22 @@ boolean initHospital(Hospital *hospital, int userCapacity, int patientCapacity, 
     hospital->treatmentHistory.nEff = 0;       // Awalnya tidak ada riwayat pengobatan.
 
     // Menambahkan pengguna default (Manajer) secara manual setelah semua inisialisasi dasar selesai.
-    // Ini adalah perubahan dari versi sebelumnya dimana user default mungkin di-init di main.
+    // Ini adalah perubahan dari versi sebelumnya dimana user default di-init di main.
     // Pastikan `hospital->users.elements` sudah dialokasikan dan `hospital->users.nEff` masih < `hospital->users.capacity`.
     // Karena `userCapacity` bisa saja kecil, penambahan ini harus aman.
     // Jika `userCapacity` adalah 0 (dicegah di awal), atau jika `nEff` sudah sama dengan `capacity` sebelum ini,
     // maka ini bisa menjadi masalah. Namun, `nEff` diinisialisasi 0.
     hospital->users.elements[0].id = 1;                         // Menetapkan ID pengguna default.
     strcpy(hospital->users.elements[0].username, "NimonsDawg"); // Menetapkan username.
-    // Mengenkripsi password pengguna default. `enigmaEncrypt` adalah fungsi kustom.
-    // 100 adalah panjang buffer untuk password terenkripsi.
+                                                                // Mengenkripsi password pengguna default. `enigmaEncrypt` adalah fungsi kustom.
+                                                                // 100 adalah panjang buffer untuk password terenkripsi.
     if (!enigmaEncrypt("admoontothemoon", hospital->users.elements[0].password.encryptedContent, 100))
     {
-        printError("Gagal mengenkripsi password!");
-        // Cleanup penuh karena kegagalan terjadi setelah banyak alokasi.
-        // Ini adalah titik kritis, jika enkripsi gagal, semua yang sudah di-init perlu di-free.
-        // Skrip asli mengembalikan '1' yang tidak sesuai untuk fungsi boolean, tapi tidak akan diubah.
-        // Untuk konsistensi, idealnya memanggil freeHospital() lalu return false.
-        // freeHospital(hospital); // Idealnya
-        return 1; // Skrip asli mengembalikan 1, yang akan dievaluasi sebagai true dalam konteks boolean. Ini mungkin bug.
-                  // Sesuai instruksi, tidak mengubah skrip.
+        printError("Gagal mengenkripsi password manager default!"); // Pesan error spesifik.
+        // PERBAIKAN: Jika enkripsi gagal, panggil freeHospital untuk membersihkan semua alokasi
+        // dan kembalikan false untuk menandakan kegagalan inisialisasi.
+        freeHospital(hospital); // Memanggil fungsi cleanup.
+        return false;           // Mengembalikan false.
     }
     hospital->users.elements[0].role = MANAGER; // Menetapkan peran sebagai Manajer.
     hospital->users.nEff++;                     // Menambah jumlah pengguna efektif menjadi 1.
@@ -534,7 +531,7 @@ void freeHospital(Hospital *hospital)
         // yaitu `medicationsPrescribed.medicationId` dan `medicationsTaken.medicationId`.
         for (int i = 0; i < hospital->patients.nEff; i++)
         { // Loop melalui pasien yang efektif.
-            // Bebaskan daftar obat yang diresepkan untuk pasien i.
+          // Bebaskan daftar obat yang diresepkan untuk pasien i.
             if (hospital->patients.elements[i].medicationsPrescribed.medicationId != NULL)
             {
                 free(hospital->patients.elements[i].medicationsPrescribed.medicationId);
@@ -589,13 +586,13 @@ void freeHospital(Hospital *hospital)
     }
 
     // Membebaskan memori untuk daftar antrian (HospitalQueueList).
-    if (hospital->queues.queues)
-    { // Periksa apakah array struktur Queue dialokasikan.
+    if (hospital->queues.queues) // Periksa apakah array struktur Queue dialokasikan.
+    {
         // Loop melalui semua slot antrian yang dialokasikan (berdasarkan `hospital->queues.capacity`).
         for (int i = 0; i < hospital->queues.capacity; i++)
         {
-            // Membebaskan semua node dalam linked list untuk antrian ke-i.
-            QueueNode *current = hospital->queues.queues[i].front; // Mulai dari node depan.
+            // Menggunakan `head` untuk iterasi node dalam antrian (perubahan dari `front`).
+            QueueNode *current = hospital->queues.queues[i].head; // Mulai dari node kepala.
             QueueNode *nextNode;
             while (current != NULL)
             {                             // Selama masih ada node dalam antrian.
@@ -603,10 +600,10 @@ void freeHospital(Hospital *hospital)
                 free(current);            // Bebaskan memori untuk node saat ini.
                 current = nextNode;       // Pindah ke node berikutnya.
             }
-            // Setelah semua node dibebaskan, set pointer front dan rear ke NULL.
-            hospital->queues.queues[i].front = NULL;
-            hospital->queues.queues[i].rear = NULL;
-            // `size` dan `roomCode` tidak perlu di-free karena bukan pointer dinamis.
+            // Setelah semua node dibebaskan, set pointer head dan tail ke NULL, dan size ke 0.
+            hospital->queues.queues[i].head = NULL;
+            hospital->queues.queues[i].tail = NULL;
+            hospital->queues.queues[i].size = 0; // Reset ukuran antrian.
         }
         // Bebaskan memori untuk array struktur Queue itu sendiri.
         free(hospital->queues.queues);
@@ -650,7 +647,7 @@ boolean deletePatient(Hospital *hospital, int patientId)
     // Langkah 1: Menghapus pasien dari PatientList.
     int patientIndex = -1;         // Indeks pasien dalam array `hospital->patients.elements`, diinisialisasi -1 (tidak ditemukan).
     char patientUsername[50] = ""; // Buffer untuk menyimpan username pasien yang dihapus (digunakan untuk pesan sukses).
-    // Mencari pasien dalam `PatientList` berdasarkan ID.
+                                   // Mencari pasien dalam `PatientList` berdasarkan ID.
     for (int i = 0; i < hospital->patients.nEff; i++)
     {
         if (hospital->patients.elements[i].id == patientId)
@@ -691,7 +688,7 @@ boolean deletePatient(Hospital *hospital, int patientId)
 
     // Langkah 2: Menghapus entri pengguna (yang berkorespondensi dengan pasien tersebut) dari UserSet.
     int userIndex = -1; // Indeks pengguna dalam array `hospital->users.elements`.
-    // Cari pengguna berdasarkan ID (yang seharusnya sama dengan patientId).
+                        // Cari pengguna berdasarkan ID (yang seharusnya sama dengan patientId).
     for (int i = 0; i < hospital->users.nEff; i++)
     {
         if (hospital->users.elements[i].id == patientId)
@@ -716,16 +713,16 @@ boolean deletePatient(Hospital *hospital, int patientId)
     for (int i = 0; i < hospital->queues.capacity; i++)
     {
         Queue *q = &hospital->queues.queues[i]; // Pointer ke struktur antrian saat ini.
-        // Lewati antrian yang tidak aktif (belum memiliki `roomCode`) atau antrian yang kosong.
-        // `isQueueEmpty(q)` adalah fungsi utilitas yang diasumsikan ada.
+                                                // Lewati antrian yang tidak aktif (belum memiliki `roomCode`) atau antrian yang kosong.
+                                                // `isQueueEmpty(q)` adalah fungsi utilitas yang diasumsikan ada.
         if (q->roomCode[0] == '\0' || isQueueEmpty(q))
         {
             continue; // Lanjut ke slot antrian berikutnya.
         }
 
-        boolean removed = false;       // Flag untuk menandakan apakah pasien sudah dihapus dari antrian ini.
-        QueueNode *current = q->front; // Mulai dari node depan antrian (linked list).
-        QueueNode *prev = NULL;        // Pointer ke node sebelumnya (digunakan untuk penghapusan dari tengah/belakang list).
+        boolean removed = false;      // Flag untuk menandakan apakah pasien sudah dihapus dari antrian ini.
+        QueueNode *current = q->head; // Mulai dari node kepala antrian (perubahan dari `front`).
+        QueueNode *prev = NULL;       // Pointer ke node sebelumnya (digunakan untuk penghapusan dari tengah/belakang list).
 
         // Iterasi melalui node-node dalam antrian saat ini.
         while (current != NULL)
@@ -733,18 +730,25 @@ boolean deletePatient(Hospital *hospital, int patientId)
             // Jika ID pasien di node saat ini (`current->info.patientId`) cocok dengan `patientId` yang akan dihapus.
             if (current->info.patientId == patientId)
             {
-                // Logika penghapusan node dari linked list.
+                // Logika penghapusan node dari linked list (kemungkinan doubly linked list).
                 if (prev == NULL)
-                {                             // Jika pasien ada di node depan antrian (front).
-                    q->front = current->next; // Pindahkan pointer `front` ke node berikutnya.
+                {                            // Jika pasien ada di node kepala antrian (head).
+                    q->head = current->next; // Pindahkan pointer `head` ke node berikutnya.
                 }
                 else
                 {                               // Jika pasien ada di tengah atau belakang antrian.
                     prev->next = current->next; // Sambungkan node `prev` ke node setelah `current`.
                 }
-                if (current == q->rear)
-                {                   // Jika pasien yang dihapus adalah node belakang (rear).
-                    q->rear = prev; // Pindahkan pointer `rear` ke node `prev` (bisa jadi NULL jika antrian menjadi kosong).
+
+                // Penyesuaian untuk doubly linked list atau tail pointer.
+                if (current->next == NULL) // Jika node yang dihapus adalah node terakhir (tail).
+                {
+                    q->tail = prev; // Pointer `tail` menunjuk ke `prev` (bisa NULL jika hanya ada 1 elemen).
+                }
+                else // Jika node yang dihapus bukan node terakhir.
+                {
+                    // Jika ini adalah doubly linked list, pointer `prev` dari node `current->next` perlu diupdate.
+                    current->next->prev = prev;
                 }
                 free(current);  // Bebaskan memori yang dialokasikan untuk node `current`.
                 q->size--;      // Kurangi ukuran (jumlah elemen) antrian.
@@ -754,13 +758,11 @@ boolean deletePatient(Hospital *hospital, int patientId)
             prev = current;          // Simpan node saat ini sebagai `prev` untuk iterasi berikutnya.
             current = current->next; // Pindah ke node berikutnya dalam antrian.
         }
-
-        // Jika setelah penghapusan, antrian menjadi kosong (front menjadi NULL), pastikan rear juga NULL.
-        if (q->front == NULL)
+        // Jika setelah penghapusan, antrian menjadi kosong (head menjadi NULL), pastikan tail juga NULL.
+        if (q->head == NULL)
         {
-            q->rear = NULL;
+            q->tail = NULL;
         }
-
         // Jika pasien sudah dihapus dari satu antrian, kita bisa berasumsi pasien hanya bisa ada dalam satu antrian pada satu waktu.
         if (removed)
         {
@@ -778,7 +780,7 @@ boolean deletePatient(Hospital *hospital, int patientId)
         for (int j = 0; j < hospital->layout.colEff; j++)
         {
             Room *room = &hospital->layout.elements[i][j]; // Pointer ke ruangan saat ini.
-            // Iterasi melalui daftar ID pasien yang ada di dalam ruangan tersebut.
+                                                           // Iterasi melalui daftar ID pasien yang ada di dalam ruangan tersebut.
             for (int k = 0; k < room->patientInRoom.nEff; k++)
             {
                 // Jika ID pasien di dalam ruangan (`room->patientInRoom.patientId[k]`) cocok dengan `patientId` yang akan dihapus.
@@ -801,7 +803,7 @@ boolean deletePatient(Hospital *hospital, int patientId)
     // Jika seorang pasien mungkin memiliki beberapa entri riwayat, logika ini perlu diubah
     // untuk menghapus semua entri yang relevan (misalnya, dengan loop `while` atau menggeser berulang kali).
     int historyIndex = -1; // Indeks entri riwayat yang akan dihapus.
-    // Cari entri riwayat berdasarkan patientId.
+                           // Cari entri riwayat berdasarkan patientId.
     for (int i = 0; i < hospital->treatmentHistory.nEff; i++)
     {
         if (hospital->treatmentHistory.elements[i].patientId == patientId)

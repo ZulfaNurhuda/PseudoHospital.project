@@ -7,7 +7,7 @@
 
 #include "abstractDataTypes.h"
 #include "utils.h"
-#include "myQueue.h" // For queue operations like isQueueEmpty
+#include "queuePrimitive.h"
 
 /**
  * Nama Fungsi: `initHospital`

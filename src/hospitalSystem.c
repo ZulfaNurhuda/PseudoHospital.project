@@ -44,16 +44,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    hospital.users.elements[0].id = 1;
-    strcpy(hospital.users.elements[0].username, "NimonsDawg");
-    if (!enigmaEncrypt("admoontothemoon", hospital.users.elements[0].password.encryptedContent, 100))
-    {
-        printError("Gagal mengenkripsi password!");
-        return 1;
-    }
-    hospital.users.elements[0].role = MANAGER;
-    hospital.users.nEff++;
-
     session.isLoggedIn = false;
     session.userId = -1;
     session.username[0] = '\0';
