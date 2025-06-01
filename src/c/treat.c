@@ -1,11 +1,10 @@
 #include "treat.h"
-#include "utils.h"
 
 boolean treatPatient(Hospital *hospital, Session *session)
 {
     if (hospital == NULL || session == NULL)
     {
-        printError("Struktur rumah sakit, sesi, atau username tidak valid!");
+        printError("Struktur rumah sakit atau sesi tidak valid!");
         return false;
     }
     if (!session->isLoggedIn || session->role != DOCTOR)
@@ -79,8 +78,9 @@ boolean treatPatient(Hospital *hospital, Session *session)
 
     if (strcmp(patient->disease, "Tidak terdeteksi") == 0)
     {
-        printError("Pasien tidak menderita penyakit apapun!");
-        return false;
+        printSuccess("Pasien tidak menderita penyakit apapun!");
+        patient->treatedStatus = true;
+        return true;
     }
 
     if (!patient->diagnosedStatus)
@@ -98,6 +98,38 @@ boolean treatPatient(Hospital *hospital, Session *session)
     if (strcmp(patient->queueRoom, doctor->room) != 0)
     {
         printError("Pasien tidak berada di antrian ruangan dokter!");
+        return false;
+    }
+
+    Queue *roomQueue = NULL;
+    if (hospital->queues.nRooms > 0)
+    {
+        for (int i = 0; i < hospital->queues.nRooms; i++)
+        {
+            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0)
+            {
+                roomQueue = &hospital->queues.queues[i];
+                break;
+            }
+        }
+    }
+
+    if (roomQueue == NULL || isQueueEmpty(roomQueue))
+    {
+        printError("Antrian untuk ruangan dokter ini kosong atau tidak ditemukan.");
+        return false;
+    }
+
+    int firstPatientId = -1;
+    if (!peekQueue(roomQueue, &firstPatientId))
+    {
+        printError("Tidak dapat melihat pasien di depan antrian.");
+        return false;
+    }
+
+    if (firstPatientId != patient->id)
+    {
+        printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
         return false;
     }
 
@@ -131,7 +163,7 @@ boolean treatPatient(Hospital *hospital, Session *session)
 
     if (medicationCount > 0)
     {
-        tempPrescriptions = malloc(medicationCount * sizeof(MedicationPrescription));
+        tempPrescriptions = (MedicationPrescription *)malloc(medicationCount * sizeof(MedicationPrescription));
         if (tempPrescriptions == NULL)
         {
             printError("Gagal mengalokasi memori untuk resep sementara!");
@@ -154,7 +186,6 @@ boolean treatPatient(Hospital *hospital, Session *session)
             {
                 if (tempPrescriptions[j].doseOrder > tempPrescriptions[j + 1].doseOrder)
                 {
-
                     MedicationPrescription temp = tempPrescriptions[j];
                     tempPrescriptions[j] = tempPrescriptions[j + 1];
                     tempPrescriptions[j + 1] = temp;
@@ -192,18 +223,32 @@ boolean treatPatient(Hospital *hospital, Session *session)
         printTableRow(header, widths, 2);
         printTableBorder(widths, 2, 2);
 
-        for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
+        for (int i = 0; i < prescribedMedications.nEff; i++)
         {
             Medication *med = NULL;
             for (int j = 0; j < hospital->medications.nEff; j++)
             {
-                if (hospital->medications.elements[j].id == patient->medicationsPrescribed.medicationId[i])
+                if (hospital->medications.elements[j].id == prescribedMedications.elements[i].id)
                 {
                     med = &hospital->medications.elements[j];
                     break;
                 }
             }
-            
+
+            if (med == NULL)
+            {
+                char errorMessage[100] = "";
+                strcat(errorMessage, "Obat dengan ID ");
+                char idStr[10];
+                integerToString(prescribedMedications.elements[i].id, idStr, sizeof(idStr));
+                strcat(errorMessage, idStr);
+                strcat(errorMessage, " tidak ditemukan!");
+                printError(errorMessage);
+
+                free(prescribedMedications.elements);
+                return false;
+            }
+
             char no[10] = "";
             integerToString(i + 1, no, sizeof(no));
             strcat(no, ".");
@@ -215,7 +260,6 @@ boolean treatPatient(Hospital *hospital, Session *session)
 
         if (patient->medicationsPrescribed.capacity < medicationCount)
         {
-
             int *newMedicationIds = realloc(patient->medicationsPrescribed.medicationId,
                                             medicationCount * sizeof(int));
             if (newMedicationIds == NULL)
@@ -231,13 +275,11 @@ boolean treatPatient(Hospital *hospital, Session *session)
         patient->medicationsPrescribed.nEff = 0;
         for (int i = 0; i < prescribedMedications.nEff; i++)
         {
-            patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff] =
-                prescribedMedications.elements[i].id;
+            patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff] = prescribedMedications.elements[i].id;
             patient->medicationsPrescribed.nEff++;
         }
 
         patient->treatedStatus = true;
-
         free(prescribedMedications.elements);
 
         printSuccess("Obat berhasil diberikan!");

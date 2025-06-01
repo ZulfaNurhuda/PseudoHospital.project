@@ -128,11 +128,11 @@ boolean diagnosePatient(Hospital *hospital, Session *session)
 
     if (strcmp(diseaseStr, "Tidak terdeteksi") == 0)
     {
+        patient->diagnosedStatus = true;
         printSuccess("Pasien tidak terdiagnosis penyakit apapun!");
     }
     else
     {
-
         printf("%s terdiagnosa penyakit %s%s%s!\n", patient->username, COLOR_YELLOW, diseaseStr, COLOR_RESET);
     }
 
