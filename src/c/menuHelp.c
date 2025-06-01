@@ -77,7 +77,7 @@ void displayMenu(Session *session)
             menu[count++] = "HELP";
             menu[count++] = "LIHAT_DENAH";
             menu[count++] = "DIAGNOSIS";
-            menu[count++] = "TREAT"; // Perintah "TREAT" (atau "NGOBATIN" setelah normalisasi).
+            menu[count++] = "NGOBATIN"; 
             menu[count++] = "LIHAT_DOMPET";
             menu[count++] = "EXIT";
             break;
@@ -304,7 +304,7 @@ void displayHelp(Session *session, const char *command)
                 printf("  🩺 %sDIAGNOSIS%s\n     Deskripsi: Lakukan diagnosis otomatis untuk pasien di ruangan Anda.\n", FORMAT_BOLD, FORMAT_RESET);
             }
             else if (strcmp(normalCommand, "NGOBATIN") == 0)
-            { // Sesuai normalisasi dari "TREAT" atau "NGOBATIN"
+            { 
                 printf("  💊 %sNGOBATIN%s\n     Deskripsi: Berikan resep obat otomatis berdasarkan penyakit pasien.\n", FORMAT_BOLD, FORMAT_RESET);
             }
             else if (strcmp(normalCommand, "LIHATDOMPET") == 0)
