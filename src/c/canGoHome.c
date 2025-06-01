@@ -74,7 +74,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
 
             for (int i = 0; i < takenCount && correctOrder; i++)
             {
-
                 if (patient->medicationsTaken.medicationId[i] != patient->medicationsPrescribed.medicationId[i])
                 {
                     correctOrder = false;
