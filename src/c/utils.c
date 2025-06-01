@@ -14,7 +14,7 @@ void *safeMalloc(size_t size)
     return ptr;
 }
 
-char localCharToLower(char c)
+char charToLower(char c)
 {
     // Memeriksa apakah karakter `c` adalah huruf besar (berada dalam rentang ASCII 'A' hingga 'Z').
     if (c >= 'A' && c <= 'Z')
@@ -27,7 +27,7 @@ char localCharToLower(char c)
     return c;
 }
 
-int localCaseInsensitiveStrcmp(const char *s1, const char *s2)
+int caseInsensitiveStrcmp(const char *s1, const char *s2)
 {
     // Menangani kasus jika kedua string adalah NULL, dianggap sama.
     if (s1 == NULL && s2 == NULL)
@@ -43,9 +43,9 @@ int localCaseInsensitiveStrcmp(const char *s1, const char *s2)
     // Melakukan iterasi selama kedua string belum mencapai karakter null terminator ('\0').
     while (s1[i] != '\0' && s2[i] != '\0')
     {
-        // Mengubah karakter dari kedua string ke huruf kecil untuk perbandingan menggunakan customCharToLower.
-        char c1_lower = customCharToLower(s1[i]);
-        char c2_lower = customCharToLower(s2[i]);
+        // Mengubah karakter dari kedua string ke huruf kecil untuk perbandingan menggunakan charToLower.
+        char c1_lower = charToLower(s1[i]);
+        char c2_lower = charToLower(s2[i]);
         // Jika karakter yang sudah dikecilkan pada posisi saat ini berbeda.
         if (c1_lower != c2_lower)
         {
@@ -57,7 +57,7 @@ int localCaseInsensitiveStrcmp(const char *s1, const char *s2)
     // Setelah salah satu string (atau keduanya) mencapai akhir,
     // bandingkan karakter pada posisi `i` (yang mungkin null terminator untuk salah satu atau keduanya).
     // Ini penting untuk menangani kasus di mana satu string adalah awalan dari string lain (misalnya, "apple" vs "applepie").
-    return customCharToLower(s1[i]) - customCharToLower(s2[i]);
+    return charToLower(s1[i]) - charToLower(s2[i]);
 }
 
 boolean readValidString(char *buffer, int maxLen, const char *prompt, boolean alphanumeric)

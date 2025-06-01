@@ -694,7 +694,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            if (customCaseInsensitiveStrcmp(patientUsernameToCancel, "saya") == 0) {
+            if (caseInsensitiveStrcmp(patientUsernameToCancel, "saya") == 0) {
                  if (session.role == PATIENT) {
                     strcpy(patientUsernameToCancel, session.username);
                  } else {

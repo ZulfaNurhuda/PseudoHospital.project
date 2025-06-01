@@ -36,7 +36,7 @@ static boolean localContainsCaseInsensitiveSubstring(const char *text, const cha
         for (int j = 0; j < patternLen; j++)
         {
             // Membandingkan karakter dari text (mulai dari i+j) dengan karakter pattern (j), keduanya dikecilkan.
-            if (localCharToLower(text[i + j]) != localCharToLower(pattern[j]))
+            if (charToLower(text[i + j]) != charToLower(pattern[j]))
             {
                 match = false; // Jika ada karakter yang tidak cocok, set match ke false.
                 break;         // Keluar dari loop inner (perbandingan pattern).
@@ -308,7 +308,7 @@ void findUser(Hospital *hospital, Session *session, const char *query, boolean b
         {
             User *user = &hospital->users.elements[i];
             // Perbandingan nama case-insensitive.
-            if (localCaseInsensitiveStrcmp(user->username, query) == 0)
+            if (caseInsensitiveStrcmp(user->username, query) == 0)
             {
                 if (!printedTableHeaders) // Cetak header jika belum.
                 {
@@ -477,7 +477,7 @@ void findPatient(Hospital *hospital, Session *session, const char *query, boolea
         for (int i = 0; i < hospital->patients.nEff; i++)
         {
             Patient *patient = &hospital->patients.elements[i];
-            if (localCaseInsensitiveStrcmp(patient->disease, query) == 0)
+            if (caseInsensitiveStrcmp(patient->disease, query) == 0)
             {
                 if (!printedTableHeaders)
                 { /* Cetak header tabel */
@@ -576,7 +576,7 @@ void findPatient(Hospital *hospital, Session *session, const char *query, boolea
         for (int i = 0; i < hospital->patients.nEff; i++)
         {
             Patient *patient = &hospital->patients.elements[i];
-            if (localCaseInsensitiveStrcmp(patient->username, query) == 0)
+            if (caseInsensitiveStrcmp(patient->username, query) == 0)
             {
                 if (!printedTableHeaders)
                 { /* Cetak header tabel */
@@ -751,7 +751,7 @@ void findDoctor(Hospital *hospital, Session *session, const char *query, boolean
         for (int i = 0; i < hospital->doctors.nEff; i++)
         {
             Doctor *doctor = &hospital->doctors.elements[i];
-            if (localCaseInsensitiveStrcmp(doctor->username, query) == 0)
+            if (caseInsensitiveStrcmp(doctor->username, query) == 0)
             {
                 found = true;           // Hasil ditemukan.
                 exactMatchFound = true; // Pencocokan persis.
@@ -785,7 +785,7 @@ void findDoctor(Hospital *hospital, Session *session, const char *query, boolean
                 Doctor *doctor = &hospital->doctors.elements[i];
                 // Cek apakah username mengandung query dan BUKAN merupakan exact match yang sudah diproses.
                 if (localContainsCaseInsensitiveSubstring(doctor->username, query) &&
-                    localCaseInsensitiveStrcmp(doctor->username, query) != 0) // Hindari menampilkan exact match lagi sebagai suggestion.
+                    caseInsensitiveStrcmp(doctor->username, query) != 0) // Hindari menampilkan exact match lagi sebagai suggestion.
                 {
                     found = true;          // Sebuah kecocokan (saran) ditemukan.
                     if (!suggestionsFound) // Jika ini saran pertama.

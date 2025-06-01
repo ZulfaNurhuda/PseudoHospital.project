@@ -20,7 +20,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
     }
 
     // Validasi Username Dokter Baru.
-    // Menggunakan fungsi `isValidUsername` (diasumsikan ada) untuk memeriksa format username.
+    // Menggunakan fungsi `isValidUsername` untuk memeriksa format username.
     if (!isValidUsername(inputUsername))
     {
         printError("Username tidak valid! Hanya boleh berisi huruf, angka, spasi, atau underscore."); // Pesan error jika username tidak valid.
@@ -28,7 +28,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
     }
 
     // Pemeriksaan Keunikan Username.
-    // Menggunakan fungsi `isUsernameTaken` (diasumsikan ada) untuk memeriksa apakah username sudah digunakan.
+    // Menggunakan fungsi `isUsernameTaken` untuk memeriksa apakah username sudah digunakan.
     if (isUsernameTaken(hospital, inputUsername))
     {
         printError("Username sudah terdaftar!"); // Pesan error jika username sudah ada.
@@ -177,8 +177,8 @@ boolean assignDoctor(Hospital *hospital, Session *session, const char *username,
     for (int i = 0; i < hospital->doctors.nEff; i++)
     {
         // Membandingkan username input dengan username dokter (case-insensitive).
-        // `customCaseInsensitiveStrcmp` adalah fungsi perbandingan string kustom yang tidak membedakan huruf besar/kecil.
-        if (customCaseInsensitiveStrcmp(hospital->doctors.elements[i].username, username) == 0)
+        // `caseInsensitiveStrcmp` adalah fungsi perbandingan string kustom yang tidak membedakan huruf besar/kecil.
+        if (caseInsensitiveStrcmp(hospital->doctors.elements[i].username, username) == 0)
         {
             doctorIdx = i; // Jika ditemukan, simpan indeksnya.
             break;         // Keluar dari loop.

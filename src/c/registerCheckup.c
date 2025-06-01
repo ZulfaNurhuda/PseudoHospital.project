@@ -1,21 +1,5 @@
-// Menyertakan file header "registerCheckup.h".
-// File ini diasumsikan berisi deklarasi fungsi registerCheckup,
-// definisi struktur Hospital, Session, Patient, Doctor, Queue, TreatmentHistory,
-// serta makro (seperti COLOR_YELLOW, FORMAT_BOLD, FORMAT_RESET) dan deklarasi fungsi utilitas lainnya yang relevan seperti
-// printError, printHeader, strcmp, strcpy, strcat, strlen,
-// integerToString, floatToString, printTableBorder, printTableRow,
-// readValidInt, queueSize, initializeQueue, enqueue, isQueueEmpty, realloc, safeMalloc.
 #include "registerCheckup.h"
-#include <stdio.h>  // Diperlukan untuk printf.
-#include <string.h> // Diperlukan untuk strcmp, strcpy, strcat.
-#include <stdlib.h> // Diperlukan untuk realloc (jika safeMalloc tidak menanganinya).
 
-// Fungsi untuk mendaftarkan pasien untuk sesi checkup dengan dokter.
-// Parameter:
-//   hospital: pointer ke struktur Hospital yang menyimpan semua data rumah sakit.
-//   session: pointer ke struktur Session yang menyimpan informasi sesi pengguna saat ini.
-//   healthData: array float yang berisi data kesehatan awal pasien.
-// Mengembalikan true jika pendaftaran berhasil, false jika gagal.
 boolean registerCheckup(Hospital *hospital, Session *session, float healthData[])
 {
     // Validasi Input Awal: Memeriksa apakah pointer-pointer penting tidak NULL.
@@ -95,13 +79,13 @@ boolean registerCheckup(Hospital *hospital, Session *session, float healthData[]
 
     // Mendefinisikan lebar kolom dan header untuk tabel dokter.
     // Kolom: Nama Dokter, Spesialisasi, Ruangan, Jumlah Antrian Saat Ini, Aura, Biaya Checkup.
-    int widths[] = {20, 20, 10, 10, 10, 20};
-    const char *headers[] = {"Dokter", "Spesialisasi", "Ruangan", "Antrian", "Aura", "Biaya Checkup"};
+    int widths[] = {5, 20, 15, 10, 10, 10, 15};
+    const char *headers[] = {"No", "Dokter", "Spesialisasi", "Ruangan", "Antrian", "Aura", "Biaya Checkup"};
 
     // Mencetak border atas dan baris header tabel.
-    printTableBorder(widths, 6, 1);    // 6 kolom, tipe border 1 (atas).
-    printTableRow(headers, widths, 6); // Mencetak baris header.
-    printTableBorder(widths, 6, 2);    // Mencetak garis pemisah di bawah header.
+    printTableBorder(widths, 7, 1);    // 7 kolom, tipe border 1 (atas).
+    printTableRow(headers, widths, 7); // Mencetak baris header.
+    printTableBorder(widths, 7, 2);    // Mencetak garis pemisah di bawah header.
 
     // Melakukan iterasi melalui daftar dokter yang tersedia untuk ditampilkan di tabel.
     for (int i = 0; i < availableDoctorCount; i++)
@@ -124,8 +108,10 @@ boolean registerCheckup(Hospital *hospital, Session *session, float healthData[]
 
         // Menyiapkan data dokter untuk ditampilkan dalam baris tabel.
         // Buffer untuk menyimpan representasi string dari angka (jumlah antrian, aura, biaya).
-        char queueCountStr[10], auraStr[10], checkupCostStr[20];
+        char numberStr[10], queueCountStr[10], auraStr[10], checkupCostStr[20];
         // Mengkonversi integer ke string.
+        integerToString(i + 1, numberStr, sizeof(numberStr));
+        strcat(numberStr, ". ");
         integerToString(queueCount, queueCountStr, sizeof(queueCountStr));
         integerToString(doctor->aura, auraStr, sizeof(auraStr));
         // Mengkonversi float ke string dengan 2 angka desimal.
@@ -133,16 +119,17 @@ boolean registerCheckup(Hospital *hospital, Session *session, float healthData[]
 
         // Array string yang berisi data untuk satu baris tabel.
         const char *row[] = {
+            numberStr,
             doctor->username,
             doctor->specialization,
             doctor->room,
             queueCountStr,
             auraStr,
             checkupCostStr};
-        printTableRow(row, widths, 6); // Mencetak baris data dokter.
+        printTableRow(row, widths, 7); // Mencetak baris data dokter.
     }
 
-    printTableBorder(widths, 6, 3); // Mencetak border bawah tabel.
+    printTableBorder(widths, 7, 3); // Mencetak border bawah tabel.
 
     // Meminta Pasien untuk Memilih Dokter dari Daftar.
     int doctorChoice = 0; // Variabel untuk menyimpan pilihan dokter oleh pasien.
