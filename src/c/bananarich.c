@@ -35,78 +35,22 @@ void viewWallet(Hospital *hospital, Session *session)
         }
     }
 
-    // Format saldo ke string secara manual
+    // Use floatToString to handle the float conversion
     char balanceStr[50] = "";
-    int intPart = (int)balance;
-    int decPart = (int)((balance - intPart) * 100);
-    char tempStr[20] = "";
-
-    // Konversi bagian integer
-    if (intPart == 0)
-        strcat(tempStr, "0");
-    else
+    if (!floatToString(balance, balanceStr, sizeof(balanceStr), 2))
     {
-        char digits[20] = "";
-        int index = 0;
-        while (intPart > 0)
-        {
-            digits[index++] = (intPart % 10) + '0';
-            intPart /= 10;
-        }
-        for (int i = index - 1; i >= 0; i--) {
-            // strncat(tempStr, &digits[i], 1);
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = digits[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
+        printError("Gagal mengonversi float ke string!");
+        return;
     }
 
-    // Tambahkan titik desimal dan bagian desimal
-    strcat(tempStr, ".");
-    if (decPart < 10)
-        strcat(tempStr, "0"); // Appends "0"
-    
-    char decStr[10] = "";
-    int decIndex = 0; // Renamed to avoid conflict with outer 'index'
-    int tempDecPart = decPart; // Use a temporary variable for manipulation
-
-    // Special case for decPart being 0, ensure "00" is appended if precision is 2
-    if (tempDecPart == 0) {
-        strcat(tempStr, "00");
-    } else {
-        while (tempDecPart > 0) {
-            if (decIndex >= 9) break; // Prevent overflow on decStr
-            decStr[decIndex++] = (tempDecPart % 10) + '0';
-            tempDecPart /= 10;
-        }
-        // decStr now holds digits in reverse, e.g., for .25, it's "52"
-
-        // Append digits from decStr in correct order
-        for (int i = decIndex - 1; i >= 0; i--) {
-            // strncat(tempStr, &decStr[i], 1);
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = decStr[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
-        if (decIndex == 1) { // If only one decimal digit (e.g., .5), append a '0' to make it .50
-             strcat(tempStr, "0");
-        }
-    }
-
-    // Tambahkan warna kuning dan unit
-    strcat(balanceStr, COLOR_YELLOW);
-    strcat(balanceStr, tempStr);
+    // Add the color and unit
     strcat(balanceStr, " BananaRich");
-    strcat(balanceStr, COLOR_RESET);
 
     int widths[] = {15, 20};
     const char *headers[] = {userType, "Saldo"};
     printTableBorder(widths, 2, 1);
     printTableRow(headers, widths, 2);
+    printTableBorder(widths, 2, 2);
     const char *row[] = {session->username, balanceStr};
     printTableRow(row, widths, 2);
     printTableBorder(widths, 2, 3);
@@ -123,74 +67,68 @@ void viewFinancial(Hospital *hospital, Session *session)
     printHeader("Finansial Rumah Sakit");
     float balance = hospital->finance.hospitalBalance;
 
-    // Format saldo ke string secara manual
+    // Use floatToString to handle the float conversion
     char balanceStr[50] = "";
-    int intPart = (int)balance;
-    int decPart = (int)((balance - intPart) * 100);
-    char tempStr[20] = "";
-
-    // Konversi bagian integer
-    if (intPart == 0)
-        strcat(tempStr, "0");
-    else
+    if (!floatToString(balance, balanceStr, sizeof(balanceStr), 2))
     {
-        char digits[20] = "";
-        int index = 0;
-        while (intPart > 0)
-        {
-            digits[index++] = (intPart % 10) + '0';
-            intPart /= 10;
-        }
-        for (int i = index - 1; i >= 0; i--) {
-            // strncat(tempStr, &digits[i], 1);
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = digits[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
+        printError("Gagal mengonversi float ke string!");
+        return;
     }
 
-    // Tambahkan titik desimal dan bagian desimal
-    strcat(tempStr, ".");
-    if (decPart < 10)
-        strcat(tempStr, "0");
-    
-    char decStr[10] = "";
-    int decIndex = 0; // Renamed
-    int tempDecPart = decPart;
-
-    if (tempDecPart == 0) {
-        strcat(tempStr, "00");
-    } else {
-        while (tempDecPart > 0) {
-            if (decIndex >= 9) break;
-            decStr[decIndex++] = (tempDecPart % 10) + '0';
-            tempDecPart /= 10;
-        }
-        for (int i = decIndex - 1; i >= 0; i--) {
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = decStr[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
-        if (decIndex == 1) {
-             strcat(tempStr, "0");
-        }
-    }
-
-    // Tambahkan unit
-    strcat(balanceStr, tempStr);
+    // Add the unit
     strcat(balanceStr, " BananaRich");
 
     int widths[] = {15, 20};
     const char *headers[] = {"Entitas", "Saldo"};
     printTableBorder(widths, 2, 1);
     printTableRow(headers, widths, 2);
+    printTableBorder(widths, 2, 2);
     const char *row[] = {"Rumah Sakit", balanceStr};
     printTableRow(row, widths, 2);
     printTableBorder(widths, 2, 3);
+}
+
+// Counter untuk tracking pemanggilan gacha (persistent)
+static int gachaCallCounter = 0;
+
+// Fungsi hash sederhana untuk string
+unsigned long hashString(const char *str)
+{
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *str++))
+    {
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    }
+    return hash;
+}
+
+// Fungsi untuk generate pseudo-random number tanpa time.h
+unsigned long generateSeed(Patient *patient)
+{
+    gachaCallCounter++;
+
+    unsigned long seed = 0;
+
+    // Kombinasi berbagai sumber entropy yang tersedia
+    seed ^= hashString(patient->username);               // Username hash
+    seed ^= (unsigned long)(patient->bananaRich * 100);  // Balance (tapi dikontrol)
+    seed ^= (unsigned long)gachaCallCounter * 1664525UL; // Call counter
+    seed ^= (unsigned long)&patient;                     // Memory address
+    seed ^= (unsigned long)&seed;                        // Stack address
+
+    // Mixing step untuk distribusi yang lebih baik
+    seed = (seed ^ (seed >> 16)) * 0x45d9f3bUL;
+    seed = (seed ^ (seed >> 16)) * 0x45d9f3bUL;
+    seed = seed ^ (seed >> 16);
+
+    return seed;
+}
+
+// LCG dengan seed yang dinamis
+unsigned long lcgRandom(unsigned long seed)
+{
+    return (seed * 1664525UL + 1013904223UL) & 0xFFFFFFFFUL;
 }
 
 boolean gacha(Hospital *hospital, Session *session)
@@ -217,43 +155,96 @@ boolean gacha(Hospital *hospital, Session *session)
     }
 
     Patient *patient = &hospital->patients.elements[patientIndex];
-    const float gachaCost = 10.0;
 
-    if (patient->bananaRich < gachaCost)
-    {
-        printError("Saldo BananaRich tidak cukup! Dibutuhkan 10.00 BananaRich.");
-        return false;
-    }
+    // Generate seed dinamis
+    unsigned long seed = generateSeed(patient);
 
-    patient->bananaRich -= gachaCost;
-    hospital->finance.hospitalBalance += gachaCost;
+    // Generate beberapa random number untuk variasi
+    unsigned long rand1 = lcgRandom(seed);
+    unsigned long rand2 = lcgRandom(rand1);
+    unsigned long rand3 = lcgRandom(rand2);
 
-    // Simulasi gacha
-    int seed = (int)(patient->bananaRich * 100);
-    int result = seed % 3;
     float reward = 0.0;
     char rewardMessage[100] = "";
 
-    switch (result)
+    // Gunakan rand2 untuk reward type (0-99)
+    int rewardType = rand2 % 100;
+
+    // Gunakan rand3 untuk memilih item dalam kategori
+    int itemChoice = rand3 % 3;
+
+    // Distribusi baru:
+    // 40% - Tidak dapat apa-apa
+    // 35% - Small rewards (2, 5, 10)
+    // 15% - Medium rewards (15, 20, 25)
+    // 8% - Large rewards (50, 100)
+    // 2% - Jackpot (200)
+
+    if (rewardType < 40)
     {
-    case 0:
-        reward = 5.0;
-        strcpy(rewardMessage, "Selamat, Anda mendapatkan 5 BananaRich!");
-        break;
-    case 1:
-        reward = 20.0;
-        strcpy(rewardMessage, "Jackpot! Anda mendapatkan 20 BananaRich!");
-        break;
-    default:
-        reward = 0.0;
-        strcpy(rewardMessage, "Maaf, Anda tidak mendapatkan hadiah.");
-        break;
+        // 40% chance untuk tidak mendapat apa-apa
+        printf("Selamat datang %s, di Mesin Gacha %sXXeon06%s!\n", patient->username, FORMAT_BOLD COLOR_BLUE, FORMAT_RESET);
+        strcpy(rewardMessage, "[👀 Yahhh] - Kamu kurang beruntung, coba lagi nanti!");
+        printf(COLOR_YELLOW FORMAT_BOLD "%s\n" FORMAT_RESET, rewardMessage);
+        return true;
+    }
+    else if (rewardType < 75)
+    {
+        // 35% chance for small rewards (2, 5, 10 BananaRich)
+        int smallRewards[] = {2, 5, 10};
+        reward = smallRewards[itemChoice];
+        strcat(rewardMessage, "[😲 WOW] - ");
+        strcat(rewardMessage, "Selamat! ");
+        strcat(rewardMessage, "Anda mendapatkan ");
+        char rewardStr[10];
+        floatToString(reward, rewardStr, sizeof(rewardStr), 2);
+        strcat(rewardMessage, rewardStr);
+        strcat(rewardMessage, " BananaRich!");
+    }
+    else if (rewardType < 90)
+    {
+        // 15% chance for medium rewards (15, 20, 25 BananaRich)
+        int mediumRewards[] = {15, 20, 25};
+        reward = mediumRewards[itemChoice];
+        strcat(rewardMessage, "[🎉 YAY] - ");
+        strcat(rewardMessage, "Selamat! ");
+        strcat(rewardMessage, "Anda mendapatkan ");
+        char rewardStr[10];
+        floatToString(reward, rewardStr, sizeof(rewardStr), 2);
+        strcat(rewardMessage, rewardStr);
+        strcat(rewardMessage, " BananaRich!");
+    }
+    else if (rewardType < 98)
+    {
+        // 8% chance for large rewards (50, 100 BananaRich)
+        int largeRewards[] = {50, 100};
+        reward = largeRewards[itemChoice % 2]; // Hanya 2 pilihan
+        strcat(rewardMessage, "[🥳 HOREE] - ");
+        strcat(rewardMessage, "Selamat! ");
+        strcat(rewardMessage, "Anda mendapatkan ");
+        char rewardStr[10];
+        floatToString(reward, rewardStr, sizeof(rewardStr), 2);
+        strcat(rewardMessage, rewardStr);
+        strcat(rewardMessage, " BananaRich!");
+    }
+    else
+    {
+        // 2% chance for Jackpot reward (200 BananaRich)
+        reward = 200;
+        strcat(rewardMessage, "[🎊 JACKPOT] - ");
+        strcat(rewardMessage, "Selamat! ");
+        strcat(rewardMessage, "Anda mendapatkan ");
+        char rewardStr[10];
+        floatToString(reward, rewardStr, sizeof(rewardStr), 2);
+        strcat(rewardMessage, rewardStr);
+        strcat(rewardMessage, " BananaRich!");
     }
 
     patient->bananaRich += reward;
 
     printHeader("Hasil Gacha");
-    printf(COLOR_YELLOW "%s\n" COLOR_RESET, rewardMessage);
+    printf("Selamat datang %s, di Mesin Gacha %sXXeon06%s!\n", patient->username, FORMAT_BOLD COLOR_BLUE, FORMAT_RESET);
+    printf(COLOR_YELLOW FORMAT_BOLD "%s\n" FORMAT_RESET, rewardMessage);
 
     // Format saldo sebelum dan sesudah
     char beforeStr[50] = "";
@@ -261,123 +252,15 @@ boolean gacha(Hospital *hospital, Session *session)
     float beforeBalance = patient->bananaRich - reward;
     float afterBalance = patient->bananaRich;
 
-    // Format saldo sebelum
-    int intPart = (int)beforeBalance;
-    int decPart = (int)((beforeBalance - intPart) * 100);
-    char tempStr[20] = "";
-    if (intPart == 0)
-        strcat(tempStr, "0");
-    else
+    if (!floatToString(beforeBalance, beforeStr, sizeof(beforeStr), 2) ||
+        !floatToString(afterBalance, afterStr, sizeof(afterStr), 2))
     {
-        char digits[20] = "";
-        int index = 0;
-        while (intPart > 0)
-        {
-            digits[index++] = (intPart % 10) + '0';
-            intPart /= 10;
-        }
-        for (int i = index - 1; i >= 0; i--) {
-            // strncat(tempStr, &digits[i], 1);
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = digits[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
+        printError("Gagal mengonversi saldo ke string!");
+        return false;
     }
-    strcat(tempStr, ".");
-    if (decPart < 10)
-        strcat(tempStr, "0");
 
-    char decStr[10] = "";
-    int decIndex = 0; // Renamed
-    int tempDecPart = decPart;
-    
-    if (tempDecPart == 0) {
-        strcat(tempStr, "00");
-    } else {
-        while (tempDecPart > 0) {
-            if (decIndex >= 9) break;
-            decStr[decIndex++] = (tempDecPart % 10) + '0';
-            tempDecPart /= 10;
-        }
-        for (int i = decIndex - 1; i >= 0; i--) {
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = decStr[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
-        if (decIndex == 1) {
-            strcat(tempStr, "0");
-        }
-    }
-    strcat(beforeStr, tempStr);
-    strcat(beforeStr, " BananaRich");
+    printf("\n[💰 | Info]: Saldo sebelum: %s\n", beforeStr);
+    printf("[🤑 | Info]: Saldo sesudah: %s\n", afterStr);
 
-    // Format saldo sesudah
-    intPart = (int)afterBalance;
-    decPart = (int)((afterBalance - intPart) * 100);
-    tempStr[0] = '\0';
-    if (intPart == 0)
-        strcat(tempStr, "0");
-    else
-    {
-        char digits[20] = "";
-        int index = 0; // Corrected: Added 'int' declaration
-        while (intPart > 0)
-        {
-            digits[index++] = (intPart % 10) + '0';
-            intPart /= 10;
-        }
-        for (int i = index - 1; i >= 0; i--) {
-            // strncat(tempStr, &digits[i], 1);
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = digits[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
-    }
-    strcat(tempStr, ".");
-    if (decPart < 10)
-        strcat(tempStr, "0");
-
-    // char decStr[10] = ""; // Already declared above loop in this scope
-    decStr[0] = '\0'; // Clear it for reuse
-    int decIndexAfter = 0; // Renamed from index
-    int tempDecPartAfter = decPart;
-
-    if (tempDecPartAfter == 0) {
-        strcat(tempStr, "00");
-    } else {
-        while (tempDecPartAfter > 0) {
-            if (decIndex >= 9) break;
-            decStr[decIndexAfter++] = (tempDecPartAfter % 10) + '0';
-            tempDecPartAfter /= 10;
-        }
-        for (int i = decIndex - 1; i >= 0; i--) {
-            int currentLen = strlen(tempStr);
-            if (currentLen < sizeof(tempStr) - 1) {
-                tempStr[currentLen] = decStr[i];
-                tempStr[currentLen+1] = '\0';
-            }
-        }
-        if (decIndexAfter == 1) {
-            strcat(tempStr, "0");
-        }
-    }
-    strcat(afterStr, tempStr);
-    strcat(afterStr, " BananaRich");
-
-    int widths[] = {15, 20};
-    const char *headers[] = {"Saldo Sebelum", "Saldo Sekarang"};
-    printTableBorder(widths, 2, 1);
-    printTableRow(headers, widths, 2);
-    const char *row[] = {beforeStr, afterStr};
-    printTableRow(row, widths, 2);
-    printTableBorder(widths, 2, 3);
-
-    printSuccess("Gacha selesai!");
     return true;
 }
