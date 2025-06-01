@@ -10,3 +10,5 @@ src/build/
 # abaikan file output
 *.out
 
+# abaikan file wsl executable
+src/hospitalSystem
