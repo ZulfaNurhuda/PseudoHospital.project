@@ -1,8 +1,9 @@
 #include "treat.h"
+#include "utils.h"
 
-boolean treatPatient(Hospital *hospital, Session *session, const char *patientUsername)
+boolean treatPatient(Hospital *hospital, Session *session)
 {
-    if (hospital == NULL || session == NULL || patientUsername == NULL)
+    if (hospital == NULL || session == NULL)
     {
         printError("Struktur rumah sakit, sesi, atau username tidak valid!");
         return false;
@@ -13,54 +14,7 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
         return false;
     }
 
-    if (!isValidUsername(patientUsername))
-    {
-        printError("Username pasien tidak valid!");
-        return false;
-    }
-
-    if (hospital->patients.nEff == 0)
-    {
-        printError("Tidak ada pasien terdaftar!");
-        return false;
-    }
-    int patientIdx = -1;
-    for (int i = 0; i < hospital->patients.nEff; i++)
-    {
-        if (strcmp(hospital->patients.elements[i].username, patientUsername) == 0)
-        {
-            patientIdx = i;
-            break;
-        }
-    }
-    if (patientIdx == -1)
-    {
-        printError("Pasien tidak ditemukan!");
-        return false;
-    }
-
-    Patient *patient = &hospital->patients.elements[patientIdx];
-    if (!patient->diagnosedStatus)
-    {
-        printError("Pasien belum didiagnosa!");
-        return false;
-    }
-    if (patient->treatedStatus)
-    {
-        printError("Pasien sudah diberikan resep obat!");
-        return false;
-    }
-    if (strcmp(patient->disease, "Tidak terdeteksi") == 0 || patient->disease[0] == '\0')
-    {
-        printError("Penyakit pasien tidak valid untuk peresepan!");
-        return false;
-    }
-
-    if (hospital->doctors.nEff == 0)
-    {
-        printError("Tidak ada dokter terdaftar!");
-        return false;
-    }
+    // Mencari dokter berdasarkan session username
     int doctorIdx = -1;
     for (int i = 0; i < hospital->doctors.nEff; i++)
     {
@@ -72,193 +26,229 @@ boolean treatPatient(Hospital *hospital, Session *session, const char *patientUs
     }
     if (doctorIdx == -1)
     {
-        printError("Dokter tidak ditemukan!");
+        printError("Dokter tidak ditemukan dalam daftar!");
         return false;
     }
 
     Doctor *doctor = &hospital->doctors.elements[doctorIdx];
+
+    // Memastikan dokter sudah ditugaskan ke ruangan
     if (doctor->room[0] == '\0')
     {
         printError("Dokter tidak ditugaskan ke ruangan manapun!");
         return false;
     }
 
-    // Memeriksa apakah pasien mengantri di ruangan dokter
+    // Memeriksa apakah ruangan dokter memiliki pasien yang antri
+    Room *doctorRoom = NULL;
+    for (int i = 0; i < hospital->layout.rowEff; i++)
+    {
+        for (int j = 0; j < hospital->layout.colEff; j++)
+        {
+            if (strcmp(hospital->layout.elements[i][j].code, doctor->room) == 0)
+            {
+                doctorRoom = &hospital->layout.elements[i][j];
+                break;
+            }
+        }
+        if (doctorRoom != NULL)
+            break;
+    }
+
+    if (doctorRoom == NULL || doctorRoom->patientInRoom.nEff == 0)
+    {
+        printError("Tidak ada pasien yang berada didalam ruangan dokter ini.");
+        return false;
+    }
+
+    // Ambil pasien yang berada di depan ruangan
+    int patientId = doctorRoom->patientInRoom.patientId[0]; // Pasien pertama di dalam ruangan
+    int patientIdx = -1;
+    for (int i = 0; i < hospital->patients.nEff; i++)
+    {
+        if (hospital->patients.elements[i].id == patientId)
+        {
+            patientIdx = i;
+            break;
+        }
+    }
+
+    if (patientIdx == -1)
+    {
+        printError("Pasien tidak ditemukan!");
+        return false;
+    }
+
+    Patient *patient = &hospital->patients.elements[patientIdx];
+
+    if (strcmp(patient->disease, "Tidak terdeteksi") == 0)
+    {
+        printError("Pasien tidak menderita penyakit apapun!");
+        return false;
+    }
+
+    // Pastikan pasien belum terdiagnosis
+    if (patient->diagnosedStatus)
+    {
+        printError("Pasien sudah didiagnosa sebelumnya!");
+        return false;
+    }
+
+    // Memastikan pasien belum diberikan resep obat
+    if (patient->treatedStatus)
+    {
+        printError("Pasien sudah diberikan resep obat!");
+        return false;
+    }
+
+    // Memastikan pasien berada di antrian ruangan dokter
     if (strcmp(patient->queueRoom, doctor->room) != 0)
     {
         printError("Pasien tidak berada di antrian ruangan dokter!");
         return false;
     }
 
-    // Memeriksa antrian di HospitalQueueList
-    // Patient must be at the front of the queue for the doctor's room.
-    Queue *roomQueue = NULL;
-    if (hospital->queues.nRooms > 0)
-    {
-        for (int i = 0; i < hospital->queues.nRooms; i++)
-        {
-            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0)
-            {
-                roomQueue = &hospital->queues.queues[i];
-                break;
-            }
-        }
-    }
-
-    if (roomQueue == NULL || isQueueEmpty(roomQueue))
-    {
-        printError("Antrian untuk ruangan dokter ini kosong atau tidak ditemukan.");
-        return false;
-    }
-
-    int firstPatientId = -1;
-    if (!peekQueue(roomQueue, &firstPatientId))
-    {
-        printError("Tidak dapat melihat pasien di depan antrian.");
-        return false;
-    }
-
-    if (firstPatientId != patient->id)
-    {
-        printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
-        return false;
-    }
-
-    // Mencari diseaseId berdasarkan patient->disease
+    // Mencari penyakit pasien
     int diseaseId = -1;
-    if (hospital->diseases.nEff > 0)
+    for (int i = 0; i < hospital->diseases.nEff; i++)
     {
-        for (int i = 0; i < hospital->diseases.nEff; i++)
+        if (strcmp(hospital->diseases.elements[i].name, patient->disease) == 0)
         {
-            if (strcmp(hospital->diseases.elements[i].name, patient->disease) == 0)
-            {
-                diseaseId = hospital->diseases.elements[i].id;
-                break;
-            }
+            diseaseId = hospital->diseases.elements[i].id;
+            break;
         }
     }
+
     if (diseaseId == -1)
     {
         printError("Penyakit pasien tidak ditemukan dalam database!");
         return false;
     }
 
-    // Meresepkan obat berdasarkan diseaseId, diurutkan berdasarkan doseOrder
-    if (hospital->prescriptions.nEff > 0)
+    // Hitung dulu berapa banyak obat yang diperlukan
+    int medicationCount = 0;
+    for (int i = 0; i < hospital->prescriptions.nEff; i++)
     {
-        // Mengumpulkan semua resep untuk penyakit
-        struct
+        if (hospital->prescriptions.elements[i].diseaseId == diseaseId)
         {
-            int medicationId;
-            int doseOrder;
-        } prescriptions[100];
-        int prescriptionCount = 0;
+            medicationCount++;
+        }
+    }
+
+    // Alokasi memori untuk menyimpan resep sementara
+    MedicationPrescription *tempPrescriptions = NULL;
+    MedicationList prescribedMedications = {NULL, 0, 0};
+
+    if (medicationCount > 0)
+    {
+        tempPrescriptions = malloc(medicationCount * sizeof(MedicationPrescription));
+        if (tempPrescriptions == NULL)
+        {
+            printError("Gagal mengalokasi memori untuk resep sementara!");
+            return false;
+        }
+
+        // Mengisi daftar resep sementara
+        int tempCount = 0;
         for (int i = 0; i < hospital->prescriptions.nEff; i++)
         {
             if (hospital->prescriptions.elements[i].diseaseId == diseaseId)
             {
-                prescriptions[prescriptionCount].medicationId = hospital->prescriptions.elements[i].medicationId;
-                prescriptions[prescriptionCount].doseOrder = hospital->prescriptions.elements[i].doseOrder;
-                prescriptionCount++;
+                tempPrescriptions[tempCount] = hospital->prescriptions.elements[i];
+                tempCount++;
             }
         }
 
-        // Mengurutkan resep berdasarkan doseOrder
-        for (int i = 0; i < prescriptionCount - 1; i++)
+        // Mengurutkan berdasarkan doseOrder (bubble sort)
+        for (int i = 0; i < medicationCount - 1; i++)
         {
-            for (int j = 0; j < prescriptionCount - i - 1; j++)
+            for (int j = 0; j < medicationCount - i - 1; j++)
             {
-                if (prescriptions[j].doseOrder > prescriptions[j + 1].doseOrder)
+                if (tempPrescriptions[j].doseOrder > tempPrescriptions[j + 1].doseOrder)
                 {
-                    int tempId = prescriptions[j].medicationId;
-                    int tempOrder = prescriptions[j].doseOrder;
-                    prescriptions[j].medicationId = prescriptions[j + 1].medicationId;
-                    prescriptions[j].doseOrder = prescriptions[j + 1].doseOrder;
-                    prescriptions[j + 1].medicationId = tempId;
-                    prescriptions[j + 1].doseOrder = tempOrder;
+                    // Tukar posisi
+                    MedicationPrescription temp = tempPrescriptions[j];
+                    tempPrescriptions[j] = tempPrescriptions[j + 1];
+                    tempPrescriptions[j + 1] = temp;
                 }
             }
         }
 
-        // Menambahkan obat ke medicationsPrescribed
-        for (int i = 0; i < prescriptionCount; i++)
+        // Alokasi memori untuk daftar obat final
+        prescribedMedications.elements = malloc(medicationCount * sizeof(Medication));
+        if (prescribedMedications.elements == NULL)
         {
-            if (patient->medicationsPrescribed.nEff < patient->medicationsPrescribed.capacity)
+            free(tempPrescriptions);
+            printError("Gagal mengalokasi memori untuk daftar obat!");
+            return false;
+        }
+
+        // Mengisi daftar obat final berdasarkan urutan yang sudah diurutkan
+        for (int i = 0; i < medicationCount; i++)
+        {
+            prescribedMedications.elements[i].id = tempPrescriptions[i].medicationId;
+            prescribedMedications.nEff++;
+        }
+
+        // Bebaskan memori sementara
+        free(tempPrescriptions);
+    }
+
+    // Menampilkan daftar obat yang harus diberikan
+    if (prescribedMedications.nEff > 0)
+    {
+        printf("Dokter sedang mengobati pasien!\n");
+        printf("Pasien memiliki penyakit %s\n", patient->disease);
+        printf("Obat yang harus diberikan:\n");
+
+        // Tampilkan obat berdasarkan urutan
+        for (int i = 0; i < prescribedMedications.nEff; i++)
+        {
+            Medication *med = &hospital->medications.elements[prescribedMedications.elements[i].id];
+            printf("%d. %s\n", i + 1, med->name);
+        }
+
+        // Menyimpan resep obat ke dalam ADT pasien
+        // Pastikan kapasitas mencukupi
+        if (patient->medicationsPrescribed.capacity < medicationCount)
+        {
+            // Realokasi jika kapasitas tidak mencukupi
+            int *newMedicationIds = realloc(patient->medicationsPrescribed.medicationId,
+                                            medicationCount * sizeof(int));
+            if (newMedicationIds == NULL)
             {
-                patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff++] =
-                    prescriptions[i].medicationId;
-            }
-            else
-            {
-                printError("Kapasitas daftar resep pasien penuh!");
+                free(prescribedMedications.elements);
+                printError("Gagal mengalokasi memori untuk daftar obat pasien!");
                 return false;
             }
+            patient->medicationsPrescribed.medicationId = newMedicationIds;
+            patient->medicationsPrescribed.capacity = medicationCount;
         }
-    }
 
-    patient->treatedStatus = true;
-
-    // Dequeue patient after treatment
-    int dequeuedPatientId = -1;
-    if (dequeue(roomQueue, &dequeuedPatientId))
-    {
-        if (dequeuedPatientId != patient->id)
+        // Menyimpan medication ID ke dalam daftar obat pasien berdasarkan urutan
+        patient->medicationsPrescribed.nEff = 0;
+        for (int i = 0; i < prescribedMedications.nEff; i++)
         {
-            printError("Pasien yang di-dequeue berbeda dari pasien yang diobati!");
+            patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff] =
+                prescribedMedications.elements[i].id;
+            patient->medicationsPrescribed.nEff++;
         }
-        patient->queueRoom[0] = '\0';
-        patient->queuePosition = 0;
+
+        // Update status pengobatan pasien
+        patient->treatedStatus = true;
+
+        // Tingkatkan aura dokter (menggunakan doctor yang sudah ditemukan di awal)
+        doctor->aura += 1;
+
+        // Bebaskan memori yang dialokasi
+        free(prescribedMedications.elements);
+
+        printSuccess("Obat berhasil diberikan!");
+        return true;
     }
     else
     {
-        printError("Gagal men-dequeue pasien setelah pengobatan!");
+        printError("Tidak ada obat yang ditemukan untuk penyakit ini!");
+        return false;
     }
-
-    // Tampilkan hasil
-    printHeader("Resep Obat");
-    if (patient->medicationsPrescribed.nEff == 0)
-    {
-        printError("Tidak ada obat yang diresepkan.");
-    }
-    else
-    {
-        char msg[100] = "Obat yang diresepkan (urutan konsumsi):";
-        printSuccess(msg);
-        for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
-        {
-            for (int j = 0; j < hospital->medications.nEff; j++)
-            {
-                if (hospital->medications.elements[j].id == patient->medicationsPrescribed.medicationId[i])
-                {
-                    char medMsg[100] = "";
-                    strcat(medMsg, "  ");
-                    char numStr[10];
-                    int num = i + 1;
-                    int k = 0;
-                    if (num == 0)
-                        numStr[k++] = '0';
-                    else
-                        while (num > 0)
-                        {
-                            numStr[k++] = (num % 10) + '0';
-                            num /= 10;
-                        }
-                    for (int m = k - 1; m >= 0; m--)
-                        medMsg[2 + k - 1 - m] = numStr[m];
-                    medMsg[2 + k] = '.';
-                    medMsg[3 + k] = ' ';
-                    strcat(medMsg, hospital->medications.elements[j].name);
-                    printSuccess(medMsg);
-                    break;
-                }
-            }
-        }
-    }
-
-    // Pesan sukses
-    char successMsg[100] = "Resep obat untuk ";
-    strcat(successMsg, patientUsername);
-    strcat(successMsg, " berhasil diberikan!");
-    printSuccess(successMsg);
-    return true;
 }

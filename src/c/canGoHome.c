@@ -63,7 +63,7 @@ boolean canGoHome(Hospital *hospital, Session *session)
         {
             correctOrder = false;
         }
-        
+
         else
         {
             for (int i = 0; i <= patient->medicationsTaken.top; i++)

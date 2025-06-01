@@ -2,6 +2,7 @@
 
 boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
 {
+    // --- Validasi Input Awal ---
     if (hospital == NULL || session == NULL)
     {
         printError("Struktur rumah sakit atau sesi tidak valid!");
@@ -18,6 +19,7 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
         return false;
     }
 
+    // --- Mencari Data Pasien ---
     if (hospital->patients.nEff == 0)
     {
         printError("Tidak ada pasien terdaftar!");
@@ -37,8 +39,14 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
         printError("Pasien tidak ditemukan!");
         return false;
     }
-
     Patient *patient = &hospital->patients.elements[patientIdx];
+
+    // --- Validasi Resep dan Ketersediaan Obat di RS ---
+    if (strcmp(patient->disease, "Tidak terdeteksi") == 0)
+    {
+        printSuccess("Pasien tidak diresepkan obat karena tidak ada penyakit terdeteksi.");
+        return true; // Tidak ada obat yang perlu dikonsumsi
+    }
     if (!patient->treatedStatus)
     {
         printError("Anda belum diberikan resep obat!");
@@ -46,66 +54,89 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
     }
     if (patient->medicationsPrescribed.nEff == 0)
     {
-        printError("Tidak ada obat yang diresepkan!");
+        printError("Tidak ada obat yang diresepkan untuk pasien ini!");
+        return false;
+    }
+    if (hospital->medications.nEff == 0)
+    {
+        printError("Tidak ada obat terdaftar di rumah sakit!");
         return false;
     }
 
-    if (hospital->medications.nEff == 0)
+    // **PERBAIKAN KRUSIAL:**
+    // --- Memeriksa apakah semua obat sudah dikonsumsi (dipindahkan ke sini) ---
+    // Jika jumlah obat yang sudah dikonsumsi (top + 1) sudah mencapai
+    // atau melebihi jumlah total obat yang diresepkan (nEff), berarti semua sudah selesai.
+    if (patient->medicationsTaken.top + 1 >= patient->medicationsPrescribed.nEff)
     {
-        printError("Tidak ada obat terdaftar!");
+        printError("Semua obat yang diresepkan sudah dikonsumsi!");
         return false;
     }
-    boolean isValidMedication = false;
+    // END PERBAIKAN KRUSIAL
+
+    // --- Validasi ID Obat yang Dimasukkan (Apakah ada di resep pasien & di daftar RS global) ---
+    boolean isMedicationActuallyPrescribedToThisPatient = false;
     char medicationName[50] = "Tidak dikenal";
+    boolean isIdInHospitalMedicationList = false;
+
+    // Pertama, cek apakah ID obat ada di resep spesifik pasien ini
+    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
+    {
+        if (patient->medicationsPrescribed.medicationId[i] == medicationId)
+        {
+            isMedicationActuallyPrescribedToThisPatient = true;
+            break;
+        }
+    }
+
+    if (!isMedicationActuallyPrescribedToThisPatient)
+    {
+        // Jika obat tidak ada di daftar resep pasien sama sekali
+        printError("Pilihan tidak tersedia! Obat ini tidak diresepkan untuk Anda.");
+        return false;
+    }
+
+    // Kedua, dapatkan nama obat dari daftar obat global RS (jika sudah dipastikan diresepkan untuk pasien)
+    // Ini penting agar 'medicationName' terisi dengan benar untuk pesan sukses/error.
     for (int i = 0; i < hospital->medications.nEff; i++)
     {
         if (hospital->medications.elements[i].id == medicationId)
         {
-            isValidMedication = true;
             strcpy(medicationName, hospital->medications.elements[i].name);
+            isIdInHospitalMedicationList = true; // Menandakan bahwa ID ini juga ada di daftar global RS
             break;
         }
     }
-    if (!isValidMedication)
+    // Ini adalah pengecekan konsistensi data. Seharusnya obat yang diresepkan selalu ada di daftar RS.
+    if (!isIdInHospitalMedicationList)
     {
-        printError("ID obat tidak valid!");
+        printError("Kesalahan sistem: Obat diresepkan tetapi tidak terdaftar di Rumah Sakit!");
         return false;
     }
 
-    // Memeriksa apakah semua obat sudah dikonsumsi
-    if (patient->medicationsTaken.top + 1 >= patient->medicationsPrescribed.nEff)
-    {
-        printError("Semua obat sudah dikonsumsi!");
-        return false;
-    }
+    // Mendapatkan ID obat yang seharusnya dikonsumsi selanjutnya (urutan yang benar)
+    // Baris ini aman karena `patient->medicationsTaken.top + 1 >= patient->medicationsPrescribed.nEff`
+    // sudah dicek di awal fungsi.
+    int expectedMedicationId = patient->medicationsPrescribed.medicationId[patient->medicationsTaken.top + 1];
 
-    // Memeriksa urutan obat
-    int expectedMedication = patient->medicationsPrescribed.medicationId[patient->medicationsTaken.top + 1];
-    if (expectedMedication != medicationId)
+    // --- Logika Memeriksa Urutan Obat dan Menangani Kesalahan ---
+    if (medicationId == expectedMedicationId)
     {
+        // Kasus: Obat yang dimasukkan adalah obat yang diharapkan (urutan benar).
+        // Lanjutkan ke proses konsumsi obat yang berhasil.
+    }
+    else
+    {
+        // Kasus: Obat yang dimasukkan adalah obat yang diresepkan (sudah dicek oleh isMedicationActuallyPrescribedToThisPatient),
+        // TETAPI BUKAN urutan yang diharapkan. Ini berarti salah urutan.
         patient->life--;
         printHeader("Konsumsi Obat");
 
         char errorMsg[100] = "Obat ";
         strcat(errorMsg, medicationName);
         strcat(errorMsg, " salah urutan! Nyawa tersisa: ");
-        char lifeStr[10] = "";
-        int k = 0;
-        int life = patient->life;
-        if (life == 0)
-            lifeStr[k++] = '0';
-        else
-            while (life > 0)
-            {
-                lifeStr[k++] = (life % 10) + '0';
-                life /= 10;
-            }
-        for (int m = 0; m < k / 2; m++)
-        {
-            char temp = lifeStr[m];
-            lifeStr[m] = lifeStr[k - 1 - m];
-            lifeStr[k - 1 - m] = temp;
-        }
+        char lifeStr[10];
+        integerToString(patient->life, lifeStr, sizeof(lifeStr)); // Asumsi integerToString ada dan berfungsi
         strcat(errorMsg, lifeStr);
         printError(errorMsg);
 
@@ -118,47 +149,37 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
             session->username[0] = '\0';
             session->role = -1;
         }
-        return false;
+        return false; // Keluar dari fungsi karena kesalahan urutan
     }
 
-    // Menambahkan obat ke stack
+    // --- Menambahkan Obat ke Stack (medicationsTaken) ---
+    // Bagian ini hanya dijalankan jika medicationId == expectedMedicationId (konsumsi benar)
     if (patient->medicationsTaken.top + 1 < patient->medicationsTaken.capacity)
     {
         patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = medicationId;
     }
     else
     {
-        printError("Kapasitas obat yang diambil penuh!");
+        // Ini adalah skenario yang jarang terjadi jika kapasitas stack tidak diatur dengan baik
+        // (misalnya, lebih kecil dari medicationsPrescribed.nEff).
+        printError("Kapasitas penyimpanan obat yang sudah dikonsumsi penuh!");
         return false;
     }
 
+    // --- Tampilan Konfirmasi dan Update Status ---
     printHeader("Konsumsi Obat");
     int widths[] = {15, 20};
     const char *headers[] = {"Obat", "Status"};
-    printTableRow(headers, widths, 4);
     printTableBorder(widths, 2, 1);
+    printTableRow(headers, widths, 2);
+    printTableBorder(widths, 2, 2);
     const char *row[] = {medicationName, "Berhasil dikonsumsi"};
     printTableRow(row, widths, 2);
     printTableBorder(widths, 2, 3);
 
     char lifeMsg[50] = "Nyawa tersisa: ";
-    char lifeStr[10] = "";
-    int k = 0;
-    int life = patient->life;
-    if (life == 0)
-        lifeStr[k++] = '0';
-    else
-        while (life > 0)
-        {
-            lifeStr[k++] = (life % 10) + '0';
-            life /= 10;
-        }
-    for (int m = 0; m < k / 2; m++)
-    {
-        char temp = lifeStr[m];
-        lifeStr[m] = lifeStr[k - 1 - m];
-        lifeStr[k - 1 - m] = temp;
-    }
+    char lifeStr[10];
+    integerToString(patient->life, lifeStr, sizeof(lifeStr)); // Asumsi integerToString ada
     strcat(lifeMsg, lifeStr);
     printSuccess(lifeMsg);
 
@@ -166,5 +187,6 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
     strcat(successMsg, medicationName);
     strcat(successMsg, " berhasil dikonsumsi!");
     printSuccess(successMsg);
+
     return true;
 }
