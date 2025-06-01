@@ -88,9 +88,9 @@ boolean treatPatient(Hospital *hospital, Session *session)
     }
 
     // Pastikan pasien belum terdiagnosis
-    if (patient->diagnosedStatus)
+    if (!patient->diagnosedStatus)
     {
-        printError("Pasien sudah didiagnosa sebelumnya!");
+        printError("Pasien belom mendapat diagnosa dari dokter!");
         return false;
     }
 
