@@ -21,6 +21,6 @@
  * 
  * Return: `boolean` - True jika konsumsi obat berhasil (urutan benar), false jika urutan salah, obat tidak valid, pasien tidak memiliki resep, atau input tidak valid.
  */
-boolean takeMedication(Hospital *hospital, Session *session, int medicationId);
+boolean takeMedication(Hospital *hospital, Session *session);
 
 #endif // TAKE_MEDICATION_H

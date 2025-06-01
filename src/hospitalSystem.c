@@ -608,13 +608,7 @@ int main(int argc, char *argv[])
 
         else if (strcmp(command, "MINUMOBAT") == 0)
         {
-            int medication_id;
-            if (!readValidInt(&medication_id, "Masukkan ID obat: "))
-            {
-                printError("ID obat tidak valid!");
-                continue;
-            }
-            takeMedication(&hospital, &session, medication_id);
+            takeMedication(&hospital, &session);
         }
 
         else if (strcmp(command, "MINUMPENAWAR") == 0)
