@@ -194,8 +194,16 @@ boolean treatPatient(Hospital *hospital, Session *session)
 
         for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
         {
-            Medication *med = &hospital->medications.elements[patient->medicationsPrescribed.medicationId[i]];
-            printf("Duar: %s - %d\n", med->name, med->id);
+            Medication *med = NULL;
+            for (int j = 0; j < hospital->medications.nEff; j++)
+            {
+                if (hospital->medications.elements[j].id == patient->medicationsPrescribed.medicationId[i])
+                {
+                    med = &hospital->medications.elements[j];
+                    break;
+                }
+            }
+            
             char no[10] = "";
             integerToString(i + 1, no, sizeof(no));
             strcat(no, ".");
