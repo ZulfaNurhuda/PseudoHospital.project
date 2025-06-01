@@ -44,13 +44,42 @@ boolean takeMedication(Hospital *hospital, Session *session)
         return false;
     }
 
-    if (patient->medicationsTaken.top + 1 >= patient->medicationsPrescribed.nEff)
+    if (patient->medicationsPrescribed.nEff == 0)
     {
         printError("Semua obat yang diresepkan sudah dikonsumsi!");
         return false;
     }
 
-    printHeader("Daftar Obat yang Diresepkan");
+    // Tampilkan urutan yang benar dari obat
+    printHeader("Urutan Obat yang Harus Diminum");
+    printf(COLOR_GREY "📋 Informasi: Obat harus diminum sesuai urutan berikut!\n" COLOR_RESET);
+
+    int orderWidths[] = {8, 30};
+    const char *orderHeaders[] = {"Urutan", "Nama Obat"};
+    printTableBorder(orderWidths, 2, 1);
+    printTableRow(orderHeaders, orderWidths, 2);
+
+    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
+    {
+        int medicationId = patient->medicationsPrescribed.medicationId[i];
+        for (int j = 0; j < hospital->medications.nEff; j++)
+        {
+            if (hospital->medications.elements[j].id == medicationId)
+            {
+                char orderNum[10], medicationName[50];
+                integerToString(i + 1, orderNum, sizeof(orderNum));
+                strcpy(medicationName, hospital->medications.elements[j].name);
+
+                const char *orderRow[] = {orderNum, medicationName};
+                printTableRow(orderRow, orderWidths, 2);
+                break;
+            }
+        }
+    }
+    printTableBorder(orderWidths, 2, 3);
+    printf("\n");
+
+    printHeader("Daftar Obat yang Tersedia untuk Dipilih");
     int widths[] = {5, 30};
     const char *headers[] = {"No.", "Nama Obat"};
     printTableBorder(widths, 2, 1);
@@ -65,9 +94,8 @@ boolean takeMedication(Hospital *hospital, Session *session)
             {
                 char medicationName[50], medicationIdStr[10];
                 strcpy(medicationName, hospital->medications.elements[j].name);
-                integerToString(medicationId, medicationIdStr, sizeof(medicationIdStr));
+                integerToString(i + 1, medicationIdStr, sizeof(medicationIdStr)); // Nomor urut, bukan ID
                 const char *row[] = {medicationIdStr, medicationName};
-                printTableBorder(widths, 2, 2);
                 printTableRow(row, widths, 2);
                 break;
             }
@@ -88,19 +116,24 @@ boolean takeMedication(Hospital *hospital, Session *session)
     }
 
     int selectedMedicationId = patient->medicationsPrescribed.medicationId[choice - 1];
-    int expectedMedicationId = patient->medicationsPrescribed.medicationId[patient->medicationsTaken.top + 1];
+    int expectedMedicationId = patient->medicationsPrescribed.medicationId[0];
 
     if (selectedMedicationId == expectedMedicationId)
     {
-
         patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = selectedMedicationId;
+
+        for (int i = choice - 1; i < patient->medicationsPrescribed.nEff - 1; i++)
+        {
+            patient->medicationsPrescribed.medicationId[i] = patient->medicationsPrescribed.medicationId[i + 1];
+        }
+        patient->medicationsPrescribed.nEff--;
 
         printSuccess("Obat berhasil diminum!");
         return true;
     }
     else
     {
-
+        // Pasien salah pilih obat
         patient->life--;
 
         if (patient->life <= 0)
@@ -115,7 +148,7 @@ boolean takeMedication(Hospital *hospital, Session *session)
             printf("→ Sisa nyawa:");
             for (int i = 0; i < 3; i++)
             {
-                if (i + 1 >= patient->life)
+                if (i < patient->life) // Fixed logic untuk menampilkan nyawa
                 {
                     printf("💙");
                 }

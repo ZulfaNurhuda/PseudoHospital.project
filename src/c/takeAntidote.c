@@ -52,7 +52,7 @@ boolean takeAntidote(Hospital *hospital, Session *session)
     }
 
     // Hapus obat terakhir dari stack dan kembalikan ke inventory
-    patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff++]
+    patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff++];
     patient->medicationsTaken.top--;
 
     // Tambahkan nyawa pasien
@@ -61,6 +61,31 @@ boolean takeAntidote(Hospital *hospital, Session *session)
         patient->life++;
     }
 
-    printSuccess("Penawar berhasil diminum! Obat %s dibatalkan, nyawa tersisa: %d", medicationName, patient->life);
+    printHeader("Konsumsi Penawar");
+    int widths[] = {20, 20, 20};
+    const char *headers[] = {"Obat Dibatalkan", "Nyawa Tersisa", "Status"};
+    printTableBorder(widths, 3, 1);
+    printTableRow(headers, widths, 3);
+    printTableBorder(widths, 3, 2);
+    char lifeStr[15] = "";
+    for (int i = 0; i < 3; i++)
+    {
+        if (i < patient->life)
+        {
+            strcat(lifeStr, "💙");
+        }
+        else
+        {
+            strcat(lifeStr, "🖤");
+        }
+    }
+    const char *row[] = {medicationName, lifeStr, "Penawar berhasil"};
+    printTableRow(row, widths, 3);
+    printTableBorder(widths, 3, 3);
+
+    char successMsg[100] = "Penawar berhasil! Obat ";
+    strcat(successMsg, medicationName);
+    strcat(successMsg, " dibatalkan.");
+    printSuccess(successMsg);
     return true;
 }
