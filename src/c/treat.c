@@ -194,15 +194,12 @@ boolean treatPatient(Hospital *hospital, Session *session)
 
         for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
         {
-
             Medication *med = &hospital->medications.elements[patient->medicationsPrescribed.medicationId[i]];
-
-            char no[10] = "", medicationName[50] = "";
+            printf("Duar: %s - %d\n", med->name, med->id);
+            char no[10] = "";
             integerToString(i + 1, no, sizeof(no));
             strcat(no, ".");
-            strcat(medicationName, med->name);
-            const char *row[] = {no, medicationName};
-
+            const char *row[] = {no, med->name};
             printTableRow(row, widths, 2);
         }
 
