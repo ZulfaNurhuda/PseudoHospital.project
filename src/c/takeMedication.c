@@ -50,38 +50,11 @@ boolean takeMedication(Hospital *hospital, Session *session)
         return false;
     }
 
-    // Tampilkan urutan yang benar dari obat
-    printHeader("Urutan Obat yang Harus Diminum");
-    printf(COLOR_GREY "📋 Informasi: Obat harus diminum sesuai urutan berikut!\n" COLOR_RESET);
-
-    int orderWidths[] = {8, 30};
-    const char *orderHeaders[] = {"Urutan", "Nama Obat"};
-    printTableBorder(orderWidths, 2, 1);
-    printTableRow(orderHeaders, orderWidths, 2);
-
-    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
-    {
-        int medicationId = patient->medicationsPrescribed.medicationId[i];
-        for (int j = 0; j < hospital->medications.nEff; j++)
-        {
-            if (hospital->medications.elements[j].id == medicationId)
-            {
-                char orderNum[10], medicationName[50];
-                integerToString(i + 1, orderNum, sizeof(orderNum));
-                strcpy(medicationName, hospital->medications.elements[j].name);
-
-                const char *orderRow[] = {orderNum, medicationName};
-                printTableRow(orderRow, orderWidths, 2);
-                break;
-            }
-        }
-    }
-    printTableBorder(orderWidths, 2, 3);
-    printf("\n");
-
-    printHeader("Daftar Obat yang Tersedia untuk Dipilih");
-    int widths[] = {5, 30};
-    const char *headers[] = {"No.", "Nama Obat"};
+    printHeader("Daftar Obat yang Diresepkan");
+    printf(COLOR_BLUE "[📋 | Info] - Daftar obat yang harus diminum sesuai dengan urutan\n" COLOR_RESET);
+    
+    int widths[] = {15, 30};
+    const char *headers[] = {"Urutan Minum", "Nama Obat"};
     printTableBorder(widths, 2, 1);
     printTableRow(headers, widths, 2);
 
@@ -92,12 +65,24 @@ boolean takeMedication(Hospital *hospital, Session *session)
         {
             if (hospital->medications.elements[j].id == medicationId)
             {
-                char medicationName[50], medicationIdStr[10];
-                strcpy(medicationName, hospital->medications.elements[j].name);
-                integerToString(i + 1, medicationIdStr, sizeof(medicationIdStr)); // Nomor urut, bukan ID
-                const char *row[] = {medicationIdStr, medicationName};
-                printTableRow(row, widths, 2);
-                break;
+                boolean isMedicationInInventory = true;
+                for (int i = 0; i <= patient->medicationsTaken.top; i++) 
+                {
+                    if (patient->medicationsTaken.medicationId[i] == medicationId)
+                    {
+                        isMedicationInInventory = false;
+                        break;
+                    }
+                }
+                if (isMedicationInInventory)
+                {
+                    char medicationName[50], medicationIdStr[10];
+                    strcpy(medicationName, hospital->medications.elements[j].name);
+                    integerToString(i + 1, medicationIdStr, sizeof(medicationIdStr)); // Nomor urut, bukan ID
+                    const char *row[] = {medicationIdStr, medicationName};
+                    printTableRow(row, widths, 2);
+                    break;
+                }
             }
         }
     }
@@ -120,14 +105,6 @@ boolean takeMedication(Hospital *hospital, Session *session)
 
     if (selectedMedicationId == expectedMedicationId)
     {
-        patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = selectedMedicationId;
-
-        for (int i = choice - 1; i < patient->medicationsPrescribed.nEff - 1; i++)
-        {
-            patient->medicationsPrescribed.medicationId[i] = patient->medicationsPrescribed.medicationId[i + 1];
-        }
-        patient->medicationsPrescribed.nEff--;
-
         printSuccess("Obat berhasil diminum!");
         return true;
     }

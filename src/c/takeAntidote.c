@@ -39,53 +39,63 @@ boolean takeAntidote(Hospital *hospital, Session *session)
         return false;
     }
 
-    // Menampilkan obat yang terakhir diminum
+    boolean isNeedAntidote = false;
     int lastMedicationId = patient->medicationsTaken.medicationId[patient->medicationsTaken.top];
-    char medicationName[50] = "Tidak dikenal";
-    for (int i = 0; i < hospital->medications.nEff; i++)
+    for (int i = 0; i < patient->medicationsTaken.top; i++)
     {
-        if (hospital->medications.elements[i].id == lastMedicationId)
+        if (patient->medicationsTaken.medicationId[i] != patient->medicationsPrescribed.medicationId[i])
         {
-            strcpy(medicationName, hospital->medications.elements[i].name);
+            isNeedAntidote = true;
             break;
         }
     }
 
-    // Hapus obat terakhir dari stack dan kembalikan ke inventory
-    patient->medicationsPrescribed.medicationId[patient->medicationsPrescribed.nEff++];
-    patient->medicationsTaken.top--;
-
-    // Tambahkan nyawa pasien
-    if (patient->life < 3)
+    if (isNeedAntidote)
     {
-        patient->life++;
-    }
+        char medicationName[50] = "Tidak dikenal";
+        for (int i = 0; i < hospital->medications.nEff; i++)
+        {
+            if (hospital->medications.elements[i].id == lastMedicationId)
+            {
+                strcpy(medicationName, hospital->medications.elements[i].name);
+                break;
+            }
+        }
 
-    printHeader("Konsumsi Penawar");
-    int widths[] = {20, 20, 20};
-    const char *headers[] = {"Obat Dibatalkan", "Nyawa Tersisa", "Status"};
-    printTableBorder(widths, 3, 1);
-    printTableRow(headers, widths, 3);
-    printTableBorder(widths, 3, 2);
-    char lifeStr[15] = "";
-    for (int i = 0; i < 3; i++)
+        patient->medicationsTaken.top--;
+
+        printHeader("Konsumsi Penawar");
+        int widths[] = {15, 20, 10};
+        const char *headers[] = {"Obat Dibatalkan", "Nyawa Tersisa", "Status"};
+        printTableBorder(widths, 3, 1);
+        printTableRow(headers, widths, 3);
+        printTableBorder(widths, 3, 2);
+        char lifeStr[15] = "";
+        for (int i = 0; i < 3; i++)
+        {
+            if (i < patient->life)
+            {
+                strcat(lifeStr, "💙");
+            }
+            else
+            {
+                strcat(lifeStr, "🖤");
+            }
+        }
+        const char *row[] = {medicationName, lifeStr, "Penawar berhasil"};
+        printTableRow(row, widths, 3);
+        printTableBorder(widths, 3, 3);
+
+        char successMsg[100] = "";
+        strcat(successMsg, "Penawar berhasil! Obat ");
+        strcat(successMsg, medicationName);
+        strcat(successMsg, " dibatalkan.");
+        printSuccess(successMsg);
+        return true;
+    }
+    else
     {
-        if (i < patient->life)
-        {
-            strcat(lifeStr, "💙");
-        }
-        else
-        {
-            strcat(lifeStr, "🖤");
-        }
+        printError("Anda tidak perlu mengonsumsi penawar! Urutan obat yang diminum sudah benar.");
+        return true;
     }
-    const char *row[] = {medicationName, lifeStr, "Penawar berhasil"};
-    printTableRow(row, widths, 3);
-    printTableBorder(widths, 3, 3);
-
-    char successMsg[100] = "Penawar berhasil! Obat ";
-    strcat(successMsg, medicationName);
-    strcat(successMsg, " dibatalkan.");
-    printSuccess(successMsg);
-    return true;
 }
