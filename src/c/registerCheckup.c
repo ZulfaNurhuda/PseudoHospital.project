@@ -1,21 +1,5 @@
-// Menyertakan file header "registerCheckup.h".
-// File ini diasumsikan berisi deklarasi fungsi registerCheckup,
-// definisi struktur Hospital, Session, Patient, Doctor, Room, Queue, QueueNode, TreatmentHistory,
-// serta makro (seperti COLOR_YELLOW, FORMAT_BOLD, FORMAT_RESET) dan deklarasi fungsi utilitas lainnya yang relevan seperti
-// printError, printHeader, strcmp, strcpy, strcat, strlen,
-// integerToString, floatToString, printTableBorder, printTableRow,
-// readValidInt, queueSize, initializeQueue, enqueue, isQueueEmpty, realloc, safeMalloc.
 #include "registerCheckup.h"
-#include <stdio.h>  // Diperlukan untuk printf.
-#include <string.h> // Diperlukan untuk strcmp, strcpy, strcat.
-#include <stdlib.h> // Diperlukan untuk realloc (jika safeMalloc tidak menanganinya).
 
-// Fungsi untuk mendaftarkan pasien untuk sesi checkup dengan dokter.
-// Parameter:
-//   hospital: pointer ke struktur Hospital yang menyimpan semua data rumah sakit.
-//   session: pointer ke struktur Session yang menyimpan informasi sesi pengguna saat ini.
-//   healthData: array float yang berisi data kesehatan awal pasien yang akan disimpan.
-// Mengembalikan true jika pendaftaran berhasil, false jika gagal.
 boolean registerCheckup(Hospital *hospital, Session *session, float healthData[])
 {
     // ========== VALIDASI INPUT AWAL ==========
