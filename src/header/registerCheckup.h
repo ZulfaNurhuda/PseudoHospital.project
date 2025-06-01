@@ -22,6 +22,6 @@
  * 
  * Return: `boolean` - True jika pendaftaran berhasil, false jika input tidak valid, dokter tidak ditemukan, pasien sudah dalam antrian, saldo tidak cukup, atau antrian penuh.
  */
-boolean registerCheckup(Hospital *hospital, Session *session, const char *doctorUsername, float healthData[]);
+boolean registerCheckup(Hospital *hospital, Session *session, float healthData[]);
 
 #endif // REGISTER_CHECKUP_H

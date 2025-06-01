@@ -32,7 +32,7 @@ SOURCES = hospitalSystem.c \
           $(SRC_DIR)/login.c \
           $(SRC_DIR)/logout.c \
           $(SRC_DIR)/menuHelp.c \
-          $(SRC_DIR)/myQueue.c \
+          $(SRC_DIR)/queuePrimitive.c \
           $(SRC_DIR)/queueManagement.c \
           $(SRC_DIR)/registerCheckup.c \
           $(SRC_DIR)/registerPatient.c \

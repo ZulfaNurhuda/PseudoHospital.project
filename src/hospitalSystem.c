@@ -504,15 +504,17 @@ int main(int argc, char *argv[])
         else if (strcmp(command, "TAMBAHDOKTER") == 0)
         {
             char username[51], password[100], specialization[50];
+            float checkupCost;
             
             if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username dokter: ") ||
                 !readValidString(password, 100, "Masukkan password dokter: ", false) ||
-                !readStringWithSpaces(specialization, sizeof(specialization), "Masukkan spesialisasi dokter: ")) 
+                !readStringWithSpaces(specialization, sizeof(specialization), "Masukkan spesialisasi dokter: ") ||
+                !readValidFloat(&checkupCost, "Masukkan biaya checkup dokter: ")) 
             {
                 printError("Input tidak valid!");
                 continue;
             }
-            addDoctor(&hospital, &session, username, password, specialization);
+            addDoctor(&hospital, &session, username, password, specialization, checkupCost);
         }
         else if (strcmp(command, "ASSIGNDOKTER") == 0)
         {
@@ -555,23 +557,62 @@ int main(int argc, char *argv[])
         
         else if (strcmp(command, "DAFTARCHECKUP") == 0)
         {
-            char doctor_username[51];
-            float health_data[11];
-            if (!readUsernameWithTrim(doctor_username, sizeof(doctor_username), "Masukkan username dokter: "))
+            float healthData[11]; // Misalnya data yang dimasukkan oleh pasien
+
+            // Array prompt untuk masing-masing data kesehatan
+            const char *prompts[] = {
+                "Suhu Tubuh (Celcius): ",
+                "Tekanan Darah Sistol (mmHg): ",
+                "Tekanan Darah Diastol (mmHg): ",
+                "Detak Jantung (bpm): ",
+                "Saturasi Oksigen (%): ",
+                "Kadar Gula Darah (mg/dL): ",
+                "Berat Badan (kg): ",
+                "Tinggi Badan (cm): ",
+                "Kadar Kolestrol (mg/dL): ",
+                "Trombosit (ribu/µL): "
+            };
+
+            for (int i = 0; i < 10; i++)
             {
-                printError("Username dokter tidak valid!");
-                continue;
-            }
-            printf("Masukkan data kesehatan (11 nilai):\n");
-            for (int i = 0; i < 11; i++)
-            {
-                if (!readValidFloat(&health_data[i], "Masukkan data kesehatan: "))
+                while (true)
                 {
-                    printError("Data kesehatan tidak valid!");
-                    break;
+                    // Meminta input untuk masing-masing data kesehatan
+                    if (!readValidFloat(&healthData[i], prompts[i]))
+                    {
+                        printError("Input tidak valid, silakan coba lagi!");
+                        continue;
+                    }
+
+                    // Validasi jika input sesuai dengan rentang yang diinginkan
+                    const float ranges[10][2] = {
+                        {30.0, 45.0},   // bodyTemperature
+                        {50.0, 200.0},  // systolicBloodPressure
+                        {30.0, 120.0},  // diastolicBloodPressure
+                        {40.0, 200.0},  // heartRate
+                        {50.0, 100.0},  // oxygenSaturation
+                        {50.0, 300.0},  // bloodSugarLevel
+                        {20.0, 200.0},  // weight
+                        {100.0, 250.0}, // height
+                        {100.0, 400.0}, // cholesterolLevel
+                        {100.0, 1000.0} // platelets
+                    };
+
+                    // Cek apakah data berada dalam rentang yang valid
+                    if (healthData[i] < ranges[i][0] || healthData[i] > ranges[i][1])
+                    {
+                        char errorMsg[100] = "";
+                        strcat(errorMsg, "Data kesehatan '");
+                        strcat(errorMsg, prompts[i]);
+                        strcat(errorMsg, "' tidak valid! Harap masukkan nilai dalam rentang yang benar.");
+                        printError(errorMsg);
+                        continue; // Jika data tidak valid, ulangi input
+                    }
+                    break; // Jika input valid, keluar dari loop
                 }
             }
-            registerCheckup(&hospital, &session, doctor_username, health_data);
+
+            registerCheckup(&hospital, &session, healthData);
         }
         
         else if (strcmp(command, "ANTRIANSAYA") == 0)

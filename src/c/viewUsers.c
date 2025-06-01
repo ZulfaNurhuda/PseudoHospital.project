@@ -492,7 +492,7 @@ void displayDoctors(Hospital *hospital, Session *session, int sortBy, int sortOr
     sortDoctors(&tempList, sortBy, sortOrder);
 
     // String untuk menampilkan kriteria pengurutan yang lebih deskriptif.
-    char sortByStr[10], sortOrderStr[10];
+    char sortByStr[10], sortOrderStr[15];
 
     // Menentukan string untuk kriteria pengurutan (sortBy).
     if (sortBy == 1)

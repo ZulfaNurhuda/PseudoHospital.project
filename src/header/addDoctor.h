@@ -23,7 +23,7 @@
  * 
  * Return: `boolean` - True jika penambahan berhasil, false jika input tidak valid, nama pengguna sudah ada, kapasitas penuh, atau enkripsi gagal.
  */
-boolean addDoctor(Hospital *hospital, Session *session, const char *username, const char *password, const char *specialization);
+boolean addDoctor(Hospital *hospital, Session *session, const char *username, const char *password, const char *specialization, const float checkupCost);
 
 /**
  * Nama Fungsi: `assignDoctor`

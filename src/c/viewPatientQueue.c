@@ -1,5 +1,5 @@
 #include "viewPatientQueue.h"
-#include "myQueue.h" // For isQueueEmpty, queueSize
+#include "queuePrimitive.h" // For isQueueEmpty, queueSize
 #include <stdio.h>   // For sprintf
 #include <string.h>  // For strcmp
 
@@ -77,7 +77,7 @@ void viewMySpecificQueueStatus(Hospital *hospital, Session *session) {
     // Validate patient's actual position in the new linked list structure
     int actualPositionInList = 0;
     int currentPosition = 0;
-    QueueNode *currentNode = roomQueue->front;
+    QueueNode *currentNode = roomQueue->head;
     while(currentNode != NULL) {
         currentPosition++;
         if(currentNode->info.patientId == patient->id) {

@@ -1,6 +1,6 @@
 #include "addDoctor.h"
 
-boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsername, const char *password, const char *specialization)
+boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsername, const char *password, const char *specialization, const float checkupCost)
 {
     // Pemeriksaan Awal: Validasi input pointer.
     // Memastikan bahwa pointer ke struktur Hospital, Session, dan string input tidak NULL.
@@ -125,6 +125,7 @@ boolean addDoctor(Hospital *hospital, Session *session, const char *inputUsernam
     newDoctor->aura = 0;                               // Inisialisasi nilai aura dokter (misalnya, 0).
     newDoctor->bananaRich = 100.0f;                    // Inisialisasi nilai BananaRich dokter (misalnya, 100.0).
     newDoctor->room[0] = '\0';                         // Inisialisasi kode ruangan dokter sebagai string kosong (belum ditugaskan).
+    newDoctor->checkupCost = checkupCost;              // Menetapkan biaya check
 
     // Meningkatkan jumlah pengguna efektif dan dokter efektif.
     hospital->users.nEff++;
