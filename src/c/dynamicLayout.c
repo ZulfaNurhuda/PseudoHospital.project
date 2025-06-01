@@ -31,8 +31,11 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
                     {
                         if (hospital->doctors.elements[k].id == room->doctorId)
                         {
-                            char errorMessage[100];
-                            sprintf(errorMessage, "Ruangan %s masih ditempati oleh Dr. %s!", room->code, hospital->doctors.elements[k].username);
+                            char errorMessage[100] = "";
+                            strcat(errorMessage, "Ruangan ");
+                            strcat(errorMessage, room->code);
+                            strcat(errorMessage, " masih ditempati oleh Dr.");
+                            strcat(errorMessage, hospital->doctors.elements[k].username);
                             printError(errorMessage);
                             return false; // Cannot resize if doctors are in the rooms being deleted
                         }
@@ -69,7 +72,9 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
         {
             char code[5] = "";
             code[0] = 'A' + i;              // Row letter
-            sprintf(&code[1], "%d", j + 1); // Column number
+            char numberStr[3] = "";
+            integerToString(j + 1, numberStr, sizeof(numberStr)); // Column number
+            strcat(code, numberStr);
             strcpy(newLayout[i][j].code, code);
             newLayout[i][j].capacity = 3;
             newLayout[i][j].doctorId = -1;                                                // No doctor assigned initially

@@ -197,16 +197,37 @@ boolean treatPatient(Hospital *hospital, Session *session)
     // Menampilkan daftar obat yang harus diberikan
     if (prescribedMedications.nEff > 0)
     {
-        printf("Dokter sedang mengobati pasien!\n");
-        printf("Pasien memiliki penyakit %s\n", patient->disease);
-        printf("Obat yang harus diberikan:\n");
+        printf(COLOR_GREEN "Dokter sedang mengobati pasien!\n" COLOR_RESET);
+        printf("Pasien memiliki penyakit %s%s%s\n", COLOR_YELLOW, patient->disease, COLOR_RESET);
+        printf("\nObat yang harus diberikan:\n");
 
-        // Tampilkan obat berdasarkan urutan
-        for (int i = 0; i < prescribedMedications.nEff; i++)
+        // Tentukan lebar kolom untuk tabel
+        int widths[] = {5, 30}; // No, Nama Obat, Keterangan
+
+        // Header Tabel
+        const char *header[] = {"No.", "Nama Obat"};
+        printTableBorder(widths, 2, 1);
+        printTableRow(header, widths, 2);
+        printTableBorder(widths, 2, 2);
+
+        // Isi tabel dengan data obat yang telah diberikan kepada pasien
+        for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
         {
-            Medication *med = &hospital->medications.elements[prescribedMedications.elements[i].id];
-            printf("%d. %s\n", i + 1, med->name);
+            // Mendapatkan obat berdasarkan ID
+            Medication *med = &hospital->medications.elements[patient->medicationsPrescribed.medicationId[i]];
+
+            // Menyiapkan data untuk baris tabel
+            char no[10] = "", medicationName[50] = "";
+            integerToString(i + 1, no, sizeof(no));
+            strcat(no, ".");
+            strcat(medicationName, med->name);
+            const char *row[] = {no, medicationName};
+
+            // Menampilkan baris tabel
+            printTableRow(row, widths, 2);
         }
+
+        printTableBorder(widths, 2, 3);
 
         // Menyimpan resep obat ke dalam ADT pasien
         // Pastikan kapasitas mencukupi
@@ -236,9 +257,6 @@ boolean treatPatient(Hospital *hospital, Session *session)
 
         // Update status pengobatan pasien
         patient->treatedStatus = true;
-
-        // Tingkatkan aura dokter (menggunakan doctor yang sudah ditemukan di awal)
-        doctor->aura += 1;
 
         // Bebaskan memori yang dialokasi
         free(prescribedMedications.elements);
