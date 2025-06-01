@@ -75,6 +75,7 @@ void displayQueue(Hospital *hospital, Session *session)
                 // Mencetak header spesifik untuk antrian ruangan ini.
                 char header[100] = "Antrian Ruangan "; // Buffer untuk judul header.
                 strcat(header, room->code);            // Menambahkan kode ruangan (misal "A1") ke judul.
+                printf("\n"); // Baris kosong untuk pemisah visual.
                 printHeader(header);                   // Mencetak header antrian ruangan.
 
                 // Menampilkan Kapasitas Ruangan.
@@ -99,7 +100,6 @@ void displayQueue(Hospital *hospital, Session *session)
                 printTableRow(row1, widths, 2); // Baris data kapasitas.
 
                 // Menampilkan Dokter yang Bertugas di Ruangan.
-                printf("Dokter:\n");     // Label untuk bagian informasi dokter.
                 char *doctorName = NULL; // Pointer untuk menyimpan nama dokter, diinisialisasi NULL.
                 // Mencari nama dokter berdasarkan `room->doctorId` di daftar dokter rumah sakit (`hospital->doctors`).
                 for (int k = 0; k < hospital->doctors.nEff; k++) // Loop melalui dokter yang efektif.
