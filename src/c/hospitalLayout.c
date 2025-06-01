@@ -1,19 +1,5 @@
-// Menyertakan file header "hospitalLayout.h".
-// File ini diasumsikan berisi deklarasi fungsi-fungsi dalam file ini (displayLayout, displayRoomDetails),
-// definisi struktur Hospital (menyimpan data rumah sakit), Session (data sesi pengguna),
-// Room (detail ruangan), Layout (struktur denah), dan enum Role (peran pengguna),
-// serta makro seperti COLOR_YELLOW, COLOR_RESET (untuk pewarnaan teks di konsol),
-// dan deklarasi fungsi utilitas seperti printError (mencetak pesan kesalahan),
-// printHeader (mencetak judul), isValidRoomCode (memvalidasi format kode ruangan),
-// printTableBorder (mencetak batas tabel), dan printTableRow (mencetak baris tabel).
 #include "hospitalLayout.h"
-#include <stdio.h>  // Diperlukan untuk fungsi input/output standar seperti printf.
-#include <string.h> // Diperlukan untuk fungsi manipulasi string seperti strcmp (membandingkan string), strcpy (menyalin string), dan strcat (menggabungkan string).
 
-// Fungsi untuk menampilkan denah rumah sakit secara visual di konsol.
-// Menerima pointer ke struktur Hospital (data rumah sakit),
-// pointer ke struktur Session (informasi sesi pengguna saat ini),
-// dan flag boolean printHeaderFlag untuk menentukan apakah header "Denah Rumah Sakit" perlu dicetak.
 void displayLayout(Hospital *hospital, Session *session, boolean printHeaderFlag)
 {
     // Pemeriksaan Awal: Memastikan pointer hospital dan session tidak NULL.
@@ -292,7 +278,7 @@ void displayRoomDetails(Hospital *hospital, Session *session, const char *roomCo
                 // Membandingkan ID pasien di daftar global dengan ID pasien yang ada di ruangan.
                 if (hospital->patients.elements[j].id == room->patientInRoom.patientId[i])
                 {
-                    char idStr[20]; // Buffer untuk menyimpan nomor urut pasien sebagai string.
+                    char idStr[20] = ""; // Buffer untuk menyimpan nomor urut pasien sebagai string.
                     // Logika pembuatan string nomor urut: (i + 1) untuk nomor mulai dari 1.
                     // `i + 1 + '0'` akan menghasilkan karakter ASCII berdasarkan nilai numerik, BUKAN string angka.
                     // Contoh: jika i+1 adalah 1, maka 1 + '0' (ASCII 48) = 49 (ASCII untuk '1'). Ini benar untuk 1 digit.
@@ -301,8 +287,8 @@ void displayRoomDetails(Hospital *hospital, Session *session, const char *roomCo
                     // Kode ini akan menghasilkan string yang salah untuk nomor > 9.
                     // Seharusnya menggunakan sprintf(idStr, "%d", i + 1); atau logika konversi multi-digit yang benar.
                     // Karena diminta TIDAK MENGUBAH, komentar ini hanya menjelaskan perilaku kode ASLI.
-                    strcpy(idStr, i + 1 + "0"); // Ini akan menghasilkan karakter, bukan string angka untuk i+1 >= 10
-                    strcat(idStr, ".");         // Menambahkan titik setelah nomor.
+                    integerToString(i + 1, idStr, sizeof(idStr)); // Menggunakan fungsi utilitas untuk mengkonversi integer ke string.
+                    strcat(idStr, ".");                           // Menambahkan titik setelah nomor.
 
                     // Data untuk baris pasien: nomor urut (yang mungkin salah formatnya) dan username pasien.
                     const char *row4[] = {idStr, hospital->patients.elements[j].username};
