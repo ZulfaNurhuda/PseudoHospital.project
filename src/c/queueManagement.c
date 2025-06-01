@@ -1,6 +1,5 @@
 #include "queueManagement.h"
 
-// Helper function to find a queue by its room code
 static Queue *findQueueByRoomCode(Hospital *hospital, const char *roomCode)
 {
     if (hospital == NULL || roomCode == NULL || roomCode[0] == '\0')
@@ -16,7 +15,6 @@ static Queue *findQueueByRoomCode(Hospital *hospital, const char *roomCode)
     return NULL;
 }
 
-// Helper function to update queue positions for all patients in a specific queue
 static void updatePatientPositionsInQueue(Hospital *hospital, Queue *q)
 {
     if (q == NULL || hospital == NULL)
@@ -66,7 +64,6 @@ static void updatePatientPositionsInQueue(Hospital *hospital, Queue *q)
     }
 }
 
-// Function for Manager to move the first patient in a queue to the end of the queue.
 boolean skipPatientInQueue(Hospital *hospital, Session *session, const char *roomCode)
 {
     if (hospital == NULL || session == NULL || roomCode == NULL)
@@ -114,7 +111,6 @@ boolean skipPatientInQueue(Hospital *hospital, Session *session, const char *roo
     return true;
 }
 
-// Function for a Patient to cancel their own queue, or Manager to cancel any patient's queue.
 boolean cancelPatientFromQueue(Hospital *hospital, Session *session, const char *patientUsernameToCancel)
 {
     if (hospital == NULL || session == NULL || patientUsernameToCancel == NULL)
@@ -208,7 +204,7 @@ boolean cancelPatientFromQueue(Hospital *hospital, Session *session, const char 
                 }
                 else
                 {
-                    current->next->prev = prev; // Update prev for next node
+                    current->next->prev = prev;
                 }
                 free(current);
                 q->size--;
