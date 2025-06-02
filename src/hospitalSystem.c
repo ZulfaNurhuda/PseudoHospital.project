@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            if (choiceSortBy < 1 || choiceSortBy > 2)
+            if (choiceSortBy < 1 || choiceSortBy > 3)
             {
                 printError("Pilihan tidak valid!");
                 continue;
@@ -557,14 +557,13 @@ int main(int argc, char *argv[])
                 "Berat Badan (kg)",
                 "Tinggi Badan (cm)",
                 "Kadar Kolestrol (mg/dL)",
-                "Trombosit (ribu/µL)"
-            };
+                "Trombosit (ribu/µL)"};
 
             for (int i = 0; i < 10; i++)
             {
                 while (true)
                 {
-                    char promp[100];
+                    char promp[100] = "";
                     strcat(promp, prompts[i]);
                     strcat(promp, ": ");
 
@@ -666,33 +665,46 @@ int main(int argc, char *argv[])
         else if (strcmp(command, "LEWATIANTRIAN") == 0)
         {
             char roomCode[5];
-            if (!readValidString(roomCode, sizeof(roomCode), "Masukkan kode ruangan antrian yang akan di-skip: ", false))
+            char patientUsernameToCancel[51];
+            if (session.role == PATIENT)
             {
-
-                continue;
+                for (int i = 0; i < hospital.layout.rowEff; i++)
+                {
+                    for (int j = 0; j < hospital.layout.colEff; j++)
+                    {
+                        if (strcmp(hospital.layout.elements[i][j].code, session.username) == 0)
+                        {
+                            strcpy(roomCode, hospital.layout.elements[i][j].code);
+                            break;
+                        }
+                    }
+                }
+                strcpy(patientUsernameToCancel, roomCode);
+            }
+            else
+            {
+                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): "))
+                {
+                    printError("Input username tidak valid!");
+                }
             }
             skipPatientInQueue(&hospital, &session, roomCode);
         }
         else if (strcmp(command, "BATALKANANTRIAN") == 0)
         {
             char patientUsernameToCancel[51];
-            if (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): "))
+            if (session.role == PATIENT)
             {
-                continue;
+                strcpy(patientUsernameToCancel, session.username);
+            }
+            else
+            {
+                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): "))
+                {
+                    printError("Input username tidak valid!");
+                }
             }
 
-            if (caseInsensitiveStrcmp(patientUsernameToCancel, "saya") == 0)
-            {
-                if (session.role == PATIENT)
-                {
-                    strcpy(patientUsernameToCancel, session.username);
-                }
-                else
-                {
-                    printError("Perintah 'saya' hanya valid untuk Pasien. Manajer harus memasukkan username pasien secara spesifik.");
-                    continue;
-                }
-            }
             cancelPatientFromQueue(&hospital, &session, patientUsernameToCancel);
         }
 

@@ -186,7 +186,6 @@ boolean treatPatient(Hospital *hospital, Session *session)
 
     if (prescribedMedications.nEff > 0)
     {
-        printf("%d", prescribedMedications.nEff);
         printf(COLOR_GREEN "Dokter sedang mengobati pasien!\n" COLOR_RESET);
         printf("Pasien memiliki penyakit %s%s%s\n", COLOR_YELLOW, patient->disease, COLOR_RESET);
         printf("\nObat yang harus diberikan:\n");
