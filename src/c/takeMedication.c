@@ -50,6 +50,32 @@ boolean takeMedication(Hospital *hospital, Session *session)
         return false;
     }
 
+    boolean isMedicationAvailable = false;
+    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
+    {
+        boolean foundInTaken = false;
+        for (int j = 0; j <= patient->medicationsTaken.top; j++)
+        {
+            if (patient->medicationsPrescribed.medicationId[i] == patient->medicationsTaken.medicationId[j])
+            {
+                foundInTaken = true;
+                break;
+            }
+        }
+
+        if (!foundInTaken)
+        {
+            isMedicationAvailable = true;
+            break;
+        }
+    }
+
+    if (!isMedicationAvailable)
+    {
+        printError("Semua obat yang diresepkan sudah dikonsumsi!");
+        return false;
+    }
+
     printHeader("Daftar Obat yang Diresepkan");
     printf(COLOR_BLUE "[📋 | Info] - Daftar obat yang harus diminum sesuai dengan urutan\n" COLOR_RESET);
 
