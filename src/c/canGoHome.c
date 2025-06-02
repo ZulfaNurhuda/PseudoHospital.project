@@ -67,7 +67,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
         }
         else
         {
-            // Check if medications were taken in correct order
             boolean correctOrder = true;
             for (int i = 0; i < takenCount && correctOrder; i++)
             {
@@ -91,7 +90,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
         }
     }
 
-    // Display status
     printHeader("Status Pulang");
     int widths[] = {20, 40};
     const char *headers[] = {"Status", "Keterangan"};
@@ -105,7 +103,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
 
     if (canGoHomeStatus)
     {
-        // Update doctor's aura
         for (int i = 0; i < hospital->treatmentHistory.nEff; i++)
         {
             if (hospital->treatmentHistory.elements[i].patientId == patient->id)
@@ -123,10 +120,8 @@ boolean canGoHome(Hospital *hospital, Session *session)
             }
         }
 
-        // Remove patient from room and queue
         if (patient->queueRoom[0] != '\0')
         {
-            // Find the correct room using proper nested loop with break conditions
             Room *room = NULL;
             boolean roomFound = false;
 
@@ -142,15 +137,12 @@ boolean canGoHome(Hospital *hospital, Session *session)
                 }
             }
 
-            // Remove patient from room
             if (room)
             {
-                // Find patient in room and remove
                 for (int i = 0; i < room->patientInRoom.nEff; i++)
                 {
                     if (room->patientInRoom.patientId[i] == patient->id)
                     {
-                        // Shift remaining patients
                         for (int j = i; j < room->patientInRoom.nEff - 1; j++)
                         {
                             room->patientInRoom.patientId[j] = room->patientInRoom.patientId[j + 1];
@@ -160,7 +152,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
                     }
                 }
 
-                // Find corresponding queue and move next patient from queue to room
                 Queue *targetQueue = NULL;
                 for (int i = 0; i < hospital->queues.capacity; i++)
                 {
@@ -172,13 +163,11 @@ boolean canGoHome(Hospital *hospital, Session *session)
                     }
                 }
 
-                // Move next patient from queue to room if queue is not empty
                 if (targetQueue && !isQueueEmpty(targetQueue))
                 {
                     QueueInfo nextPatientInfo;
                     if (dequeue(targetQueue, &nextPatientInfo.patientId))
                     {
-                        // Add next patient to room
                         if (room->patientInRoom.nEff < room->patientInRoom.capacity)
                         {
                             room->patientInRoom.patientId[room->patientInRoom.nEff] = nextPatientInfo.patientId;
@@ -189,7 +178,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
             }
         }
 
-        // Reset patient data for next visit
         patient->queueRoom[0] = '\0';
         patient->queuePosition = 0;
         patient->diagnosedStatus = false;

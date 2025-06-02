@@ -664,31 +664,19 @@ int main(int argc, char *argv[])
 
         else if (strcmp(command, "LEWATIANTRIAN") == 0)
         {
-            char roomCode[5];
             char patientUsernameToCancel[51];
             if (session.role == PATIENT)
             {
-                for (int i = 0; i < hospital.layout.rowEff; i++)
-                {
-                    for (int j = 0; j < hospital.layout.colEff; j++)
-                    {
-                        if (strcmp(hospital.layout.elements[i][j].code, session.username) == 0)
-                        {
-                            strcpy(roomCode, hospital.layout.elements[i][j].code);
-                            break;
-                        }
-                    }
-                }
-                strcpy(patientUsernameToCancel, roomCode);
+                strcpy(patientUsernameToCancel, session.username);
             }
             else
             {
-                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): "))
+                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dilewati: "))
                 {
                     printError("Input username tidak valid!");
                 }
             }
-            skipPatientInQueue(&hospital, &session, roomCode);
+            skipPatientInQueue(&hospital, &session, patientUsernameToCancel);
         }
         else if (strcmp(command, "BATALKANANTRIAN") == 0)
         {
@@ -699,7 +687,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): "))
+                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan: "))
                 {
                     printError("Input username tidak valid!");
                 }
