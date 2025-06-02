@@ -576,7 +576,6 @@ void freeHospital(Hospital *hospital)
 
 boolean deletePatient(Hospital *hospital, int patientId)
 {
-
     int patientIndex = -1;
     char patientUsername[50] = "";
 
@@ -596,26 +595,28 @@ boolean deletePatient(Hospital *hospital, int patientId)
         return false;
     }
 
+    // Check if medications are already freed
     if (hospital->patients.elements[patientIndex].medicationsPrescribed.medicationId != NULL)
     {
         free(hospital->patients.elements[patientIndex].medicationsPrescribed.medicationId);
-        hospital->patients.elements[patientIndex].medicationsPrescribed.medicationId = NULL;
+        hospital->patients.elements[patientIndex].medicationsPrescribed.medicationId = NULL; // Set to NULL after free
     }
     if (hospital->patients.elements[patientIndex].medicationsTaken.medicationId != NULL)
     {
         free(hospital->patients.elements[patientIndex].medicationsTaken.medicationId);
-        hospital->patients.elements[patientIndex].medicationsTaken.medicationId = NULL;
+        hospital->patients.elements[patientIndex].medicationsTaken.medicationId = NULL; // Set to NULL after free
     }
 
+    // Shift the patients' elements
     for (int i = patientIndex; i < hospital->patients.nEff - 1; i++)
     {
-
         hospital->patients.elements[i] = hospital->patients.elements[i + 1];
     }
     hospital->patients.nEff--;
 
     int userIndex = -1;
 
+    // Find user linked to patient
     for (int i = 0; i < hospital->users.nEff; i++)
     {
         if (hospital->users.elements[i].id == patientId)
@@ -625,9 +626,9 @@ boolean deletePatient(Hospital *hospital, int patientId)
         }
     }
 
+    // Delete user
     if (userIndex != -1)
     {
-
         for (int i = userIndex; i < hospital->users.nEff - 1; i++)
         {
             hospital->users.elements[i] = hospital->users.elements[i + 1];
@@ -635,10 +636,10 @@ boolean deletePatient(Hospital *hospital, int patientId)
         hospital->users.nEff--;
     }
 
+    // Clean up patient from queue
     for (int i = 0; i < hospital->queues.capacity; i++)
     {
         Queue *q = &hospital->queues.queues[i];
-
         if (q->roomCode[0] == '\0' || isQueueEmpty(q))
         {
             continue;
@@ -650,10 +651,8 @@ boolean deletePatient(Hospital *hospital, int patientId)
 
         while (current != NULL)
         {
-
             if (current->info.patientId == patientId)
             {
-
                 if (prev == NULL)
                 {
                     q->head = current->next;
@@ -669,7 +668,6 @@ boolean deletePatient(Hospital *hospital, int patientId)
                 }
                 else
                 {
-
                     current->next->prev = prev;
                 }
                 free(current);
@@ -688,23 +686,20 @@ boolean deletePatient(Hospital *hospital, int patientId)
 
         if (removed)
         {
-
             break;
         }
     }
 
+    // Remove patient from layout
     for (int i = 0; i < hospital->layout.rowEff; i++)
     {
         for (int j = 0; j < hospital->layout.colEff; j++)
         {
             Room *room = &hospital->layout.elements[i][j];
-
             for (int k = 0; k < room->patientInRoom.nEff; k++)
             {
-
                 if (room->patientInRoom.patientId[k] == patientId)
                 {
-
                     for (int l = k; l < room->patientInRoom.nEff - 1; l++)
                     {
                         room->patientInRoom.patientId[l] = room->patientInRoom.patientId[l + 1];
@@ -716,8 +711,8 @@ boolean deletePatient(Hospital *hospital, int patientId)
         }
     }
 
+    // Clean up treatment history
     int historyIndex = -1;
-
     for (int i = 0; i < hospital->treatmentHistory.nEff; i++)
     {
         if (hospital->treatmentHistory.elements[i].patientId == patientId)
@@ -729,7 +724,6 @@ boolean deletePatient(Hospital *hospital, int patientId)
 
     if (historyIndex != -1)
     {
-
         for (int i = historyIndex; i < hospital->treatmentHistory.nEff - 1; i++)
         {
             hospital->treatmentHistory.elements[i] = hospital->treatmentHistory.elements[i + 1];

@@ -189,6 +189,15 @@ boolean canGoHome(Hospital *hospital, Session *session)
 
             patient->queueRoom[0] = '\0';
             patient->queuePosition = 0;
+            patient->diagnosedStatus = false;
+            patient->treatedStatus = false;
+            patient->life = 3;
+            strcpy(patient->disease, "");
+
+            patient->medicationsTaken.top = -1;
+            free(patient->medicationsTaken.medicationId);
+            patient->medicationsPrescribed.nEff = 0;
+            free(patient->medicationsPrescribed.medicationId);
         }
 
         printSuccess("Selamat, Anda boleh pulang!");

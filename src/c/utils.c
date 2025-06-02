@@ -42,13 +42,13 @@ int caseInsensitiveStrcmp(const char *s1, const char *s2)
     while (s1[i] != '\0' && s2[i] != '\0')
     {
 
-        char c1_lower = charToLower(s1[i]);
-        char c2_lower = charToLower(s2[i]);
+        char c1Lower = charToLower(s1[i]);
+        char c2Lower = charToLower(s2[i]);
 
-        if (c1_lower != c2_lower)
+        if (c1Lower != c2Lower)
         {
 
-            return c1_lower - c2_lower;
+            return c1Lower - c2Lower;
         }
         i++;
     }
@@ -71,17 +71,17 @@ boolean readValidString(char *buffer, int maxLen, const char *prompt, boolean al
     if (scanf("%255s", temp) != 1)
     {
 
-        int c_clear;
+        int cClear;
 
-        while ((c_clear = getchar()) != '\n' && c_clear != EOF)
+        while ((cClear = getchar()) != '\n' && cClear != EOF)
             ;
 
         printError("Gagal membaca input.");
         return false;
     }
 
-    int c_clear_after;
-    while ((c_clear_after = getchar()) != '\n' && c_clear_after != EOF)
+    int cClearAfter;
+    while ((cClearAfter = getchar()) != '\n' && cClearAfter != EOF)
         ;
 
     size_t len = strlen(temp);
@@ -130,9 +130,9 @@ boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt)
     {
         buffer[0] = '\0';
 
-        int r1_clear_single;
+        int R1ClearSingle;
 
-        while ((r1_clear_single = getchar()) != '\n' && r1_clear_single != EOF)
+        while ((R1ClearSingle = getchar()) != '\n' && R1ClearSingle != EOF)
             ;
         return true;
     }
@@ -142,21 +142,21 @@ boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt)
     char rawInput[256];
     rawInput[0] = '\0';
 
-    int scanf_res = scanf("%255[^\n]", rawInput);
+    int scanfRes = scanf("%255[^\n]", rawInput);
 
-    int clear_res_loop;
+    int clearResLoop;
 
     do
     {
-        clear_res_loop = scanf("%*[^\n]");
-    } while (clear_res_loop == 1 && clear_res_loop != EOF);
+        clearResLoop = scanf("%*[^\n]");
+    } while (clearResLoop == 1 && clearResLoop != EOF);
 
-    if (clear_res_loop != EOF)
+    if (clearResLoop != EOF)
     {
         scanf("%*c");
     }
 
-    if (scanf_res == EOF && rawInput[0] == '\0')
+    if (scanfRes == EOF && rawInput[0] == '\0')
     {
         buffer[0] = '\0';
         return false;

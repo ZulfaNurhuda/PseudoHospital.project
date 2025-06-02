@@ -41,7 +41,7 @@ boolean takeAntidote(Hospital *hospital, Session *session)
 
     boolean isNeedAntidote = false;
     int lastMedicationId = patient->medicationsTaken.medicationId[patient->medicationsTaken.top];
-    for (int i = 0; i < patient->medicationsTaken.top; i++)
+    for (int i = 0; i <= patient->medicationsTaken.top; i++)
     {
         if (patient->medicationsTaken.medicationId[i] != patient->medicationsPrescribed.medicationId[i])
         {
@@ -65,7 +65,7 @@ boolean takeAntidote(Hospital *hospital, Session *session)
         patient->medicationsTaken.top--;
 
         printHeader("Konsumsi Penawar");
-        int widths[] = {15, 20, 10};
+        int widths[] = {20, 20, 20};
         const char *headers[] = {"Obat Dibatalkan", "Nyawa Tersisa", "Status"};
         printTableBorder(widths, 3, 1);
         printTableRow(headers, widths, 3);
@@ -75,11 +75,11 @@ boolean takeAntidote(Hospital *hospital, Session *session)
         {
             if (i < patient->life)
             {
-                strcat(lifeStr, "💙");
+                strcat(lifeStr, "● ");
             }
             else
             {
-                strcat(lifeStr, "🖤");
+                strcat(lifeStr, "○ ");
             }
         }
         const char *row[] = {medicationName, lifeStr, "Penawar berhasil"};

@@ -52,12 +52,14 @@ boolean takeMedication(Hospital *hospital, Session *session)
 
     printHeader("Daftar Obat yang Diresepkan");
     printf(COLOR_BLUE "[📋 | Info] - Daftar obat yang harus diminum sesuai dengan urutan\n" COLOR_RESET);
-    
+
     int widths[] = {15, 30};
     const char *headers[] = {"Urutan Minum", "Nama Obat"};
     printTableBorder(widths, 2, 1);
     printTableRow(headers, widths, 2);
+    printTableBorder(widths, 2, 2);
 
+    boolean validOptions[patient->medicationsPrescribed.nEff];
     for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
     {
         int medicationId = patient->medicationsPrescribed.medicationId[i];
@@ -66,7 +68,7 @@ boolean takeMedication(Hospital *hospital, Session *session)
             if (hospital->medications.elements[j].id == medicationId)
             {
                 boolean isMedicationInInventory = true;
-                for (int i = 0; i <= patient->medicationsTaken.top; i++) 
+                for (int i = 0; i <= patient->medicationsTaken.top; i++)
                 {
                     if (patient->medicationsTaken.medicationId[i] == medicationId)
                     {
@@ -76,12 +78,17 @@ boolean takeMedication(Hospital *hospital, Session *session)
                 }
                 if (isMedicationInInventory)
                 {
+                    validOptions[i] = true;
                     char medicationName[50], medicationIdStr[10];
                     strcpy(medicationName, hospital->medications.elements[j].name);
                     integerToString(i + 1, medicationIdStr, sizeof(medicationIdStr)); // Nomor urut, bukan ID
                     const char *row[] = {medicationIdStr, medicationName};
                     printTableRow(row, widths, 2);
                     break;
+                }
+                else
+                {
+                    validOptions[i] = false;
                 }
             }
         }
@@ -96,19 +103,39 @@ boolean takeMedication(Hospital *hospital, Session *session)
 
     if (choice < 1 || choice > patient->medicationsPrescribed.nEff)
     {
-        printError("Pilihan nomor untuk obat tidak tersedia!");
-        return false;
+        if (!validOptions[choice - 1])
+        {
+            printError("Pilihan nomor untuk obat tidak tersedia!");
+            return false;
+        }
+    }
+
+    int expectedMedicationId;
+    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
+    {
+        boolean foundInTaken = false;
+        for (int j = 0; j <= patient->medicationsTaken.top; j++)
+        {
+            if (patient->medicationsPrescribed.medicationId[i] == patient->medicationsTaken.medicationId[j])
+            {
+                foundInTaken = true;
+                break;
+            }
+        }
+
+        if (!foundInTaken)
+        {
+            expectedMedicationId = patient->medicationsPrescribed.medicationId[i];
+            break;
+        }
     }
 
     int selectedMedicationId = patient->medicationsPrescribed.medicationId[choice - 1];
-    int expectedMedicationId = patient->medicationsPrescribed.medicationId[0];
 
-    if (selectedMedicationId == expectedMedicationId)
-    {
-        printSuccess("Obat berhasil diminum!");
-        return true;
-    }
-    else
+    patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = selectedMedicationId;
+    printSuccess("Obat berhasil diminum!");
+
+    if (selectedMedicationId != expectedMedicationId)
     {
         // Pasien salah pilih obat
         patient->life--;
@@ -117,6 +144,9 @@ boolean takeMedication(Hospital *hospital, Session *session)
         {
             printError("Pasien kehabisan nyawa! Pasien akan dihapus. 🥀");
             deletePatient(hospital, patient->id);
+            session->isLoggedIn = false;
+            session->userId = -1;
+            strcpy(session->username, "");
             return false;
         }
         else
@@ -127,15 +157,17 @@ boolean takeMedication(Hospital *hospital, Session *session)
             {
                 if (i < patient->life) // Fixed logic untuk menampilkan nyawa
                 {
-                    printf("💙");
+                    printf("● ");
                 }
                 else
                 {
-                    printf("🖤");
+                    printf("○ ");
                 }
             }
             printf("\n");
             return false;
         }
     }
+
+    return true;
 }
