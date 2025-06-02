@@ -21,6 +21,6 @@
  * 
  * Return: `boolean` - True jika peresepan berhasil, false jika input tidak valid, pasien tidak ditemukan, belum didiagnosis, sudah diobati, atau dokter tidak berwenang.
  */
-boolean treatPatient(Hospital *hospital, Session *session, const char *patientUsername);
+boolean treatPatient(Hospital *hospital, Session *session);
 
 #endif // TREAT_H

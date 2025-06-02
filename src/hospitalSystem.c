@@ -534,12 +534,7 @@ int main(int argc, char *argv[])
 
         else if (strcmp(command, "NGOBATIN") == 0)
         {
-            char username[51];
-            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username pasien yang akan diobati: ")) {
-                printError("Input username tidak valid!");
-                continue;
-            }
-            treatPatient(&hospital, &session, username);
+            treatPatient(&hospital, &session);
         }
 
         else if (strcmp(command, "PULANGDOK") == 0)
@@ -553,23 +548,28 @@ int main(int argc, char *argv[])
 
             // Array prompt untuk masing-masing data kesehatan
             const char *prompts[] = {
-                "Suhu Tubuh (Celcius): ",
-                "Tekanan Darah Sistol (mmHg): ",
-                "Tekanan Darah Diastol (mmHg): ",
-                "Detak Jantung (bpm): ",
-                "Saturasi Oksigen (%): ",
-                "Kadar Gula Darah (mg/dL): ",
-                "Berat Badan (kg): ",
-                "Tinggi Badan (cm): ",
-                "Kadar Kolestrol (mg/dL): ",
-                "Trombosit (ribu/µL): "};
+                "Suhu Tubuh (Celcius)",
+                "Tekanan Darah Sistol (mmHg)",
+                "Tekanan Darah Diastol (mmHg)",
+                "Detak Jantung (bpm)",
+                "Saturasi Oksigen (%)",
+                "Kadar Gula Darah (mg/dL)",
+                "Berat Badan (kg)",
+                "Tinggi Badan (cm)",
+                "Kadar Kolestrol (mg/dL)",
+                "Trombosit (ribu/µL)"
+            };
 
             for (int i = 0; i < 10; i++)
             {
                 while (true)
                 {
+                    char promp[100];
+                    strcat(promp, prompts[i]);
+                    strcat(promp, ": ");
+
                     // Meminta input untuk masing-masing data kesehatan
-                    if (!readValidFloat(&healthData[i], prompts[i]))
+                    if (!readValidFloat(&healthData[i], promp))
                     {
                         printError("Input tidak valid, silakan coba lagi!");
                         continue;

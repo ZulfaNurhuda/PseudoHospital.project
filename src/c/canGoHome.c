@@ -2,7 +2,6 @@
 
 boolean canGoHome(Hospital *hospital, Session *session)
 {
-
     if (!hospital || !session)
     {
         printError("Struktur rumah sakit atau sesi tidak valid!");
@@ -25,7 +24,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
 
     for (int i = 0; i < hospital->patients.nEff; i++)
     {
-
         if (hospital->patients.elements[i].id == session->userId)
         {
             patient = &hospital->patients.elements[i];
@@ -40,7 +38,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
     }
 
     const char *statusStr, *descriptionStr;
-
     boolean canGoHomeStatus = false;
 
     if (!patient->diagnosedStatus)
@@ -48,30 +45,30 @@ boolean canGoHome(Hospital *hospital, Session *session)
         statusStr = "Belum Diagnosa";
         descriptionStr = "Anda belum didiagnosa oleh dokter.";
     }
-
     else if (!patient->treatedStatus)
     {
         statusStr = "Belum Diberi Obat";
         descriptionStr = "Anda belum diberikan resep obat.";
     }
-
     else
     {
-
         int prescribedCount = patient->medicationsPrescribed.nEff;
         int takenCount = patient->medicationsTaken.top + 1;
 
-        if (takenCount != prescribedCount)
+        if (takenCount < prescribedCount)
         {
             statusStr = "Belum Minum Semua Obat";
             descriptionStr = "Anda belum mengonsumsi semua obat yang telah diresepkan.";
         }
-
+        else if (takenCount > prescribedCount)
+        {
+            statusStr = "Urutan Obat Salah";
+            descriptionStr = "Anda mengonsumsi lebih banyak obat dari yang diresepkan.";
+        }
         else
         {
-
+            // Check if medications were taken in correct order
             boolean correctOrder = true;
-
             for (int i = 0; i < takenCount && correctOrder; i++)
             {
                 if (patient->medicationsTaken.medicationId[i] != patient->medicationsPrescribed.medicationId[i])
@@ -85,7 +82,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
                 statusStr = "Urutan Obat Salah";
                 descriptionStr = "Anda mengonsumsi obat dengan urutan yang salah.";
             }
-
             else
             {
                 statusStr = "Boleh Pulang";
@@ -95,27 +91,26 @@ boolean canGoHome(Hospital *hospital, Session *session)
         }
     }
 
+    // Display status
     printHeader("Status Pulang");
-
-    int widths[] = {15, 40};
+    int widths[] = {20, 40};
     const char *headers[] = {"Status", "Keterangan"};
-
     const char *row[] = {statusStr, descriptionStr};
 
     printTableBorder(widths, 2, 1);
     printTableRow(headers, widths, 2);
-
+    printTableBorder(widths, 2, 2);
     printTableRow(row, widths, 2);
     printTableBorder(widths, 2, 3);
 
     if (canGoHomeStatus)
     {
+        // Update doctor's aura
         for (int i = 0; i < hospital->treatmentHistory.nEff; i++)
         {
             if (hospital->treatmentHistory.elements[i].patientId == patient->id)
             {
                 int doctorId = hospital->treatmentHistory.elements[i].doctorId;
-
                 for (int j = 0; j < hospital->doctors.nEff; j++)
                 {
                     if (hospital->doctors.elements[j].id == doctorId)
@@ -128,76 +123,92 @@ boolean canGoHome(Hospital *hospital, Session *session)
             }
         }
 
+        // Remove patient from room and queue
         if (patient->queueRoom[0] != '\0')
         {
-            Queue *targetQueue = NULL;
+            // Find the correct room using proper nested loop with break conditions
+            Room *room = NULL;
+            boolean roomFound = false;
 
-            for (int i = 0; i < hospital->queues.capacity; i++)
+            for (int i = 0; i < hospital->layout.rowEff && !roomFound; i++)
             {
-
-                if (hospital->queues.queues[i].roomCode[0] != '\0' &&
-                    strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0)
+                for (int j = 0; j < hospital->layout.colEff && !roomFound; j++)
                 {
-                    targetQueue = &hospital->queues.queues[i];
-                    break;
+                    if (strcmp(hospital->layout.elements[i][j].code, patient->queueRoom) == 0)
+                    {
+                        room = &hospital->layout.elements[i][j];
+                        roomFound = true;
+                    }
                 }
             }
 
-            if (targetQueue && !isQueueEmpty(targetQueue))
+            // Remove patient from room
+            if (room)
             {
-                QueueNode *current = targetQueue->head;
-                QueueNode *prev = NULL;
-
-                while (current)
+                // Find patient in room and remove
+                for (int i = 0; i < room->patientInRoom.nEff; i++)
                 {
-                    if (current->info.patientId == patient->id)
+                    if (room->patientInRoom.patientId[i] == patient->id)
                     {
-
-                        if (!prev)
+                        // Shift remaining patients
+                        for (int j = i; j < room->patientInRoom.nEff - 1; j++)
                         {
-                            targetQueue->head = current->next;
-                            if (targetQueue->head)
-                            {
-                                targetQueue->head->prev = NULL;
-                            }
-                            else
-                            {
-                                targetQueue->tail = NULL;
-                            }
+                            room->patientInRoom.patientId[j] = room->patientInRoom.patientId[j + 1];
                         }
-                        else
-                        {
-                            prev->next = current->next;
-                            if (current->next)
-                            {
-                                current->next->prev = prev;
-                            }
-                            else
-                            {
-                                targetQueue->tail = prev;
-                            }
-                        }
-
-                        free(current);
-                        targetQueue->size--;
+                        room->patientInRoom.nEff--;
                         break;
                     }
-                    prev = current;
-                    current = current->next;
+                }
+
+                // Find corresponding queue and move next patient from queue to room
+                Queue *targetQueue = NULL;
+                for (int i = 0; i < hospital->queues.capacity; i++)
+                {
+                    if (hospital->queues.queues[i].roomCode[0] != '\0' &&
+                        strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0)
+                    {
+                        targetQueue = &hospital->queues.queues[i];
+                        break;
+                    }
+                }
+
+                // Move next patient from queue to room if queue is not empty
+                if (targetQueue && !isQueueEmpty(targetQueue))
+                {
+                    QueueInfo nextPatientInfo;
+                    if (dequeue(targetQueue, &nextPatientInfo.patientId))
+                    {
+                        // Add next patient to room
+                        if (room->patientInRoom.nEff < room->patientInRoom.capacity)
+                        {
+                            room->patientInRoom.patientId[room->patientInRoom.nEff] = nextPatientInfo.patientId;
+                            room->patientInRoom.nEff++;
+                        }
+                    }
                 }
             }
+        }
 
-            patient->queueRoom[0] = '\0';
-            patient->queuePosition = 0;
-            patient->diagnosedStatus = false;
-            patient->treatedStatus = false;
-            patient->life = 3;
-            strcpy(patient->disease, "");
+        // Reset patient data for next visit
+        patient->queueRoom[0] = '\0';
+        patient->queuePosition = 0;
+        patient->diagnosedStatus = false;
+        patient->treatedStatus = false;
+        patient->life = 3;
+        strcpy(patient->disease, "");
 
-            patient->medicationsTaken.top = -1;
+        patient->medicationsTaken.top = -1;
+        if (patient->medicationsTaken.medicationId != NULL)
+        {
             free(patient->medicationsTaken.medicationId);
-            patient->medicationsPrescribed.nEff = 0;
+            patient->medicationsTaken.medicationId = NULL;
+        }
+
+        patient->medicationsPrescribed.nEff = 0;
+        if (patient->medicationsPrescribed.medicationId != NULL)
+        {
             free(patient->medicationsPrescribed.medicationId);
+            patient->medicationsPrescribed.medicationId = NULL;
         }
 
         printSuccess("Selamat, Anda boleh pulang!");
@@ -205,7 +216,6 @@ boolean canGoHome(Hospital *hospital, Session *session)
     }
     else
     {
-
         printError("Anda belum boleh pulang!");
         return false;
     }

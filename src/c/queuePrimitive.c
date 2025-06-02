@@ -71,7 +71,9 @@ boolean dequeue(Queue *q, int *patientId)
     if (q == NULL || isQueueEmpty(q))
     {
         if (patientId != NULL)
+        {
             *patientId = -1;
+        }
         return false;
     }
     QueueNode *temp = q->head;
