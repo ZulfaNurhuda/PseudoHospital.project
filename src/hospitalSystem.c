@@ -658,7 +658,7 @@ int main(int argc, char *argv[])
             gacha(&hospital, &session);
         }
 
-        else if (strcmp(command, "SKIPANTRIAN") == 0)
+        else if (strcmp(command, "LEWATIANTRIAN") == 0)
         {
             char roomCode[5];
             if (!readValidString(roomCode, sizeof(roomCode), "Masukkan kode ruangan antrian yang akan di-skip: ", false))
@@ -668,7 +668,7 @@ int main(int argc, char *argv[])
             }
             skipPatientInQueue(&hospital, &session, roomCode);
         }
-        else if (strcmp(command, "CANCELANTRIAN") == 0)
+        else if (strcmp(command, "BATALKANANTRIAN") == 0)
         {
             char patientUsernameToCancel[51];
             if (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): "))
