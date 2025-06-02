@@ -534,7 +534,12 @@ int main(int argc, char *argv[])
 
         else if (strcmp(command, "NGOBATIN") == 0)
         {
-            treatPatient(&hospital, &session);
+            char username[51];
+            if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username pasien yang akan diobati: ")) {
+                printError("Input username tidak valid!");
+                continue;
+            }
+            treatPatient(&hospital, &session, username);
         }
 
         else if (strcmp(command, "PULANGDOK") == 0)

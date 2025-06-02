@@ -129,6 +129,7 @@ boolean diagnosePatient(Hospital *hospital, Session *session)
     if (strcmp(diseaseStr, "Tidak terdeteksi") == 0)
     {
         patient->diagnosedStatus = true;
+        strcpy(patient->disease, "Tidak terdeteksi");
         printSuccess("Pasien tidak terdiagnosis penyakit apapun!");
     }
     else
