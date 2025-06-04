@@ -7,6 +7,7 @@
 
 #include "abstractDataTypes.h"
 #include "utils.h"
+#include "queuePrimitive.h"
 
 /**
  * Nama Fungsi: `changeLayout`

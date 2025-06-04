@@ -1,38 +1,32 @@
 #include "registerCheckup.h"
 
-boolean registerCheckup(Hospital *hospital, Session *session, const char *doctorUsername, float healthData[])
+boolean registerCheckup(Hospital *hospital, Session *session, float healthData[])
 {
-    if (hospital == NULL || session == NULL || doctorUsername == NULL || healthData == NULL)
+
+    if (hospital == NULL || session == NULL || healthData == NULL)
     {
-        printError("Struktur rumah sakit, sesi, username dokter, atau data kesehatan tidak valid!");
+        printError("Struktur rumah sakit, sesi, atau data kesehatan tidak valid!");
         return false;
     }
+
     if (!session->isLoggedIn || session->role != PATIENT)
     {
         printError("Akses ditolak! Hanya Pasien yang dapat mendaftar checkup.");
         return false;
     }
 
-    if (!isValidUsername(doctorUsername))
-    {
-        printError("Username dokter tidak valid!");
-        return false;
-    }
-
-    if (hospital->patients.nEff == 0)
-    {
-        printError("Tidak ada pasien terdaftar!");
-        return false;
-    }
     int patientIdx = -1;
+
     for (int i = 0; i < hospital->patients.nEff; i++)
     {
+
         if (strcmp(hospital->patients.elements[i].username, session->username) == 0)
         {
             patientIdx = i;
             break;
         }
     }
+
     if (patientIdx == -1)
     {
         printError("Pasien tidak ditemukan!");
@@ -40,73 +34,114 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
     }
 
     Patient *patient = &hospital->patients.elements[patientIdx];
+
     if (patient->queueRoom[0] != '\0')
     {
         printError("Anda sudah terdaftar dalam antrian!");
         return false;
     }
 
-    if (hospital->doctors.nEff == 0)
-    {
-        printError("Tidak ada dokter terdaftar!");
-        return false;
-    }
-    int doctorIdx = -1;
+    int availableDoctorCount = 0;
+
+    Doctor *availableDoctors[hospital->doctors.nEff];
+
     for (int i = 0; i < hospital->doctors.nEff; i++)
     {
-        if (strcmp(hospital->doctors.elements[i].username, doctorUsername) == 0)
+        Doctor *doctor = &hospital->doctors.elements[i];
+
+        if (doctor->room[0] != '\0')
         {
-            doctorIdx = i;
-            break;
+
+            availableDoctors[availableDoctorCount] = doctor;
+            availableDoctorCount++;
         }
     }
-    if (doctorIdx == -1)
+
+    if (availableDoctorCount == 0)
     {
-        printError("Dokter tidak ditemukan!");
+        printError("Tidak ada dokter yang tersedia saat ini.");
         return false;
     }
 
-    Doctor *doctor = &hospital->doctors.elements[doctorIdx];
-    if (doctor->room[0] == '\0')
-    {
-        printError("Dokter tidak ditugaskan ke ruangan manapun!");
-        return false;
-    }
+    printf("\nDaftar Dokter yang Tersedia:\n");
 
-    // Validasi data kesehatan
-    const float ranges[11][2] = {
-        {30.0, 45.0},   // bodyTemperature
-        {50.0, 200.0},  // systolicBloodPressure
-        {30.0, 120.0},  // diastolicBloodPressure
-        {40.0, 200.0},  // heartRate
-        {50.0, 100.0},  // oxygenSaturation
-        {50.0, 300.0},  // bloodSugarLevel
-        {20.0, 200.0},  // weight
-        {100.0, 250.0}, // height
-        {100.0, 400.0}, // cholesterolLevel
-        {50.0, 200.0},  // ldlCholesterolLevel
-        {100.0, 1000.0} // platelets
-    };
-    for (int i = 0; i < 11; i++)
+    int widths[] = {5, 20, 15, 10, 10, 10, 15};
+    const char *headers[] = {"No", "Dokter", "Spesialisasi", "Ruangan", "Antrian", "Aura", "Biaya Checkup"};
+
+    printTableBorder(widths, 7, 1);
+    printTableRow(headers, widths, 7);
+    printTableBorder(widths, 7, 2);
+
+    for (int i = 0; i < availableDoctorCount; i++)
     {
-        if (healthData[i] < ranges[i][0] || healthData[i] > ranges[i][1])
+        Doctor *doctor = availableDoctors[i];
+        int queueCount = 0;
+
+        for (int j = 0; j < hospital->queues.nRooms; j++)
         {
-            printError("Data kesehatan tidak valid!");
+
+            if (strcmp(hospital->queues.queues[j].roomCode, doctor->room) == 0)
+            {
+
+                queueCount = queueSize(&hospital->queues.queues[j]);
+                break;
+            }
+        }
+
+        char numberStr[10], queueCountStr[10], auraStr[10], checkupCostStr[20];
+
+        integerToString(i + 1, numberStr, sizeof(numberStr));
+        strcat(numberStr, ". ");
+
+        integerToString(queueCount, queueCountStr, sizeof(queueCountStr));
+
+        integerToString(doctor->aura, auraStr, sizeof(auraStr));
+
+        floatToString(doctor->checkupCost, checkupCostStr, sizeof(checkupCostStr), 2);
+
+        const char *row[] = {
+            numberStr,
+            doctor->username,
+            doctor->specialization,
+            doctor->room,
+            queueCountStr,
+            auraStr,
+            checkupCostStr};
+        printTableRow(row, widths, 7);
+    }
+
+    printTableBorder(widths, 7, 3);
+
+    int doctorChoice = 0;
+
+    while (doctorChoice < 1 || doctorChoice > availableDoctorCount)
+    {
+
+        char promptSelectDoctor[100] = "";
+        strcat(promptSelectDoctor, "Pilih dokter (1 - ");
+        char availableCountStr[10];
+        integerToString(availableDoctorCount, availableCountStr, sizeof(availableCountStr));
+        strcat(promptSelectDoctor, availableCountStr);
+        strcat(promptSelectDoctor, "): ");
+
+        if (!readValidInt(&doctorChoice, promptSelectDoctor))
+        {
+            printError("Pilihan tidak valid!, harap masukkan angka yang sesuai.");
+
             return false;
         }
     }
 
-    // Validasi biaya checkup (misalnya, 100 BananaRich)
-    const float checkupCost = 100.0;
-    if (patient->bananaRich < checkupCost)
+    Doctor *doctor = availableDoctors[doctorChoice - 1];
+
+    if (patient->bananaRich < doctor->checkupCost)
     {
         printError("Saldo BananaRich tidak cukup untuk checkup!");
         return false;
     }
 
-    // Menambahkan ke antrian
-    // In registerCheckup function, update queue handling logic
     int queueIdx = -1;
+
     for (int i = 0; i < hospital->queues.nRooms; i++)
     {
         if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0)
@@ -115,27 +150,41 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
             break;
         }
     }
+
     if (queueIdx == -1)
     {
+
         if (hospital->queues.nRooms >= hospital->queues.capacity)
         {
             printError("Kapasitas antrian penuh!");
             return false;
         }
+
         queueIdx = hospital->queues.nRooms++;
         Queue *newQueue = &hospital->queues.queues[queueIdx];
-        initializeQueue(newQueue, doctor->room); // Initialize with linked-list structure
-    }
-    Queue *queueToEnqueue = &hospital->queues.queues[queueIdx];
-    if (!enqueue(queueToEnqueue, patient->id))
-    {
-        printError("Gagal menambahkan pasien ke antrian!");
-        return false;
-    }
-    strcpy(patient->queueRoom, doctor->room);
-    patient->queuePosition = queueSize(queueToEnqueue); // Use size for position
 
-    // Menyimpan data kesehatan
+        initializeQueue(newQueue, doctor->room);
+    }
+
+    Queue *queueToCheck = &hospital->queues.queues[queueIdx];
+
+    Room *selectedRoom = NULL;
+
+    for (int i = 0; i < hospital->layout.rowEff; i++)
+    {
+        for (int j = 0; j < hospital->layout.colEff; j++)
+        {
+            Room *room = &hospital->layout.elements[i][j];
+            if (strcmp(room->code, doctor->room) == 0)
+            {
+                selectedRoom = room;
+                break;
+            }
+        }
+        if (selectedRoom != NULL)
+            break;
+    }
+
     patient->bodyTemperature = healthData[0];
     patient->systolicBloodPressure = (int)healthData[1];
     patient->diastolicBloodPressure = (int)healthData[2];
@@ -145,60 +194,117 @@ boolean registerCheckup(Hospital *hospital, Session *session, const char *doctor
     patient->weight = healthData[6];
     patient->height = healthData[7];
     patient->cholesterolLevel = healthData[8];
-    patient->ldlCholesterolLevel = healthData[9];
-    patient->platelets = (int)healthData[10];
+    patient->platelets = (int)healthData[9];
 
-    // Mengelola biaya
-    patient->bananaRich -= checkupCost;
-    hospital->finance.hospitalBalance += checkupCost;
+    patient->bananaRich -= doctor->checkupCost;
 
-    // Menambahkan ke riwayat perawatan
-    if (hospital->treatmentHistory.nEff < hospital->treatmentHistory.capacity)
+    hospital->finance.hospitalBalance += 0.2 * doctor->checkupCost;
+
+    doctor->bananaRich += 0.8 * doctor->checkupCost;
+
+    if (hospital->treatmentHistory.nEff >= hospital->treatmentHistory.capacity)
     {
-        TreatmentHistory *history = &hospital->treatmentHistory.elements[hospital->treatmentHistory.nEff++];
-        history->patientId = patient->id;
-        history->doctorId = doctor->id;
-        strcpy(history->room, doctor->room);
-        history->examinationDate = 20250509; // Asumsi tanggal saat ini (YYYYMMDD)
-        history->treatmentStatus = false;    // Belum selesai
+
+        TreatmentHistory *newElements = (TreatmentHistory *)realloc(
+            hospital->treatmentHistory.elements,
+            sizeof(TreatmentHistory) * hospital->treatmentHistory.capacity * 2);
+
+        if (!newElements)
+        {
+            printError("Gagal mengalokasikan ulang memori untuk riwayat pengobatan!");
+
+            patient->bananaRich += doctor->checkupCost;
+            hospital->finance.hospitalBalance -= 0.2 * doctor->checkupCost;
+            doctor->bananaRich -= 0.8 * doctor->checkupCost;
+
+            return false;
+        }
+
+        hospital->treatmentHistory.capacity *= 2;
+        hospital->treatmentHistory.elements = newElements;
     }
-    else
+
+    TreatmentHistory *history = &hospital->treatmentHistory.elements[hospital->treatmentHistory.nEff++];
+    history->patientId = patient->id;
+    history->doctorId = doctor->id;
+    strcpy(history->room, doctor->room);
+    strcpy(history->disease, "Belum Didiagnosis");
+    history->treatmentStatus = false;
+
+    if (selectedRoom != NULL && selectedRoom->patientInRoom.nEff < selectedRoom->capacity)
     {
-        printError("Kapasitas riwayat pengobatan penuh!");
+
+        strcpy(patient->queueRoom, doctor->room);
+        patient->queuePosition = 0;
+
+        selectedRoom->patientInRoom.patientId[selectedRoom->patientInRoom.nEff++] = patient->id;
+
+        printf("\n");
+        printHeader("Pendaftaran Checkup");
+
+        int widths2[] = {20, 20};
+        const char *headers2[] = {"Dokter", "Ruangan"};
+        printTableBorder(widths2, 2, 1);
+        printTableRow(headers2, widths2, 2);
+        printTableBorder(widths2, 2, 2);
+        const char *row2[] = {doctor->username, doctor->room};
+        printTableRow(row2, widths2, 2);
+        printTableBorder(widths2, 2, 3);
+
+        printf(FORMAT_BOLD COLOR_YELLOW "[ℹ️  | Info]: Anda telah dipindahkan langsung ke ruangan dokter!\n" FORMAT_RESET);
+
+        char successMsg[100] = "";
+        strcat(successMsg, "Pendaftaran checkup untuk ");
+        strcat(successMsg, session->username);
+        strcat(successMsg, " pada dr.");
+        strcat(successMsg, doctor->username);
+        strcat(successMsg, " di ruangan ");
+        strcat(successMsg, doctor->room);
+        strcat(successMsg, " berhasil!");
+        printSuccess(successMsg);
+
+        return true;
+    }
+
+    if (!enqueue(queueToCheck, patient->id))
+    {
+        printError("Gagal menambahkan pasien ke antrian!");
+
+        patient->bananaRich += doctor->checkupCost;
+        hospital->finance.hospitalBalance -= 0.2 * doctor->checkupCost;
+        doctor->bananaRich -= 0.8 * doctor->checkupCost;
+
+        hospital->treatmentHistory.nEff--;
         return false;
     }
 
-    // Tampilkan hasil
+    strcpy(patient->queueRoom, doctor->room);
+    patient->queuePosition = queueSize(queueToCheck);
+
+    printf("\n");
     printHeader("Pendaftaran Checkup");
-    int widths[] = {15, 20};
-    const char *headers[] = {"Dokter", "Ruangan"};
-    printTableRow(headers, widths, 4);
-    printTableBorder(widths, 2, 1);
-    const char *row[] = {doctor->username, doctor->room};
-    printTableRow(row, widths, 2);
-    printTableBorder(widths, 2, 3);
 
-    char queueMsg[50] = "Posisi antrian: ";
-    char numStr[10];
-    int num = patient->queuePosition;
-    int k = 0;
-    if (num == 0)
-        numStr[k++] = '0';
-    else
-        while (num > 0)
-        {
-            numStr[k++] = (num % 10) + '0';
-            num /= 10;
-        }
-    for (int m = k - 1; m >= 0; m--)
-        queueMsg[16 + k - 1 - m] = numStr[m];
-    queueMsg[16 + k] = '\0';
-    printSuccess(queueMsg);
+    int widths2[] = {20, 20};
+    const char *headers2[] = {"Dokter", "Ruangan"};
+    printTableBorder(widths2, 2, 1);
+    printTableRow(headers2, widths2, 2);
+    printTableBorder(widths2, 2, 2);
+    const char *row2[] = {doctor->username, doctor->room};
+    printTableRow(row2, widths2, 2);
+    printTableBorder(widths2, 2, 3);
 
-    // Pesan sukses
-    char successMsg[100] = "Pendaftaran checkup untuk ";
+    printf(FORMAT_BOLD COLOR_YELLOW "[ℹ️  | Info]: Posisi antrian: %d\n" FORMAT_RESET,
+           patient->queuePosition);
+
+    char successMsg[100] = "";
+    strcat(successMsg, "Pendaftaran checkup untuk ");
     strcat(successMsg, session->username);
+    strcat(successMsg, " pada dr.");
+    strcat(successMsg, doctor->username);
+    strcat(successMsg, " di ruangan ");
+    strcat(successMsg, doctor->room);
     strcat(successMsg, " berhasil!");
     printSuccess(successMsg);
+
     return true;
 }

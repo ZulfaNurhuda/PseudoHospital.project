@@ -20,6 +20,6 @@
  * 
  * Return: `boolean` - True jika diagnosis berhasil, false jika input tidak valid, pasien tidak ditemukan, pasien sudah didiagnosis, atau dokter tidak berwenang.
  */
-boolean diagnosePatient(Hospital *hospital, Session *session, const char *patientUsername);
+boolean diagnosePatient(Hospital *hospital, Session *session);
 
 #endif // DIAGNOSIS_H

@@ -21,7 +21,7 @@
  *
  * Return: `boolean` - True jika antrian berhasil dilewati, false jika pasien tidak dalam antrian, sudah di posisi pertama, atau input tidak valid.
  */
-boolean skipPatientInQueue(Hospital *hospital, Session *session, const char *roomCode);
+boolean skipPatientInQueue(Hospital *hospital, Session *session, const char *patientUsernameToSkip);
 
 /**
  * Nama Fungsi: `cancelPatientFromQueue`

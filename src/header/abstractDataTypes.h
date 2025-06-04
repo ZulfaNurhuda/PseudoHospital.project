@@ -84,7 +84,6 @@ typedef struct Patient
     float weight;
     float height;
     float cholesterolLevel;
-    float ldlCholesterolLevel;
     int platelets;
 
     // Untuk tracking obat yang diminum dan diresepkan
@@ -118,6 +117,7 @@ typedef struct Doctor
     char specialization[50];
     int aura;
     float bananaRich; // Untuk fitur B03 - BananaRich
+    float checkupCost; // Biaya checkup yang ditetapkan dokter
     char room[5];     // Contoh: "A1", "B2", dll.
 } Doctor;
 
@@ -306,7 +306,7 @@ typedef struct TreatmentHistory
     int patientId;
     int doctorId;
     char room[5];
-    int examinationDate;     // Bisa menggunakan timestamp atau struktur date
+    char disease[50];     // Bisa menggunakan timestamp atau struktur date
     boolean treatmentStatus; // false: belum selesai, true: selesai
 } TreatmentHistory;
 

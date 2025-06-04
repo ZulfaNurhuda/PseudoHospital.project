@@ -1,39 +1,82 @@
 #include "diagnose.h"
-#include "myQueue.h" // Added for new queue functions
 
-boolean diagnosePatient(Hospital *hospital, Session *session, const char *patientUsername)
+boolean diagnosePatient(Hospital *hospital, Session *session)
 {
-    if (hospital == NULL || session == NULL || patientUsername == NULL)
+
+    if (hospital == NULL || session == NULL)
     {
-        printError("Struktur rumah sakit, sesi, atau username tidak valid!");
+        printError("Struktur rumah sakit atau sesi tidak valid!");
         return false;
     }
+
     if (!session->isLoggedIn || session->role != DOCTOR)
     {
         printError("Akses ditolak! Hanya Dokter yang dapat mendiagnosis.");
         return false;
     }
 
-    if (!isValidUsername(patientUsername))
+    int doctorIdx = -1;
+
+    for (int i = 0; i < hospital->doctors.nEff; i++)
     {
-        printError("Username pasien tidak valid!");
+
+        if (strcmp(hospital->doctors.elements[i].username, session->username) == 0)
+        {
+            doctorIdx = i;
+            break;
+        }
+    }
+
+    if (doctorIdx == -1)
+    {
+        printError("Dokter tidak ditemukan dalam daftar!");
         return false;
     }
 
-    if (hospital->patients.nEff == 0)
+    Doctor *doctor = &hospital->doctors.elements[doctorIdx];
+
+    if (doctor->room[0] == '\0')
     {
-        printError("Tidak ada pasien terdaftar!");
+        printError("Dokter tidak ditugaskan ke ruangan manapun!");
         return false;
     }
+
+    Room *doctorRoom = NULL;
+
+    for (int i = 0; i < hospital->layout.rowEff; i++)
+    {
+        for (int j = 0; j < hospital->layout.colEff; j++)
+        {
+
+            if (strcmp(hospital->layout.elements[i][j].code, doctor->room) == 0)
+            {
+                doctorRoom = &hospital->layout.elements[i][j];
+                break;
+            }
+        }
+        if (doctorRoom != NULL)
+            break;
+    }
+
+    if (doctorRoom == NULL || doctorRoom->patientInRoom.nEff == 0)
+    {
+
+        printError("Ruangan dokter ini tidak memiliki pasien yang mengantri.");
+        return false;
+    }
+
+    int patientId = doctorRoom->patientInRoom.patientId[0];
     int patientIdx = -1;
+
     for (int i = 0; i < hospital->patients.nEff; i++)
     {
-        if (strcmp(hospital->patients.elements[i].username, patientUsername) == 0)
+        if (hospital->patients.elements[i].id == patientId)
         {
             patientIdx = i;
             break;
         }
     }
+
     if (patientIdx == -1)
     {
         printError("Pasien tidak ditemukan!");
@@ -41,98 +84,33 @@ boolean diagnosePatient(Hospital *hospital, Session *session, const char *patien
     }
 
     Patient *patient = &hospital->patients.elements[patientIdx];
+
     if (patient->diagnosedStatus)
     {
         printError("Pasien sudah didiagnosa sebelumnya!");
         return false;
     }
 
-    if (hospital->doctors.nEff == 0)
-    {
-        printError("Tidak ada dokter terdaftar!");
-        return false;
-    }
-    int doctorIdx = -1;
-    for (int i = 0; i < hospital->doctors.nEff; i++)
-    {
-        if (strcmp(hospital->doctors.elements[i].username, session->username) == 0)
-        {
-            doctorIdx = i;
-            break;
-        }
-    }
-    if (doctorIdx == -1)
-    {
-        printError("Dokter tidak ditemukan!");
-        return false;
-    }
-
-    Doctor *doctor = &hospital->doctors.elements[doctorIdx];
-    if (doctor->room[0] == '\0')
-    {
-        printError("Dokter tidak ditugaskan ke ruangan manapun!");
-        return false;
-    }
-
-    // Memeriksa apakah pasien mengantri di ruangan dokter
     if (strcmp(patient->queueRoom, doctor->room) != 0)
     {
         printError("Pasien tidak berada di antrian ruangan dokter!");
         return false;
     }
 
-    // Memeriksa antrian di HospitalQueueList
-    // Patient must be at the front of the queue for the doctor's room.
-    Queue *roomQueue = NULL;
-    if (hospital->queues.nRooms > 0) {
-        for (int i = 0; i < hospital->queues.nRooms; i++) {
-            if (strcmp(hospital->queues.queues[i].roomCode, doctor->room) == 0) {
-                roomQueue = &hospital->queues.queues[i];
-                break;
-            }
-        }
-    }
-
-    if (roomQueue == NULL || isQueueEmpty(roomQueue)) {
-        printError("Antrian untuk ruangan dokter ini kosong atau tidak ditemukan.");
-        return false;
-    }
-
-    int firstPatientId = -1;
-    if (!peekQueue(roomQueue, &firstPatientId)) {
-        // This case should ideally be covered by isQueueEmpty, but as a safeguard:
-        printError("Tidak dapat melihat pasien di depan antrian.");
-        return false;
-    }
-
-    if (firstPatientId != patient->id) {
-        printError("Pasien ini tidak berada di depan antrian untuk ruangan dokter ini.");
-        // Optionally, find the username of the patient who IS at the front for a more informative message.
-        // char frontPatientUsername[50] = "Unknown";
-        // for(int i=0; i < hospital->patients.nEff; ++i){
-        //    if(hospital->patients.elements[i].id == firstPatientId){
-        //        strcpy(frontPatientUsername, hospital->patients.elements[i].username);
-        //        break;
-        //    }
-        // }
-        // char errMsg[150];
-        // sprintf(errMsg, "Pasien %s berada di depan antrian.", frontPatientUsername);
-        // printError(errMsg);
-        return false;
-    }
-
-    // Diagnosis berdasarkan data kesehatan
     char diseaseStr[50] = "Tidak terdeteksi";
+
     if (hospital->diseases.nEff > 0)
     {
+
         for (int i = 0; i < hospital->diseases.nEff; i++)
         {
             Disease *d = &hospital->diseases.elements[i];
+
             if (patient->bodyTemperature >= d->bodyTemperatureMin && patient->bodyTemperature <= d->bodyTemperatureMax &&
                 patient->systolicBloodPressure >= d->systolicBloodPressureMin && patient->systolicBloodPressure <= d->systolicBloodPressureMax &&
                 patient->diastolicBloodPressure >= d->diastolicBloodPressureMin && patient->diastolicBloodPressure <= d->diastolicBloodPressureMax &&
                 patient->heartRate >= d->heartRateMin && patient->heartRate <= d->heartRateMax &&
-                patient->oxygenSaturation >= d->oxygenSaturationMin && patient->oxygenSaturation <= d->oxygenSaturationMax && // <-- New check
+                patient->oxygenSaturation >= d->oxygenSaturationMin && patient->oxygenSaturation <= d->oxygenSaturationMax &&
                 patient->bloodSugarLevel >= d->bloodSugarLevelMin && patient->bloodSugarLevel <= d->bloodSugarLevelMax &&
                 patient->weight >= d->weightMin && patient->weight <= d->weightMax &&
                 patient->height >= d->heightMin && patient->height <= d->heightMax &&
@@ -140,29 +118,24 @@ boolean diagnosePatient(Hospital *hospital, Session *session, const char *patien
                 patient->platelets >= d->plateletsMin && patient->platelets <= d->plateletsMax)
             {
                 strcpy(diseaseStr, d->name);
+                patient->disease[0] = '\0';
+                strcat(patient->disease, diseaseStr);
+                patient->diagnosedStatus = true;
                 break;
             }
         }
     }
 
-    // Simpan hasil diagnosis
-    strcpy(patient->disease, diseaseStr);
-    patient->diagnosedStatus = true;
+    if (strcmp(diseaseStr, "Tidak terdeteksi") == 0)
+    {
+        patient->diagnosedStatus = true;
+        strcpy(patient->disease, "Tidak terdeteksi");
+        printSuccess("Pasien tidak terdiagnosis penyakit apapun!");
+    }
+    else
+    {
+        printf("%s terdiagnosa penyakit %s%s%s!\n", patient->username, COLOR_YELLOW, diseaseStr, COLOR_RESET);
+    }
 
-    // Tampilkan hasil
-    printHeader("Hasil Diagnosis");
-    int widths[] = {15, 20};
-    const char *headers[] = {"Pasien", "Penyakit"};
-    printTableBorder(widths, 2, 1);
-    printTableRow(headers, widths, 2);
-    const char *row[] = {patient->username, diseaseStr};
-    printTableRow(row, widths, 2);
-    printTableBorder(widths, 2, 3);
-
-    // Pesan sukses
-    char successMsg[100] = "Diagnosis untuk ";
-    strcat(successMsg, patientUsername);
-    strcat(successMsg, " berhasil!");
-    printSuccess(successMsg);
     return true;
 }

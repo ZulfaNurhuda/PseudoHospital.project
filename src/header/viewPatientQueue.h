@@ -2,7 +2,8 @@
 #define VIEW_PATIENT_QUEUE_H
 
 #include "abstractDataTypes.h"
-#include "utils.h" // For printing functions
+#include "utils.h"
+#include "queuePrimitive.h"
 
 // Function for a patient to view their own queue status.
 // (Formerly the 'myQueue' function from the old myQueue.c)

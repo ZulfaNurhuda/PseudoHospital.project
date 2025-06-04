@@ -20,7 +20,6 @@ int main(int argc, char *argv[])
     Hospital hospital;
     Session session;
 
-    
     int hospitalRows, hospitalCols;
     if (argc >= 2 && argc <= 3)
     {
@@ -39,7 +38,8 @@ int main(int argc, char *argv[])
         hospitalCols = 5;
     }
 
-    if (!initHospital(&hospital, 100, 100, 100, hospitalRows, hospitalCols)) {
+    if (!initHospital(&hospital, 100, 100, 100, hospitalRows, hospitalCols))
+    {
         printError("Inisialisasi rumah sakit gagal. Program dihentikan.");
         return 1;
     }
@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
         }
         normalizeCommand(command);
 
-        
         if (strcmp(command, "LOGIN") == 0)
         {
             char username[50], password[100];
@@ -74,7 +73,7 @@ int main(int argc, char *argv[])
             }
             login(&hospital, &session, username, password);
         }
-        
+
         else if (strcmp(command, "REGISTERPASIEN") == 0)
         {
             char username[50], password[100];
@@ -86,12 +85,12 @@ int main(int argc, char *argv[])
             }
             registerPatient(&hospital, &session, username, password);
         }
-        
+
         else if (strcmp(command, "LOGOUT") == 0)
         {
             logout(&session);
         }
-        
+
         else if (strcmp(command, "LUPAPASSWORD") == 0)
         {
             char username[51], new_password[100], rleCode[100];
@@ -276,7 +275,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            if (choiceSortBy < 1 || choiceSortBy > 2)
+            if (choiceSortBy < 1 || choiceSortBy > 3)
             {
                 printError("Pilihan tidak valid!");
                 continue;
@@ -500,19 +499,21 @@ int main(int argc, char *argv[])
         {
             displayQueue(&hospital, &session);
         }
-        
+
         else if (strcmp(command, "TAMBAHDOKTER") == 0)
         {
             char username[51], password[100], specialization[50];
-            
+            float checkupCost;
+
             if (!readUsernameWithTrim(username, sizeof(username), "Masukkan username dokter: ") ||
                 !readValidString(password, 100, "Masukkan password dokter: ", false) ||
-                !readStringWithSpaces(specialization, sizeof(specialization), "Masukkan spesialisasi dokter: ")) 
+                !readStringWithSpaces(specialization, sizeof(specialization), "Masukkan spesialisasi dokter: ") ||
+                !readValidFloat(&checkupCost, "Masukkan biaya checkup dokter: "))
             {
                 printError("Input tidak valid!");
                 continue;
             }
-            addDoctor(&hospital, &session, username, password, specialization);
+            addDoctor(&hospital, &session, username, password, specialization, checkupCost);
         }
         else if (strcmp(command, "ASSIGNDOKTER") == 0)
         {
@@ -525,82 +526,106 @@ int main(int argc, char *argv[])
             }
             assignDoctor(&hospital, &session, username, roomCode);
         }
-        
+
         else if (strcmp(command, "DIAGNOSIS") == 0)
         {
-            char patient_username[51];
-            if (!readUsernameWithTrim(patient_username, sizeof(patient_username), "Masukkan username pasien: "))
-            {
-                printError("Input username pasien tidak valid!"); 
-                continue;
-            }
-            diagnosePatient(&hospital, &session, patient_username);
+            diagnosePatient(&hospital, &session);
         }
-        
+
         else if (strcmp(command, "NGOBATIN") == 0)
         {
-            char patient_username[51];
-            if (!readUsernameWithTrim(patient_username, sizeof(patient_username), "Masukkan username pasien: "))
-            {
-                printError("Input username pasien tidak valid!");
-                continue;
-            }
-            treatPatient(&hospital, &session, patient_username);
+            treatPatient(&hospital, &session);
         }
-        
+
         else if (strcmp(command, "PULANGDOK") == 0)
         {
             canGoHome(&hospital, &session);
         }
-        
+
         else if (strcmp(command, "DAFTARCHECKUP") == 0)
         {
-            char doctor_username[51];
-            float health_data[11];
-            if (!readUsernameWithTrim(doctor_username, sizeof(doctor_username), "Masukkan username dokter: "))
+            float healthData[11]; // Misalnya data yang dimasukkan oleh pasien
+
+            // Array prompt untuk masing-masing data kesehatan
+            const char *prompts[] = {
+                "Suhu Tubuh (Celcius)",
+                "Tekanan Darah Sistol (mmHg)",
+                "Tekanan Darah Diastol (mmHg)",
+                "Detak Jantung (bpm)",
+                "Saturasi Oksigen (%)",
+                "Kadar Gula Darah (mg/dL)",
+                "Berat Badan (kg)",
+                "Tinggi Badan (cm)",
+                "Kadar Kolestrol (mg/dL)",
+                "Trombosit (ribu/µL)"};
+
+            for (int i = 0; i < 10; i++)
             {
-                printError("Username dokter tidak valid!");
-                continue;
-            }
-            printf("Masukkan data kesehatan (11 nilai):\n");
-            for (int i = 0; i < 11; i++)
-            {
-                if (!readValidFloat(&health_data[i], "Masukkan data kesehatan: "))
+                while (true)
                 {
-                    printError("Data kesehatan tidak valid!");
-                    break;
+                    char promp[100] = "";
+                    strcat(promp, prompts[i]);
+                    strcat(promp, ": ");
+
+                    // Meminta input untuk masing-masing data kesehatan
+                    if (!readValidFloat(&healthData[i], promp))
+                    {
+                        printError("Input tidak valid, silakan coba lagi!");
+                        continue;
+                    }
+
+                    // Validasi jika input sesuai dengan rentang yang diinginkan
+                    const float ranges[10][2] = {
+                        {30.0, 45.0},   // bodyTemperature
+                        {50.0, 200.0},  // systolicBloodPressure
+                        {30.0, 120.0},  // diastolicBloodPressure
+                        {40.0, 200.0},  // heartRate
+                        {50.0, 100.0},  // oxygenSaturation
+                        {50.0, 300.0},  // bloodSugarLevel
+                        {20.0, 200.0},  // weight
+                        {100.0, 250.0}, // height
+                        {100.0, 400.0}, // cholesterolLevel
+                        {100.0, 1000.0} // platelets
+                    };
+
+                    // Cek apakah data berada dalam rentang yang valid
+                    if (healthData[i] < ranges[i][0] || healthData[i] > ranges[i][1])
+                    {
+                        char errorMsg[100] = "";
+                        strcat(errorMsg, "Data kesehatan '");
+                        strcat(errorMsg, prompts[i]);
+                        strcat(errorMsg, "' tidak valid! Harap masukkan nilai dalam rentang yang benar.");
+                        printError(errorMsg);
+                        continue; // Jika data tidak valid, ulangi input
+                    }
+                    break; // Jika input valid, keluar dari loop
                 }
             }
-            registerCheckup(&hospital, &session, doctor_username, health_data);
+
+            registerCheckup(&hospital, &session, healthData);
         }
-        
+
         else if (strcmp(command, "ANTRIANSAYA") == 0)
         {
             viewMySpecificQueueStatus(&hospital, &session);
         }
-        
+
         else if (strcmp(command, "MINUMOBAT") == 0)
         {
-            int medication_id;
-            if (!readValidInt(&medication_id, "Masukkan ID obat: "))
-            {
-                printError("ID obat tidak valid!");
-                continue;
-            }
-            takeMedication(&hospital, &session, medication_id);
+            takeMedication(&hospital, &session);
         }
-        
+
         else if (strcmp(command, "MINUMPENAWAR") == 0)
         {
             takeAntidote(&hospital, &session);
         }
-        
+
         else if (strcmp(command, "EXIT") == 0)
         {
             exitProgram(&hospital, &session);
-            return 0; 
+            return 0;
         }
-        
+
         else if (strcmp(command, "UBAHDENAH") == 0)
         {
             int rows, cols;
@@ -623,7 +648,7 @@ int main(int argc, char *argv[])
             }
             moveDoctor(&hospital, &session, username, roomCode);
         }
-        
+
         else if (strcmp(command, "LIHATDOMPET") == 0)
         {
             viewWallet(&hospital, &session);
@@ -636,34 +661,41 @@ int main(int argc, char *argv[])
         {
             gacha(&hospital, &session);
         }
-        
-        else if (strcmp(command, "SKIPANTRIAN") == 0)
-        {
-            char roomCode[5];
-            if (!readValidString(roomCode, sizeof(roomCode), "Masukkan kode ruangan antrian yang akan di-skip: ", false)) {
-                
-                continue;
-            }
-            skipPatientInQueue(&hospital, &session, roomCode);
-        }
-        else if (strcmp(command, "CANCELANTRIAN") == 0)
+
+        else if (strcmp(command, "LEWATIANTRIAN") == 0)
         {
             char patientUsernameToCancel[51];
-            if (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan (atau 'saya' untuk diri sendiri): ")) {
-                continue;
+            if (session.role == PATIENT)
+            {
+                strcpy(patientUsernameToCancel, session.username);
+            }
+            else
+            {
+                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dilewati: "))
+                {
+                    printError("Input username tidak valid!");
+                }
+            }
+            skipPatientInQueue(&hospital, &session, patientUsernameToCancel);
+        }
+        else if (strcmp(command, "BATALKANANTRIAN") == 0)
+        {
+            char patientUsernameToCancel[51];
+            if (session.role == PATIENT)
+            {
+                strcpy(patientUsernameToCancel, session.username);
+            }
+            else
+            {
+                while (!readUsernameWithTrim(patientUsernameToCancel, sizeof(patientUsernameToCancel), "Masukkan username pasien yang antriannya akan dibatalkan: "))
+                {
+                    printError("Input username tidak valid!");
+                }
             }
 
-            if (customCaseInsensitiveStrcmp(patientUsernameToCancel, "saya") == 0) {
-                 if (session.role == PATIENT) {
-                    strcpy(patientUsernameToCancel, session.username);
-                 } else {
-                    printError("Perintah 'saya' hanya valid untuk Pasien. Manajer harus memasukkan username pasien secara spesifik.");
-                    continue;
-                 }
-            }
             cancelPatientFromQueue(&hospital, &session, patientUsernameToCancel);
         }
-        
+
         else if (strcmp(command, "LIHATNYAWA") == 0)
         {
             viewLifeStatus(&hospital, &session);

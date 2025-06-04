@@ -20,85 +20,201 @@
 /**
  * Nama Fungsi: `safeMalloc`
  *
- * Deskripsi: Mengalokasikan memori dengan malloc dan memeriksa apakah alokasi berhasil.
+ * Deskripsi: Mengalokasikan memori dengan `malloc` dan memeriksa apakah alokasi berhasil.
+ * Pemanggil bertanggung jawab untuk menangani kasus return NULL.
  *
  * Parameter: `size (size_t)` - Ukuran memori yang akan dialokasikan dalam byte.
  *
- * Return: `void*` - Pointer ke memori yang dialokasikan, atau keluar jika gagal.
+ * Return: `void*` - Pointer ke memori yang dialokasikan, atau `NULL` jika gagal.
  */
 void *safeMalloc(size_t size);
 
 /**
- * Nama Fungsi: `readValidString`
+ * Nama Fungsi: `charToLower`
  *
- * Deskripsi: Membaca string dari input standar, memastikan panjangnya tidak melebihi batas maksimum dan tidak kosong.
+ * Deskripsi: Mengonversi sebuah karakter huruf besar menjadi huruf kecil.
+ *
+ * Parameter: `c (char)` - Karakter yang akan dikonversi.
+ *
+ * Return: `char` - Karakter dalam versi huruf kecil, atau karakter asli jika bukan huruf besar.
+ */
+char charToLower(char c);
+
+/**
+ * Nama Fungsi: `caseInsensitiveStrcmp`
+ *
+ * Deskripsi: Membandingkan dua string tanpa memperhatikan besar kecilnya huruf (case-insensitive).
  *
  * Parameter:
- *   - `buffer (char*)`: Array tempat string disimpan.
- *   - `maxLen (int)`: Panjang maksimum string (termasuk null terminator).
- *   - `prompt (const char*)`: Prompt yang ditampilkan sebelum membaca input.
- *   - `alphanumeric (boolean)`: True jika string hanya boleh huruf, angka, atau underscore.
+ * - `s1 (const char*)`: String pertama untuk dibandingkan.
+ * - `s2 (const char*)`: String kedua untuk dibandingkan.
  *
- * Return: `boolean` - True jika input valid, false jika kosong atau terlalu panjang.
+ * Return: `int` - 0 jika string identik (ignore case), <0 jika s1 < s2, >0 jika s1 > s2.
+ */
+int caseInsensitiveStrcmp(const char *s1, const char *s2);
+
+/**
+ * Nama Fungsi: `readValidString`
+ *
+ * Deskripsi: Membaca sebuah kata (string tanpa spasi) dari input standar, memastikan panjangnya tidak melebihi batas,
+ * tidak kosong, dan secara opsional hanya berisi karakter alfanumerik.
+ *
+ * Parameter:
+ * - `buffer (char*)`: Array untuk menyimpan string yang dibaca.
+ * - `maxLen (int)`: Panjang maksimum string (termasuk null terminator).
+ * - `prompt (const char*)`: Prompt yang ditampilkan kepada pengguna.
+ * - `alphanumeric (boolean)`: `true` jika string hanya boleh berisi huruf, angka, atau underscore.
+ *
+ * Return: `boolean` - `true` jika input valid, `false` jika kosong, terlalu panjang, atau gagal baca.
  */
 boolean readValidString(char *buffer, int maxLen, const char *prompt, boolean alphanumeric);
 
 /**
- * Nama Fungsi: `readValidInt`
+ * Nama Fungsi: `readStringWithSpaces`
  *
- * Deskripsi: Membaca bilangan bulat dari input standar, memastikan input valid.
+ * Deskripsi: Membaca seluruh baris input yang mungkin mengandung spasi, memangkas spasi di awal/akhir,
+ * dan mengubah beberapa spasi berurutan di tengah menjadi satu spasi tunggal.
  *
  * Parameter:
- *   - `value (int*)`: Pointer ke variabel yang menyimpan hasil input.
- *   - `prompt (const char*)`: Prompt yang ditampilkan sebelum membaca input.
+ * - `buffer (char*)`: Array untuk menyimpan string yang sudah diproses.
+ * - `bufferSize (int)`: Ukuran penuh dari buffer.
+ * - `prompt (const char*)`: Prompt yang ditampilkan kepada pengguna.
  *
- * Return: `boolean` - True jika input valid, false jika tidak.
+ * Return: `boolean` - `true` jika pembacaan dan pemrosesan berhasil, `false` jika terjadi error.
+ */
+boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt);
+
+/**
+ * Nama Fungsi: `readUsernameWithTrim`
+ *
+ * Deskripsi: Membaca username dari input standar. Fungsi ini merupakan wrapper untuk `readStringWithSpaces`
+ * untuk memastikan username yang mengandung spasi dapat dibaca dan diproses dengan benar.
+ *
+ * Parameter:
+ * - `buffer (char*)`: Array untuk menyimpan username yang dibaca.
+ * - `bufferSize (int)`: Ukuran penuh dari buffer.
+ * - `prompt (const char*)`: Prompt yang ditampilkan kepada pengguna.
+ *
+ * Return: `boolean` - `true` jika pembacaan berhasil, `false` jika terjadi error.
+ */
+boolean readUsernameWithTrim(char *buffer, int bufferSize, const char *prompt);
+
+/**
+ * Nama Fungsi: `readValidInt`
+ *
+ * Deskripsi: Membaca sebuah bilangan bulat dari input standar, memastikan input adalah angka yang valid
+ * dan berada dalam rentang tipe data `int`.
+ *
+ * Parameter:
+ * - `value (int*)`: Pointer ke variabel yang akan menyimpan hasil integer.
+ * - `prompt (const char*)`: Prompt yang ditampilkan kepada pengguna.
+ *
+ * Return: `boolean` - `true` jika input valid dan berhasil dikonversi, `false` jika tidak.
  */
 boolean readValidInt(int *value, const char *prompt);
 
 /**
  * Nama Fungsi: `readValidFloat`
  *
- * Deskripsi: Membaca bilangan desimal dari input standar, memastikan input valid.
+ * Deskripsi: Membaca sebuah bilangan desimal dari input standar, memastikan input adalah angka desimal
+ * yang valid dan berada dalam rentang tipe data `float`.
  *
  * Parameter:
- *   - `value (float*)`: Pointer ke variabel yang menyimpan hasil input.
- *   - `prompt (const char*)`: Prompt yang ditampilkan sebelum membaca input.
+ * - `value (float*)`: Pointer ke variabel yang akan menyimpan hasil float.
+ * - `prompt (const char*)`: Prompt yang ditampilkan kepada pengguna.
  *
- * Return: `boolean` - True jika input valid, false jika tidak.
+ * Return: `boolean` - `true` jika input valid dan berhasil dikonversi, `false` jika tidak.
  */
 boolean readValidFloat(float *value, const char *prompt);
 
 /**
+ * Nama Fungsi: `stringToInt`
+ *
+ * Deskripsi: Mengonversi string yang terdiri dari digit angka menjadi bilangan integer.
+ * Fungsi ini tidak menggunakan pustaka `atoi`.
+ *
+ * Parameter:
+ * - `str (const char*)`: String yang akan dikonversi.
+ *
+ * Return: `int` - Nilai integer hasil konversi, atau -1 jika string mengandung karakter non-digit.
+ */
+int stringToInt(const char *str);
+
+/**
+ * Nama Fungsi: `integerToString`
+ *
+ * Deskripsi: Mengonversi nilai integer menjadi representasi string-nya.
+ *
+ * Parameter:
+ * - `value (int)`: Nilai integer yang akan dikonversi.
+ * - `buffer (char*)`: Buffer untuk menyimpan string hasil konversi.
+ * - `bufferSize (int)`: Ukuran dari buffer.
+ *
+ * Return: `boolean` - `true` jika konversi berhasil, `false` jika buffer terlalu kecil.
+ */
+boolean integerToString(int value, char *buffer, int bufferSize);
+
+/**
+ * Nama Fungsi: `floatToString`
+ *
+ * Deskripsi: Mengonversi nilai float menjadi representasi string-nya dengan presisi yang ditentukan.
+ * Mendukung penanganan NaN dan Infinity.
+ *
+ * Parameter:
+ * - `value (float)`: Nilai float yang akan dikonversi.
+ * - `buffer (char*)`: Buffer untuk menyimpan string hasil konversi.
+ * - `bufferSize (int)`: Ukuran dari buffer.
+ * - `precision (int)`: Jumlah digit di belakang koma.
+ *
+ * Return: `boolean` - `true` jika konversi berhasil, `false` jika buffer terlalu kecil.
+ */
+boolean floatToString(float value, char *buffer, int bufferSize, int precision);
+
+/**
  * Nama Fungsi: `isValidUsername`
  *
- * Deskripsi: Memeriksa apakah username valid (huruf, angka, underscore).
+ * Deskripsi: Memeriksa apakah format username valid. Username harus memiliki panjang 1-50 karakter,
+ * hanya berisi huruf, angka, underscore, atau spasi, dan tidak boleh hanya terdiri dari spasi.
  *
- * Parameter: `username (const char*)` - Username yang divalidasi.
+ * Parameter: `username (const char*)` - Username yang akan divalidasi.
  *
- * Return: `boolean` - True jika valid, false jika tidak.
+ * Return: `boolean` - `true` jika valid, `false` jika tidak.
  */
 boolean isValidUsername(const char *username);
 
 /**
- * Nama Fungsi: `isValidRoomCode`
+ * Nama Fungsi: `isUsernameTaken`
  *
- * Deskripsi: Memeriksa apakah kode ruangan valid sesuai format denah (misalnya "A1") dan ukuran denah rumah sakit (layout.rowEff dan layout.colEff).
+ * Deskripsi: Memeriksa apakah username sudah terdaftar dalam sistem (perbandingan case-insensitive).
  *
  * Parameter:
- *   - `hospital (Hospital*)`: Pointer ke struktur rumah sakit untuk ukuran denah.
- *   - `roomCode (const char*)`: Kode ruangan yang divalidasi.
+ * - `hospital (Hospital*)`: Pointer ke struktur rumah sakit yang berisi data pengguna.
+ * - `username (const char*)`: Username yang akan diperiksa.
  *
- * Return: `boolean` - True jika valid, false jika tidak.
+ * Return: `boolean` - `true` jika username sudah terdaftar, `false` jika belum atau jika terjadi error.
+ */
+boolean isUsernameTaken(Hospital *hospital, const char *username);
+
+/**
+ * Nama Fungsi: `isValidRoomCode`
+ *
+ * Deskripsi: Memeriksa apakah kode ruangan valid sesuai format (misal "A1") dan berada dalam
+ * batas dimensi denah rumah sakit (`layout.rowEff` dan `layout.colEff`).
+ *
+ * Parameter:
+ * - `hospital (Hospital*)`: Pointer ke struktur rumah sakit untuk mendapatkan ukuran denah.
+ * - `roomCode (const char*)`: Kode ruangan yang akan divalidasi.
+ *
+ * Return: `boolean` - `true` jika valid, `false` jika tidak.
  */
 boolean isValidRoomCode(Hospital *hospital, const char *roomCode);
 
 /**
  * Nama Fungsi: `printHeader`
  *
- * Deskripsi: Mencetak header dengan seni ASCII untuk judul, dengan garis berwarna biru.
+ * Deskripsi: Mencetak header berbingkai dengan seni ASCII untuk judul, menggunakan warna biru.
  *
- * Parameter: `title (const char*)` - Judul yang ditampilkan.
+ * Parameter: `title (const char*)` - Judul yang akan ditampilkan di dalam header.
  *
  * Return: `void`
  */
@@ -107,9 +223,9 @@ void printHeader(const char *title);
 /**
  * Nama Fungsi: `printError`
  *
- * Deskripsi: Mencetak pesan kesalahan dengan warna merah.
+ * Deskripsi: Mencetak pesan kesalahan dengan warna merah dan prefix "ERROR: ".
  *
- * Parameter: `message (const char*)` - Pesan kesalahan.
+ * Parameter: `message (const char*)` - Pesan kesalahan yang akan dicetak.
  *
  * Return: `void`
  */
@@ -118,9 +234,9 @@ void printError(const char *message);
 /**
  * Nama Fungsi: `printSuccess`
  *
- * Deskripsi: Mencetak pesan keberhasilan dengan warna hijau.
+ * Deskripsi: Mencetak pesan keberhasilan dengan warna hijau dan prefix "SUKSES: ".
  *
- * Parameter: `message (const char*)` - Pesan keberhasilan.
+ * Parameter: `message (const char*)` - Pesan keberhasilan yang akan dicetak.
  *
  * Return: `void`
  */
@@ -129,12 +245,13 @@ void printSuccess(const char *message);
 /**
  * Nama Fungsi: `printTableBorder`
  *
- * Deskripsi: Mencetak garis pembatas tabel dengan lebar kolom tertentu.
+ * Deskripsi: Mencetak satu baris border untuk tabel (atas, tengah, atau bawah)
+ * menggunakan karakter box-drawing.
  *
  * Parameter:
- *   - `widths (int*)`: Array lebar masing-masing kolom.
- *   - `n (int)`: Jumlah kolom.
- *   - `type (int)`: Tipe garis (1: atas, 2: tengah, 3: bawah).
+ * - `widths (int*)`: Array yang berisi lebar untuk masing-masing kolom.
+ * - `n (int)`: Jumlah kolom dalam tabel.
+ * - `type (int)`: Tipe garis border (1: atas, 2: tengah, 3: bawah).
  *
  * Return: `void`
  */
@@ -143,108 +260,15 @@ void printTableBorder(int *widths, int n, int type);
 /**
  * Nama Fungsi: `printTableRow`
  *
- * Deskripsi: Mencetak satu baris tabel dengan data, menyesuaikan lebar kolom.
+ * Deskripsi: Mencetak satu baris data tabel, diformat rata kiri sesuai lebar kolom yang ditentukan.
  *
  * Parameter:
- *   - `row (const char**)`: Array string data untuk setiap kolom.
- *   - `widths (int*)`: Array lebar masing-masing kolom.
- *   - `n (int)`: Jumlah kolom.
+ * - `row (const char**)`: Array string yang berisi data untuk setiap sel di baris.
+ * - `widths (int*)`: Array yang berisi lebar untuk masing-masing kolom.
+ * - `n (int)`: Jumlah kolom dalam tabel.
  *
  * Return: `void`
  */
 void printTableRow(const char **row, int *widths, int n);
-
-/**
- * Nama Fungsi: `stringToInt`
- *
- * Deskripsi: Mengubah string yang terdiri dari digit angka menjadi bilangan integer. Fungsi ini melakukan parsing manual tanpa menggunakan pustaka `atoi`. Jika string mengandung karakter non-digit, fungsi akan mengembalikan -1.
- *
- * Parameter:
- *   - `str (const char*)`: String yang akan dikonversi ke bilangan integer.
- *
- * Return: `int` — Nilai integer hasil konversi, atau -1 jika input tidak valid.
- */
-int stringToInt(const char *str);
-
-// Removed integerToString and floatToString declarations (again)
-
-/**
- * Nama Fungsi: `integerToString`
- * Deskripsi: Mengubah integer menjadi string.
- * Parameter:
- *   - value (int): Nilai integer yang akan dikonversi.
- *   - buffer (char*): Buffer untuk menyimpan string hasil konversi.
- *   - bufferSize (int): Ukuran buffer.
- * Return: `boolean` - True jika konversi berhasil, false jika buffer terlalu kecil.
- */
-boolean integerToString(int value, char *buffer, int bufferSize);
-
-/**
- * Nama Fungsi: `floatToString`
- * Deskripsi: Mengubah float menjadi string dengan presisi tertentu.
- * Parameter:
- *   - value (float): Nilai float yang akan dikonversi.
- *   - buffer (char*): Buffer untuk menyimpan string hasil konversi.
- *   - bufferSize (int): Ukuran buffer.
- *   - precision (int): Jumlah digit di belakang koma.
- * Return: `boolean` - True jika konversi berhasil, false jika buffer terlalu kecil.
- */
-boolean floatToString(float value, char *buffer, int bufferSize, int precision);
-
-/**
- * Nama Fungsi: `isUsernameTaken`
- *
- * Deskripsi: Memeriksa apakah username sudah terdaftar dalam sistem (case-insensitive).
- *
- * Parameter:
- *   - `hospital (Hospital*)`: Pointer ke struktur rumah sakit (menggunakan typedef).
- *   - `username (const char*)`: Username yang akan diperiksa.
- *
- * Return: `_Bool` - True jika username sudah terdaftar, false jika belum. (Using _Bool directly)
- */
-_Bool isUsernameTaken(Hospital *hospital, const char *username);
-
-/**
- * Nama Fungsi: `readStringWithSpaces`
- * Deskripsi: Membaca sebuah string dari input standar yang mungkin mengandung spasi,
- *            hingga newline atau bufferSize-1 karakter. Membersihkan newline dari buffer.
- * Parameter:
- *   - buffer (char*): Array tempat string disimpan.
- *   - bufferSize (int): Ukuran penuh buffer.
- *   - prompt (const char*): Prompt yang ditampilkan sebelum membaca input.
- * Return: `boolean` - True jika input berhasil dibaca (meskipun kosong), false jika error.
- */
-boolean readStringWithSpaces(char *buffer, int bufferSize, const char *prompt);
-
-/**
- * Nama Fungsi: `readUsernameWithTrim`
- * Deskripsi: Membaca username dari input standar, mengizinkan spasi, dan melakukan trim.
- *            Mirip dengan readStringWithSpaces, namun dikhususkan untuk username.
- * Parameter:
- *   - buffer (char*): Array tempat string disimpan.
- *   - bufferSize (int): Ukuran penuh buffer.
- *   - prompt (const char*): Prompt yang ditampilkan sebelum membaca input.
- * Return: `boolean` - True jika input berhasil dibaca, false jika error.
- */
-boolean readUsernameWithTrim(char *buffer, int bufferSize, const char *prompt);
-
-/**
- * Nama Fungsi: `customCharToLower`
- * Deskripsi: Mengubah sebuah karakter menjadi lowercase jika ia uppercase.
- * Parameter:
- *   - c (char): Karakter input.
- * Return: `char` - Karakter lowercase atau karakter original jika bukan uppercase.
- */
-char customCharToLower(char c);
-
-/**
- * Nama Fungsi: `customCaseInsensitiveStrcmp`
- * Deskripsi: Membandingkan dua string secara case-insensitive.
- * Parameter:
- *   - s1 (const char*): String pertama.
- *   - s2 (const char*): String kedua.
- * Return: `int` - 0 jika identik (ignore case), <0 jika s1<s2, >0 jika s1>s2.
- */
-int customCaseInsensitiveStrcmp(const char *s1, const char *s2);
 
 #endif // UTILS_H

@@ -1,28 +1,19 @@
 #include "takeMedication.h"
 
-boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
+boolean takeMedication(Hospital *hospital, Session *session)
 {
     if (hospital == NULL || session == NULL)
     {
         printError("Struktur rumah sakit atau sesi tidak valid!");
         return false;
     }
+
     if (!session->isLoggedIn || session->role != PATIENT)
     {
         printError("Akses ditolak! Hanya Pasien yang dapat mengonsumsi obat.");
         return false;
     }
-    if (medicationId <= 0)
-    {
-        printError("ID obat tidak valid!");
-        return false;
-    }
 
-    if (hospital->patients.nEff == 0)
-    {
-        printError("Tidak ada pasien terdaftar!");
-        return false;
-    }
     int patientIdx = -1;
     for (int i = 0; i < hospital->patients.nEff; i++)
     {
@@ -32,139 +23,277 @@ boolean takeMedication(Hospital *hospital, Session *session, int medicationId)
             break;
         }
     }
+
     if (patientIdx == -1)
     {
-        printError("Pasien tidak ditemukan!");
+        printError("Pasien tidak ditemukan dalam daftar!");
         return false;
     }
 
     Patient *patient = &hospital->patients.elements[patientIdx];
+
+    if (strcmp(patient->disease, "Tidak terdeteksi") == 0)
+    {
+        printf(COLOR_YELLOW "Pasien tidak diresepkan obat karena tidak ada penyakit terdeteksi" COLOR_RESET);
+        return false;
+    }
+
     if (!patient->treatedStatus)
     {
         printError("Anda belum diberikan resep obat!");
         return false;
     }
+
     if (patient->medicationsPrescribed.nEff == 0)
     {
         printError("Tidak ada obat yang diresepkan!");
         return false;
     }
 
-    if (hospital->medications.nEff == 0)
+    if (patient->medicationsTaken.top >= 0)
     {
-        printError("Tidak ada obat terdaftar!");
-        return false;
-    }
-    boolean isValidMedication = false;
-    char medicationName[50] = "Tidak dikenal";
-    for (int i = 0; i < hospital->medications.nEff; i++)
-    {
-        if (hospital->medications.elements[i].id == medicationId)
+        boolean needsAntidote = false;
+        int lastMedicationId = patient->medicationsTaken.medicationId[patient->medicationsTaken.top];
+
+        int takenCount = patient->medicationsTaken.top + 1;
+        if (takenCount <= patient->medicationsPrescribed.nEff)
         {
-            isValidMedication = true;
-            strcpy(medicationName, hospital->medications.elements[i].name);
+            int expectedMedicationId = patient->medicationsPrescribed.medicationId[takenCount - 1];
+            if (lastMedicationId != expectedMedicationId)
+            {
+                needsAntidote = true;
+            }
+        }
+        else
+        {
+            needsAntidote = true;
+        }
+
+        if (needsAntidote)
+        {
+            printError("Urutan obat salah! Silakan minum penawar terlebih dahulu.");
+            return false;
+        }
+    }
+
+    boolean isMedicationAvailable = false;
+    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
+    {
+        boolean foundInTaken = false;
+        for (int j = 0; j <= patient->medicationsTaken.top; j++)
+        {
+            if (patient->medicationsPrescribed.medicationId[i] == patient->medicationsTaken.medicationId[j])
+            {
+                foundInTaken = true;
+                break;
+            }
+        }
+
+        if (!foundInTaken)
+        {
+            isMedicationAvailable = true;
             break;
         }
     }
-    if (!isValidMedication)
+
+    if (!isMedicationAvailable)
     {
-        printError("ID obat tidak valid!");
+        printError("Semua obat yang diresepkan sudah dikonsumsi!");
         return false;
     }
 
-    // Memeriksa apakah semua obat sudah dikonsumsi
-    if (patient->medicationsTaken.top + 1 >= patient->medicationsPrescribed.nEff)
+    printHeader("Daftar Obat yang Diresepkan");
+    printf(COLOR_BLUE "[📋 | Info] - Daftar obat yang harus diminum sesuai dengan urutan\n" COLOR_RESET);
+
+    int widths[] = {15, 30};
+    const char *headers[] = {"Urutan Minum", "Nama Obat"};
+    printTableBorder(widths, 2, 1);
+    printTableRow(headers, widths, 2);
+    printTableBorder(widths, 2, 2);
+
+    boolean validOptions[patient->medicationsPrescribed.nEff];
+    int displayCount = 0;
+
+    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
     {
-        printError("Semua obat sudah dikonsumsi!");
+        int medicationId = patient->medicationsPrescribed.medicationId[i];
+
+        boolean alreadyTaken = false;
+        for (int j = 0; j <= patient->medicationsTaken.top; j++)
+        {
+            if (patient->medicationsTaken.medicationId[j] == medicationId)
+            {
+                alreadyTaken = true;
+                break;
+            }
+        }
+
+        if (!alreadyTaken)
+        {
+            validOptions[i] = true;
+            displayCount++;
+
+            for (int j = 0; j < hospital->medications.nEff; j++)
+            {
+                if (hospital->medications.elements[j].id == medicationId)
+                {
+                    char medicationName[50], medicationIdStr[10];
+                    strcpy(medicationName, hospital->medications.elements[j].name);
+                    integerToString(i + 1, medicationIdStr, sizeof(medicationIdStr));
+                    const char *row[] = {medicationIdStr, medicationName};
+                    printTableRow(row, widths, 2);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            validOptions[i] = false;
+        }
+    }
+
+    printTableBorder(widths, 2, 3);
+
+    int choice;
+    while (!readValidInt(&choice, ">>> Pilih obat untuk diminum: "))
+    {
+        printError("Input tidak valid! Silakan masukkan nomor obat yang benar.");
+    }
+
+    if (choice < 1 || choice > patient->medicationsPrescribed.nEff)
+    {
+        printError("Pilihan nomor untuk obat tidak tersedia!");
         return false;
     }
 
-    // Memeriksa urutan obat
-    int expectedMedication = patient->medicationsPrescribed.medicationId[patient->medicationsTaken.top + 1];
-    if (expectedMedication != medicationId)
+    if (!validOptions[choice - 1])
+    {
+        printError("Obat tersebut sudah diminum atau tidak tersedia!");
+        return false;
+    }
+
+    int expectedMedicationId = -1;
+    for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
+    {
+        boolean foundInTaken = false;
+        for (int j = 0; j <= patient->medicationsTaken.top; j++)
+        {
+            if (patient->medicationsPrescribed.medicationId[i] == patient->medicationsTaken.medicationId[j])
+            {
+                foundInTaken = true;
+                break;
+            }
+        }
+
+        if (!foundInTaken)
+        {
+            expectedMedicationId = patient->medicationsPrescribed.medicationId[i];
+            break;
+        }
+    }
+
+    int selectedMedicationId = patient->medicationsPrescribed.medicationId[choice - 1];
+
+    patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = selectedMedicationId;
+
+    if (selectedMedicationId != expectedMedicationId)
     {
         patient->life--;
-        printHeader("Konsumsi Obat");
 
-        char errorMsg[100] = "Obat ";
-        strcat(errorMsg, medicationName);
-        strcat(errorMsg, " salah urutan! Nyawa tersisa: ");
-        char lifeStr[10] = "";
-        int k = 0;
-        int life = patient->life;
-        if (life == 0)
-            lifeStr[k++] = '0';
-        else
-            while (life > 0)
-            {
-                lifeStr[k++] = (life % 10) + '0';
-                life /= 10;
-            }
-        for (int m = 0; m < k / 2; m++)
-        {
-            char temp = lifeStr[m];
-            lifeStr[m] = lifeStr[k - 1 - m];
-            lifeStr[k - 1 - m] = temp;
-        }
-        strcat(errorMsg, lifeStr);
-        printError(errorMsg);
+        printf(COLOR_YELLOW "[💀 | Info ] - Obat Salah! Nyawa berkurang satu.\n" COLOR_RESET);
 
         if (patient->life <= 0)
         {
-            printError("Pasien meninggal!");
+            printError("Pasien kehabisan nyawa! Pasien akan dihapus. 🥀");
+
+            if (patient->queueRoom[0] != '\0')
+            {
+                Room *room = NULL;
+                boolean roomFound = false;
+
+                for (int i = 0; i < hospital->layout.rowEff && !roomFound; i++)
+                {
+                    for (int j = 0; j < hospital->layout.colEff && !roomFound; j++)
+                    {
+                        if (strcmp(hospital->layout.elements[i][j].code, patient->queueRoom) == 0)
+                        {
+                            room = &hospital->layout.elements[i][j];
+                            roomFound = true;
+                        }
+                    }
+                }
+
+                if (room)
+                {
+                    for (int i = 0; i < room->patientInRoom.nEff; i++)
+                    {
+                        if (room->patientInRoom.patientId[i] == patient->id)
+                        {
+                            for (int j = i; j < room->patientInRoom.nEff - 1; j++)
+                            {
+                                room->patientInRoom.patientId[j] = room->patientInRoom.patientId[j + 1];
+                            }
+                            room->patientInRoom.nEff--;
+                            break;
+                        }
+                    }
+
+                    Queue *targetQueue = NULL;
+                    for (int i = 0; i < hospital->queues.capacity; i++)
+                    {
+                        if (hospital->queues.queues[i].roomCode[0] != '\0' &&
+                            strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0)
+                        {
+                            targetQueue = &hospital->queues.queues[i];
+                            break;
+                        }
+                    }
+
+                    if (targetQueue && !isQueueEmpty(targetQueue))
+                    {
+                        QueueInfo nextPatientInfo;
+                        if (dequeue(targetQueue, &nextPatientInfo.patientId))
+                        {
+                            if (room->patientInRoom.nEff < room->patientInRoom.capacity)
+                            {
+                                room->patientInRoom.patientId[room->patientInRoom.nEff] = nextPatientInfo.patientId;
+                                room->patientInRoom.nEff++;
+                            }
+                        }
+                    }
+                }
+            }
+
             deletePatient(hospital, patient->id);
+
+            printf(COLOR_YELLOW "[⭕ | Info ] - Sesi tidak valid setelah pasien kehabisan nyawa.\n" COLOR_RESET);
             session->isLoggedIn = false;
             session->userId = -1;
-            session->username[0] = '\0';
-            session->role = -1;
+            strcpy(session->username, "");
+            
+            return false;
         }
-        return false;
-    }
-
-    // Menambahkan obat ke stack
-    if (patient->medicationsTaken.top + 1 < patient->medicationsTaken.capacity)
-    {
-        patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = medicationId;
-    }
-    else
-    {
-        printError("Kapasitas obat yang diambil penuh!");
-        return false;
-    }
-
-    printHeader("Konsumsi Obat");
-    int widths[] = {15, 20};
-    const char *headers[] = {"Obat", "Status"};
-    printTableRow(headers, widths, 4);
-    printTableBorder(widths, 2, 1);
-    const char *row[] = {medicationName, "Berhasil dikonsumsi"};
-    printTableRow(row, widths, 2);
-    printTableBorder(widths, 2, 3);
-
-    char lifeMsg[50] = "Nyawa tersisa: ";
-    char lifeStr[10] = "";
-    int k = 0;
-    int life = patient->life;
-    if (life == 0)
-        lifeStr[k++] = '0';
-    else
-        while (life > 0)
+        else
         {
-            lifeStr[k++] = (life % 10) + '0';
-            life /= 10;
+            printf("→ Sisa nyawa: " COLOR_YELLOW);
+            for (int i = 0; i < 3; i++)
+            {
+                if (i < patient->life)
+                {
+                    printf("O");
+                }
+                else
+                {
+                    printf("X");
+                }
+            }
+            printf(COLOR_RESET "\n");
+            return false;
         }
-    for (int m = 0; m < k / 2; m++)
-    {
-        char temp = lifeStr[m];
-        lifeStr[m] = lifeStr[k - 1 - m];
-        lifeStr[k - 1 - m] = temp;
     }
-    strcat(lifeMsg, lifeStr);
-    printSuccess(lifeMsg);
-
-    char successMsg[100] = "Obat ";
-    strcat(successMsg, medicationName);
-    strcat(successMsg, " berhasil dikonsumsi!");
-    printSuccess(successMsg);
-    return true;
+    else
+    {
+        printSuccess("Obat berhasil diminum!");
+        return true;
+    }
 }

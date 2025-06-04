@@ -8,6 +8,7 @@
 #include "abstractDataTypes.h"
 #include "utils.h"
 #include "queuePrimitive.h"
+#include "enigma.h"
 
 /**
  * Nama Fungsi: `initHospital`

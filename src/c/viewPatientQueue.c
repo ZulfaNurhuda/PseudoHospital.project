@@ -1,126 +1,171 @@
 #include "viewPatientQueue.h"
-#include "myQueue.h" // For isQueueEmpty, queueSize
-#include <stdio.h>   // For sprintf
-#include <string.h>  // For strcmp
 
-// Function for a patient to view their own queue status.
-// (Adapted from the old 'myQueue' function)
-void viewMySpecificQueueStatus(Hospital *hospital, Session *session) {
-    if (hospital == NULL || session == NULL) {
-        printError("Struktur rumah sakit atau sesi tidak valid!");
-        return;
-    }
-    if (!session->isLoggedIn || session->role != PATIENT) {
-        printError("Akses ditolak! Hanya Pasien yang dapat melihat status antriannya.");
+void viewMySpecificQueueStatus(Hospital *hospital, Session *session)
+{
+
+    if (!session->isLoggedIn || session->role != PATIENT)
+    {
+        printError("Akses ditolak! Hanya Pasien yang dapat melihat status antrian.");
         return;
     }
 
-    int patientIdx = -1;
-    for (int i = 0; i < hospital->patients.nEff; i++) {
-        if (strcmp(hospital->patients.elements[i].username, session->username) == 0) {
-            patientIdx = i;
+    Patient *patient = NULL;
+
+    for (int i = 0; i < hospital->patients.nEff; i++)
+    {
+
+        if (strcmp(hospital->patients.elements[i].username, session->username) == 0)
+        {
+            patient = &hospital->patients.elements[i];
             break;
         }
     }
 
-    if (patientIdx == -1) {
-        printError("Pasien tidak ditemukan dalam sistem!"); // Should not happen if session is valid
-        return;
-    }
-    Patient *patient = &hospital->patients.elements[patientIdx];
-
-    if (patient->queueRoom[0] == '\0' || patient->queuePosition <= 0) {
-        printHeader("Status Antrian Saya");
-        printSuccess("Anda tidak terdaftar dalam antrian apapun saat ini.");
+    if (patient == NULL)
+    {
+        printError("Pasien tidak ditemukan dalam daftar!");
         return;
     }
 
-    Queue *roomQueue = NULL;
-    for (int i = 0; i < hospital->queues.nRooms; i++) { // Check active queues
-        if (strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0) {
-            roomQueue = &hospital->queues.queues[i];
-            break;
+    if (patient->queueRoom[0] != '\0')
+    {
+
+        boolean roomFound = false;
+        boolean patientInRoom = false;
+
+        for (int r = 0; r < hospital->layout.rowEff; r++)
+        {
+            for (int c = 0; c < hospital->layout.colEff; c++)
+            {
+                Room *room = &hospital->layout.elements[r][c];
+
+                if (strcmp(room->code, patient->queueRoom) == 0)
+                {
+                    roomFound = true;
+
+                    for (int i = 0; i < room->patientInRoom.nEff; i++)
+                    {
+                        if (room->patientInRoom.patientId[i] == patient->id)
+                        {
+                            patientInRoom = true;
+                            break;
+                        }
+                    }
+
+                    if (patientInRoom)
+                    {
+                        printf(COLOR_YELLOW "Anda sedang berada di dalam ruangan dokter! Silakan menyelesaikan pemeriksaan.\n" COLOR_RESET);
+                        return;
+                    }
+
+                    break;
+                }
+            }
+            if (roomFound)
+                break;
+        }
+
+        if (!roomFound)
+        {
+            printError("Ruangan yang terdaftar untuk Anda tidak ditemukan!");
+            return;
         }
     }
-     if (roomQueue == NULL) { // Fallback to check all queue capacities, in case nRooms is not up-to-date
-        for (int i = 0; i < hospital->queues.capacity; i++) {
-             if (hospital->queues.queues[i].roomCode[0] != '\0' && strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0) {
-                roomQueue = &hospital->queues.queues[i];
+
+    if (patient->queueRoom[0] != '\0')
+    {
+
+        Doctor *doctor = NULL;
+
+        for (int i = 0; i < hospital->doctors.nEff; i++)
+        {
+
+            if (strcmp(hospital->doctors.elements[i].room, patient->queueRoom) == 0)
+            {
+                doctor = &hospital->doctors.elements[i];
                 break;
             }
         }
-    }
 
+        if (doctor != NULL)
+        {
 
-    if (roomQueue == NULL) {
-        char errMsg[200]; // Increased buffer
-        // sprintf(errMsg, "Error: Antrian untuk ruangan %s (tempat Anda terdaftar) tidak dapat ditemukan.", patient->queueRoom);
-        strcpy(errMsg, "Error: Antrian untuk ruangan ");
-        strcat(errMsg, patient->queueRoom);
-        strcat(errMsg, " (tempat Anda terdaftar) tidak dapat ditemukan.");
-        printError(errMsg);
-        // Consider clearing patient's queue state if it's inconsistent
-        // patient->queueRoom[0] = '\0';
-        // patient->queuePosition = 0;
-        return;
-    }
+            boolean patientFoundInQueue = false;
+            int queueIdx = -1;
 
-    char doctorName[50] = "N/A";
-    for (int i = 0; i < hospital->doctors.nEff; i++) {
-        if (strcmp(hospital->doctors.elements[i].room, patient->queueRoom) == 0) {
-            // customSafeStrcpy(doctorName, hospital->doctors.elements[i].username, sizeof(doctorName));
-            strcpy(doctorName, hospital->doctors.elements[i].username); // Assuming doctorName is large enough
-            break;
+            for (int i = 0; i < hospital->queues.nRooms; i++)
+            {
+                if (strcmp(hospital->queues.queues[i].roomCode, patient->queueRoom) == 0)
+                {
+                    queueIdx = i;
+                    break;
+                }
+            }
+
+            if (queueIdx == -1)
+            {
+
+                printError("Antrian untuk ruangan Anda tidak ditemukan atau Anda tidak ada di dalamnya!");
+                return;
+            }
+
+            Queue *queueToCheck = &hospital->queues.queues[queueIdx];
+
+            QueueNode *currentNode = queueToCheck->head;
+            while (currentNode != NULL)
+            {
+                if (currentNode->info.patientId == patient->id)
+                {
+                    patientFoundInQueue = true;
+                    break;
+                }
+                currentNode = currentNode->next;
+            }
+
+            if (!patientFoundInQueue)
+            {
+                printError("Anda belum terdaftar dalam antrian check-up! Silakan daftar terlebih dahulu dengan command DAFTAR_CHECKUP.");
+
+                patient->queueRoom[0] = '\0';
+                patient->queuePosition = 0;
+                return;
+            }
+
+            char queuePositionStr[5], queueSizeStr[5], finalQueueFormat[10] = "";
+
+            integerToString(patient->queuePosition, queuePositionStr, sizeof(queuePositionStr));
+
+            integerToString(queueSize(queueToCheck), queueSizeStr, sizeof(queueSizeStr));
+
+            strcat(finalQueueFormat, queuePositionStr);
+            strcat(finalQueueFormat, "/");
+            strcat(finalQueueFormat, queueSizeStr);
+
+            printHeader("Status antrian Anda:");
+
+            int widths[] = {20, 20};
+            const char *row1[] = {"Dokter", doctor->username};
+            const char *row2[] = {"Ruangan", doctor->room};
+            const char *row3[] = {"Posisi antrian", finalQueueFormat};
+
+            printTableBorder(widths, 2, 1);
+            printTableRow(row1, widths, 2);
+            printTableBorder(widths, 2, 2);
+            printTableRow(row2, widths, 2);
+            printTableBorder(widths, 2, 2);
+            printTableRow(row3, widths, 2);
+            printTableBorder(widths, 2, 3);
+
+            return;
+        }
+
+        else
+        {
+            printError("Dokter untuk ruangan antrian Anda tidak ditemukan!");
+
+            return;
         }
     }
 
-    // Validate patient's actual position in the new linked list structure
-    int actualPositionInList = 0;
-    int currentPosition = 0;
-    QueueNode *currentNode = roomQueue->front;
-    while(currentNode != NULL) {
-        currentPosition++;
-        if(currentNode->info.patientId == patient->id) {
-            actualPositionInList = currentPosition;
-            break;
-        }
-        currentNode = currentNode->next;
-    }
-
-    if (actualPositionInList == 0) { // Patient Id not found in the queue structure
-        char errorMsg[250]; // Increased buffer
-        // sprintf(errorMsg, "Inkonsistensi data: Anda terdaftar di antrian %s tapi Id Anda tidak ditemukan dalam struktur antrian.", patient->queueRoom);
-        strcpy(errorMsg, "Inkonsistensi data: Anda terdaftar di antrian ");
-        strcat(errorMsg, patient->queueRoom);
-        strcat(errorMsg, " tapi ID Anda tidak ditemukan dalam struktur antrian.");
-        printError(errorMsg);
-        patient->queueRoom[0] = '\0'; // Clear inconsistent state
-        patient->queuePosition = 0;
-        return;
-    }
-    
-    // If patient->queuePosition is stored, it should match actualPositionInList.
-    // For this function, we'll display actualPositionInList.
-    // patient->queuePosition should be updated by enqueue/dequeue/skip/cancel functions.
-
-
-    printHeader("Status Antrian Saya");
-    int widths[] = {20, 15, 15, 15}; // Adjusted widths
-    const char *headers[] = {"Dokter", "Ruangan", "Posisi Anda", "Total Antrian"};
-    printTableBorder(widths, 4, 0); // Separator before header
-    printTableRow(headers, widths, 4);
-    printTableBorder(widths, 4, 1); // Separator after header
-
-    char positionStr[12]; 
-    if (!integerToString(actualPositionInList, positionStr, sizeof(positionStr))) {
-        strcpy(positionStr, "ERR");
-    }
-    char totalStr[12]; 
-    if (!integerToString(queueSize(roomQueue), totalStr, sizeof(totalStr))) {
-        strcpy(totalStr, "ERR");
-    }
-
-    const char *row[] = {doctorName, patient->queueRoom, positionStr, totalStr};
-    printTableRow(row, widths, 4);
-    printTableBorder(widths, 4, 3); // Footer border
+    printError("Anda belum terdaftar dalam antrian check-up! Silakan daftar terlebih dahulu dengan command DAFTAR_CHECKUP.");
 }

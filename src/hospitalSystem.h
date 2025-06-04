@@ -22,7 +22,7 @@
 #include "login.h"
 #include "logout.h"
 #include "menuHelp.h"
-#include "myQueue.h"
+#include "queuePrimitive.h"
 #include "queueManagement.h"
 #include "registerCheckup.h"
 #include "registerPatient.h"
