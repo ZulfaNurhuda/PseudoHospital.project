@@ -40,7 +40,13 @@ boolean canGoHome(Hospital *hospital, Session *session)
     const char *statusStr, *descriptionStr;
     boolean canGoHomeStatus = false;
 
-    if (!patient->diagnosedStatus)
+    if (strcmp(patient->disease, "Tidak terdeteksi") == 0)
+    {
+        statusStr = "Tidak Terjangkit Penyakit";
+        descriptionStr = "Anda telah selesai menjalani perawatan.";
+        canGoHomeStatus = true;
+    }
+    else if (!patient->diagnosedStatus)
     {
         statusStr = "Belum Diagnosa";
         descriptionStr = "Anda belum didiagnosa oleh dokter.";

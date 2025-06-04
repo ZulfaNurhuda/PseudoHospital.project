@@ -41,29 +41,25 @@ void viewLifeStatus(Hospital *hospital, Session *session)
     }
 
     printHeader("Status Nyawa");
-    int widths[] = {15, 10};
+    int widths[] = {20, 10};
     const char *headers[] = {"Pasien", "Nyawa"};
     printTableRow(headers, widths, 4);
     printTableBorder(widths, 2, 1);
 
     char lifeStr[10] = "";
-    int k = 0;
-    int life = patient->life;
-    if (life == 0)
-        lifeStr[k++] = '0';
-    else
-        while (life > 0)
-        {
-            lifeStr[k++] = (life % 10) + '0';
-            life /= 10;
-        }
-    for (int m = 0; m < k / 2; m++)
+    strcat(lifeStr, COLOR_YELLOW);
+    for (int i = 0; i < 3; i++)
     {
-        char temp = lifeStr[m];
-        lifeStr[m] = lifeStr[k - 1 - m];
-        lifeStr[k - 1 - m] = temp;
+        if (i < patient->life)
+        {
+            strcat(lifeStr, "O");
+        }
+        else
+        {
+            strcat(lifeStr, "X");
+        }
     }
-    lifeStr[k] = '\0';
+    strcat(lifeStr, COLOR_RESET);
 
     const char *row[] = {patient->username, lifeStr};
     printTableRow(row, widths, 2);

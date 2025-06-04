@@ -52,6 +52,7 @@ void displayMenu(Session *session)
         menu[count++] = "MENU";
         menu[count++] = "HELP";
         menu[count++] = "EXIT";
+        menu[count++] = "EXIT";
     }
 
     else
@@ -67,9 +68,11 @@ void displayMenu(Session *session)
             menu[count++] = "MENU";
             menu[count++] = "HELP";
             menu[count++] = "LIHAT_DENAH";
+            menu[count++] = "LIHAT_RUANGAN";
             menu[count++] = "DIAGNOSIS";
             menu[count++] = "NGOBATIN";
             menu[count++] = "LIHAT_DOMPET";
+            menu[count++] = "BATALKAN_ANTRIAN";
             menu[count++] = "EXIT";
             break;
         case MANAGER:
@@ -80,13 +83,18 @@ void displayMenu(Session *session)
             menu[count++] = "MENU";
             menu[count++] = "HELP";
             menu[count++] = "LIHAT_DENAH";
+            menu[count++] = "LIHAT_RUANGAN";
             menu[count++] = "LIHAT_USER";
             menu[count++] = "CARI_USER";
+            menu[count++] = "CARI_PASIEN";
+            menu[count++] = "CARI_DOKTER";
             menu[count++] = "LIHAT_ANTRIAN";
             menu[count++] = "TAMBAH_DOKTER";
             menu[count++] = "UBAH_DENAH";
             menu[count++] = "PINDAH_DOKTER";
             menu[count++] = "LIHAT_FINANSIAL";
+            menu[count++] = "LEWATI_ANTRIAN";
+            menu[count++] = "BATALKAN_ANTRIAN";
             menu[count++] = "EXIT";
             break;
         case PATIENT:
@@ -97,12 +105,14 @@ void displayMenu(Session *session)
             menu[count++] = "MENU";
             menu[count++] = "HELP";
             menu[count++] = "LIHAT_DENAH";
+            menu[count++] = "LIHAT_RUANGAN";
             menu[count++] = "PULANG_DOK";
             menu[count++] = "DAFTAR_CHECKUP";
             menu[count++] = "ANTRIAN_SAYA";
             menu[count++] = "MINUM_OBAT";
             menu[count++] = "MINUM_PENAWAR";
             menu[count++] = "LIHAT_DOMPET";
+            menu[count++] = "LIHAT_NYAWA";
             menu[count++] = "GACHA";
             menu[count++] = "LEWATI_ANTRIAN";
             menu[count++] = "BATALKAN_ANTRIAN";

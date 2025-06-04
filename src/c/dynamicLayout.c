@@ -94,11 +94,20 @@ boolean changeLayout(Hospital *hospital, Session *session, int newRowCount, int 
     {
         for (int j = 0; j < hospital->layout.colEff; j++)
         {
-            free(hospital->layout.elements[i][j].patientInRoom.patientId);
+            if (hospital->layout.elements[i][j].patientInRoom.patientId != NULL)
+            {
+                free(hospital->layout.elements[i][j].patientInRoom.patientId);
+            }
         }
-        free(hospital->layout.elements[i]);
+        if (hospital->layout.elements[i] != NULL)
+        {
+            free(hospital->layout.elements[i]);
+        }
     }
-    free(hospital->layout.elements);
+    if (hospital->layout.elements != NULL)
+    {
+        free(hospital->layout.elements);
+    }
 
     hospital->layout.elements = newLayout;
     hospital->layout.rowEff = newRowCount;

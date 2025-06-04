@@ -50,13 +50,11 @@ boolean takeMedication(Hospital *hospital, Session *session)
         return false;
     }
 
-    // Check if patient needs to take antidote first (if last medication was wrong)
     if (patient->medicationsTaken.top >= 0)
     {
         boolean needsAntidote = false;
         int lastMedicationId = patient->medicationsTaken.medicationId[patient->medicationsTaken.top];
 
-        // Find what should have been the medication at that position
         int takenCount = patient->medicationsTaken.top + 1;
         if (takenCount <= patient->medicationsPrescribed.nEff)
         {
@@ -68,7 +66,6 @@ boolean takeMedication(Hospital *hospital, Session *session)
         }
         else
         {
-            // More medications taken than prescribed - definitely wrong
             needsAntidote = true;
         }
 
@@ -79,7 +76,6 @@ boolean takeMedication(Hospital *hospital, Session *session)
         }
     }
 
-    // Check if there are any medications left to take
     boolean isMedicationAvailable = false;
     for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
     {
@@ -106,7 +102,6 @@ boolean takeMedication(Hospital *hospital, Session *session)
         return false;
     }
 
-    // Display available medications
     printHeader("Daftar Obat yang Diresepkan");
     printf(COLOR_BLUE "[📋 | Info] - Daftar obat yang harus diminum sesuai dengan urutan\n" COLOR_RESET);
 
@@ -116,7 +111,6 @@ boolean takeMedication(Hospital *hospital, Session *session)
     printTableRow(headers, widths, 2);
     printTableBorder(widths, 2, 2);
 
-    // Build list of available medications and display them
     boolean validOptions[patient->medicationsPrescribed.nEff];
     int displayCount = 0;
 
@@ -124,7 +118,6 @@ boolean takeMedication(Hospital *hospital, Session *session)
     {
         int medicationId = patient->medicationsPrescribed.medicationId[i];
 
-        // Check if this medication has already been taken
         boolean alreadyTaken = false;
         for (int j = 0; j <= patient->medicationsTaken.top; j++)
         {
@@ -140,7 +133,6 @@ boolean takeMedication(Hospital *hospital, Session *session)
             validOptions[i] = true;
             displayCount++;
 
-            // Find medication name
             for (int j = 0; j < hospital->medications.nEff; j++)
             {
                 if (hospital->medications.elements[j].id == medicationId)
@@ -162,28 +154,24 @@ boolean takeMedication(Hospital *hospital, Session *session)
 
     printTableBorder(widths, 2, 3);
 
-    // Get user choice
     int choice;
     while (!readValidInt(&choice, ">>> Pilih obat untuk diminum: "))
     {
         printError("Input tidak valid! Silakan masukkan nomor obat yang benar.");
     }
 
-    // Validate choice range
     if (choice < 1 || choice > patient->medicationsPrescribed.nEff)
     {
         printError("Pilihan nomor untuk obat tidak tersedia!");
         return false;
     }
 
-    // Check if the chosen medication is valid (not already taken)
     if (!validOptions[choice - 1])
     {
         printError("Obat tersebut sudah diminum atau tidak tersedia!");
         return false;
     }
 
-    // Find the next medication that should be taken (in order)
     int expectedMedicationId = -1;
     for (int i = 0; i < patient->medicationsPrescribed.nEff; i++)
     {
@@ -206,13 +194,10 @@ boolean takeMedication(Hospital *hospital, Session *session)
 
     int selectedMedicationId = patient->medicationsPrescribed.medicationId[choice - 1];
 
-    // Add the medication to taken list
     patient->medicationsTaken.medicationId[++patient->medicationsTaken.top] = selectedMedicationId;
 
-    // Check if patient took the correct medication (in order)
     if (selectedMedicationId != expectedMedicationId)
     {
-        // Patient chose wrong medication
         patient->life--;
 
         printf(COLOR_YELLOW "[💀 | Info ] - Obat Salah! Nyawa berkurang satu.\n" COLOR_RESET);
@@ -290,25 +275,24 @@ boolean takeMedication(Hospital *hospital, Session *session)
         }
         else
         {
-            printf("→ Sisa nyawa: ");
+            printf("→ Sisa nyawa: " COLOR_YELLOW);
             for (int i = 0; i < 3; i++)
             {
                 if (i < patient->life)
                 {
-                    printf("● ");
+                    printf("O");
                 }
                 else
                 {
-                    printf("○ ");
+                    printf("X");
                 }
             }
-            printf("\n");
+            printf(COLOR_RESET "\n");
             return false;
         }
     }
     else
     {
-        // Patient took the correct medication
         printSuccess("Obat berhasil diminum!");
         return true;
     }
